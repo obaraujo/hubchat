@@ -1,0 +1,7 @@
+Aguardando conexão para iniciar a importação de mensagens:
+  Whatsapp nome: E-Tech
+  Whatsapp Id: 1
+  Criação do arquivo de logs: 24/09/2025 08:18:57
+  Selecionado Data de inicio de importação: 23/09/2025 20:16:00
+  Selecionado Data final da importação: 24/09/2025 08:16:00
+   

@@ -1,0 +1,7 @@
+Aguardando conexão para iniciar a importação de mensagens:
+  Whatsapp nome: Patu_Online
+  Whatsapp Id: 5
+  Criação do arquivo de logs: 29/10/2025 20:48:15
+  Selecionado Data de inicio de importação: 01/09/2025 16:53:00
+  Selecionado Data final da importação: 06/10/2025 16:52:00
+   

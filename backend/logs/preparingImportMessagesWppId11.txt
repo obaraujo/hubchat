@@ -1,0 +1,7 @@
+Aguardando conexão para iniciar a importação de mensagens:
+  Whatsapp nome: Hiper Automação Comercial
+  Whatsapp Id: 11
+  Criação do arquivo de logs: 18/10/2025 11:53:04
+  Selecionado Data de inicio de importação: 13/10/2025 15:45:00
+  Selecionado Data final da importação: 17/10/2025 15:44:00
+   
