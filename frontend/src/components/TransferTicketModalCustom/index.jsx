@@ -24,7 +24,6 @@ import ButtonWithSpinner from "../ButtonWithSpinner";
 import toastError from "../../errors/toastError";
 import useQueues from "../../hooks/useQueues";
 import UserStatusIcon from "../UserModal/statusIcon";
-import { isNil } from "lodash";
 
 const useStyles = makeStyles((theme) => ({
   maxWidth: {
