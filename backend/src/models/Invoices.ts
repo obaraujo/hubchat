@@ -9,7 +9,8 @@ import {
     ForeignKey,
     AllowNull,
     HasMany,
-    Unique
+    Unique,
+		DataType
 } from "sequelize-typescript";
 import Company from "./Company";
 
@@ -17,53 +18,53 @@ import Company from "./Company";
 class Invoices extends Model<Invoices> {
     @PrimaryKey
     @AutoIncrement
-    @Column
+    @Column(DataType.INTEGER)
     id: number;
 
     @ForeignKey(() => Company)
-    @Column
+    @Column(DataType.INTEGER)
     companyId: number;
 
-    @Column
+    @Column(DataType.TEXT)
     dueDate: string;
 
-    @Column
+    @Column(DataType.TEXT)
     detail: string;
 
-    @Column
+    @Column(DataType.TEXT)
     status: string;
 
-    @Column
+    @Column(DataType.INTEGER)
     value: number;
 
-    @Column
+    @Column(DataType.INTEGER)
     users: number;
   
-    @Column
+    @Column(DataType.INTEGER)
     connections: number;
   
-    @Column
+    @Column(DataType.INTEGER)
     queues: number;
   
-    @Column
+    @Column(DataType.BOOLEAN)
     useWhatsapp: boolean;   
   
-    @Column
+    @Column(DataType.BOOLEAN)
     useFacebook: boolean;   
   
-    @Column
+    @Column(DataType.BOOLEAN)
     useInstagram: boolean;   
     
-    @Column
+    @Column(DataType.BOOLEAN)
     useCampaigns: boolean;   
   
-    @Column
+    @Column(DataType.BOOLEAN)
     useSchedules: boolean;   
   
-    @Column
+    @Column(DataType.BOOLEAN)
     useInternalChat: boolean;   
     
-    @Column
+    @Column(DataType.BOOLEAN)
     useExternalApi: boolean;   
 
     @CreatedAt
@@ -72,7 +73,7 @@ class Invoices extends Model<Invoices> {
     @UpdatedAt
     updatedAt: Date;
 
-    @Column
+    @Column(DataType.TEXT)
     linkInvoice: string;
 }
 

@@ -7,33 +7,33 @@ class ScheduledMessages extends Model<ScheduledMessages> {
     
     @PrimaryKey
     @AutoIncrement
-    @Column
+    @Column(DataType.INTEGER)
     id: number;
 
-    @Column
+    @Column(DataType.DATE)
     data_mensagem_programada: Date;
 
-    @Column
+    @Column(DataType.TEXT)
     id_conexao: String;
 
-    @Column
+    @Column(DataType.TEXT)
     intervalo: string;
 
-    @Column
+    @Column(DataType.TEXT)
     valor_intervalo: string;
 
     @Column(DataType.TEXT)
     mensagem: string;
 
-    @Column
+    @Column(DataType.TEXT)
     tipo_dias_envio: string;
 
     @Default(false)
-    @Column
+    @Column(DataType.BOOLEAN)
     mostrar_usuario_mensagem: boolean;
 
     @Default(false)
-    @Column
+    @Column(DataType.BOOLEAN)
     criar_ticket: boolean;
 
     @Column({ type: DataType.JSONB })
@@ -42,10 +42,10 @@ class ScheduledMessages extends Model<ScheduledMessages> {
     @Column({ type: DataType.JSONB })
     tags: String[];
 
-    @Column
+    @Column(DataType.INTEGER)
     companyId: number;
 
-    @Column
+    @Column(DataType.TEXT)
     nome: string;
 
     @CreatedAt
@@ -54,19 +54,19 @@ class ScheduledMessages extends Model<ScheduledMessages> {
     @UpdatedAt
     updatedAt: Date;
 
-    @Column
+    @Column(DataType.TEXT)
     mediaPath: string;
 
-    @Column
+    @Column(DataType.TEXT)
     mediaName: string;
 
-    @Column
+    @Column(DataType.TEXT)
     tipo_arquivo: string;
 
-    @Column
+    @Column(DataType.TEXT)
     usuario_envio: string;
 
-    @Column
+    @Column(DataType.TEXT)
     enviar_quantas_vezes: string;
 
 }

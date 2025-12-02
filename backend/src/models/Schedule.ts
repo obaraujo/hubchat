@@ -22,32 +22,32 @@ import Queue from "./Queue";
 class Schedule extends Model<Schedule> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @Column(DataType.TEXT)
   body: string;
 
-  @Column
+  @Column(DataType.DATE)
   sendAt: Date;
 
-  @Column
+  @Column(DataType.DATE)
   sentAt: Date;
 
   @ForeignKey(() => Contact)
-  @Column
+  @Column(DataType.INTEGER)
   contactId: number;
 
   @ForeignKey(() => Ticket)
-  @Column
+  @Column(DataType.INTEGER)
   ticketId: number;
 
   @ForeignKey(() => User)
-  @Column
+  @Column(DataType.INTEGER)
   userId: number;
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @Column(DataType.STRING)
@@ -72,55 +72,55 @@ class Schedule extends Model<Schedule> {
   company: Company;
 
   @ForeignKey(() => User)
-  @Column
+  @Column(DataType.INTEGER)
   ticketUserId: number;
 
   @BelongsTo(() => User, "ticketUserId")
   ticketUser: User;
 
   @ForeignKey(() => Queue)
-  @Column
+  @Column(DataType.INTEGER)
   queueId: number;
 
   @BelongsTo(() => Queue)
   queue: Queue;
 
-  @Column({ defaultValue: "closed" })
+  @Column({ defaultValue: "closed", type:DataType.TEXT })
   statusTicket: string;
 
-  @Column({ defaultValue: "disabled" })
+  @Column({ defaultValue: "disabled", type:DataType.TEXT })
   openTicket: string;
 
-  @Column
+  @Column(DataType.TEXT)
   mediaPath: string;
 
-  @Column
+  @Column(DataType.TEXT)
   mediaName: string;
 
   @ForeignKey(() => Whatsapp)
-  @Column
+  @Column(DataType.INTEGER)
   whatsappId: number;
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;
 
-  @Column
+  @Column(DataType.INTEGER)
   intervalo: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   valorIntervalo: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   enviarQuantasVezes: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   tipoDias: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   contadorEnvio: number;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   assinar: boolean;
 }
 

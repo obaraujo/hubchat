@@ -31,36 +31,36 @@ import Prompt from "./Prompt";
 class Queue extends Model<Queue> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @AllowNull(false)
   @Unique
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
   @AllowNull(false)
   @Unique
-  @Column
+  @Column(DataType.TEXT)
   color: string;
 
   @Default("")
-  @Column
+  @Column(DataType.TEXT)
   greetingMessage: string;
 
-  @Column
+  @Column(DataType.INTEGER)
   orderQueue: number;
 
   @AllowNull(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   ativarRoteador: boolean;
 
   @AllowNull(false)
-  @Column
+  @Column(DataType.INTEGER)
   tempoRoteador: number;
   
   @Default("")
-  @Column
+  @Column(DataType.TEXT)
   outOfHoursMessage: string;
 
   @Column({
@@ -75,7 +75,7 @@ class Queue extends Model<Queue> {
   updatedAt: Date;
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @BelongsTo(() => Company)
@@ -95,21 +95,21 @@ class Queue extends Model<Queue> {
   chatbots: Chatbot[];
 
   @ForeignKey(() => QueueIntegrations)
-  @Column
+  @Column(DataType.INTEGER)
   integrationId: number;
 
   @BelongsTo(() => QueueIntegrations)
   queueIntegrations: QueueIntegrations;
 
   @ForeignKey(() => Files)
-  @Column
+  @Column(DataType.INTEGER)
   fileListId: number;
 
   @BelongsTo(() => Files)
   files: Files;
   
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   closeTicket: boolean;
 
   @HasMany(() => Prompt, {

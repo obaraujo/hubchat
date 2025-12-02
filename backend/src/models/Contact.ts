@@ -12,7 +12,8 @@ import {
   HasMany,
   ForeignKey,
   BelongsTo,
-  BelongsToMany
+  BelongsToMany,
+	DataType
 } from "sequelize-typescript";
 import ContactCustomField from "./ContactCustomField";
 import Ticket from "./Ticket";
@@ -28,44 +29,44 @@ import Whatsapp from "./Whatsapp";
 class Contact extends Model<Contact> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
   @AllowNull(false)
   @Unique
-  @Column
+  @Column(DataType.TEXT)
   number: string;
 
   @AllowNull(false)
   @Default("")
-  @Column
+  @Column(DataType.TEXT)
   email: string;
 
   @Default("")
-  @Column
+  @Column(DataType.TEXT)
   profilePicUrl: string;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   isGroup: boolean;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   disableBot: boolean;
 
   @Default(true)
-  @Column
+  @Column(DataType.BOOLEAN)
   acceptAudioMessage: boolean;
 
   @Default(true)
-  @Column
+  @Column(DataType.BOOLEAN)
   active: boolean;
 
   @Default("whatsapp")
-  @Column
+  @Column(DataType.TEXT)
   channel: string;
 
   @CreatedAt
@@ -87,7 +88,7 @@ class Contact extends Model<Contact> {
   tags: Tag[];
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @BelongsTo(() => Company)
@@ -100,16 +101,16 @@ class Contact extends Model<Contact> {
   })
   schedules: Schedule[];
 
-  @Column
+  @Column(DataType.TEXT)
   remoteJid: string;
 
-  @Column
+  @Column(DataType.DATE)
   lgpdAcceptedAt: Date;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   pictureUpdated: boolean;
 
-  @Column
+  @Column(DataType.STRING)
   get urlPicture(): string | null {
     if (this.getDataValue("urlPicture")) {
       
@@ -127,7 +128,7 @@ class Contact extends Model<Contact> {
   contactWallets: ContactWallet[];
 
   @ForeignKey(() => Whatsapp)
-  @Column
+  @Column(DataType.INTEGER)
   whatsappId: number;
 
   @BelongsTo(() => Whatsapp)

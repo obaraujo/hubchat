@@ -18,17 +18,17 @@ import Whatsapp from "./Whatsapp";
 class BaileysChats extends Model<BaileysChats> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   jid: string;
 
-  @Column
+  @Column(DataType.INTEGER)
   conversationTimestamp: number;
 
   @Default(0)
-  @Column
+  @Column(DataType.INTEGER)
   unreadCount: number;
 
   @CreatedAt

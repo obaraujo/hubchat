@@ -13,13 +13,13 @@ import {
 class Version extends Model<Version> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   versionFrontend: string;
 
-  @Column
+  @Column(DataType.TEXT)
   versionBackend: string;
 
   @CreatedAt

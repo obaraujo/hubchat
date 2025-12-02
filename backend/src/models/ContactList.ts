@@ -8,7 +8,8 @@ import {
   AutoIncrement,
   ForeignKey,
   BelongsTo,
-  HasMany
+  HasMany,
+	DataType
 } from "sequelize-typescript";
 import Company from "./Company";
 import ContactListItem from "./ContactListItem";
@@ -17,10 +18,10 @@ import ContactListItem from "./ContactListItem";
 class ContactList extends Model<ContactList> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
   @CreatedAt
@@ -30,7 +31,7 @@ class ContactList extends Model<ContactList> {
   updatedAt: Date;
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @BelongsTo(() => Company)

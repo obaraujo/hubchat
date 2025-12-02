@@ -15,19 +15,19 @@ import {
 export class FlowDefaultModel extends Model<FlowDefaultModel> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   userId: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   flowIdWelcome: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   flowIdNotPhrase: number;
 
   @CreatedAt

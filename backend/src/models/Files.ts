@@ -7,7 +7,8 @@ import {
   PrimaryKey,
   AutoIncrement,
   HasMany,
-  ForeignKey
+  ForeignKey,
+	DataType
 } from "sequelize-typescript";
 import Company from "./Company";
 import FilesOptions from "./FilesOptions";
@@ -18,17 +19,17 @@ import FilesOptions from "./FilesOptions";
 class Files extends Model<Files> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
-  @Column
+  @Column(DataType.TEXT)
   message: string;
 
   @CreatedAt

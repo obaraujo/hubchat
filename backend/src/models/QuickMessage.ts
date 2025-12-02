@@ -7,7 +7,8 @@ import {
   PrimaryKey,
   ForeignKey,
   BelongsTo,
-  AutoIncrement
+  AutoIncrement,
+	DataType
 } from "sequelize-typescript";
 
 import Company from "./Company";
@@ -17,16 +18,16 @@ import User from "./User";
 class QuickMessage extends Model<QuickMessage> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   shortcode: string;
 
-  @Column
+  @Column(DataType.TEXT)
   message: string;
 
-  @Column
+  @Column(DataType.TEXT)
   get mediaPath(): string | null {
     if (this.getDataValue("mediaPath")) {
       
@@ -36,18 +37,18 @@ class QuickMessage extends Model<QuickMessage> {
     return null;
   }
   
-  @Column
+  @Column(DataType.TEXT)
   mediaName: string;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   geral: boolean;
   
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @ForeignKey(() => User)
-  @Column
+  @Column(DataType.INTEGER)
   userId: number;
 
   @BelongsTo(() => Company)
@@ -62,7 +63,7 @@ class QuickMessage extends Model<QuickMessage> {
   @UpdatedAt
   updatedAt: Date;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   visao: boolean;
 }
 

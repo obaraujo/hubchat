@@ -9,7 +9,8 @@ import {
   BelongsToMany,
   ForeignKey,
   BelongsTo,
-  HasMany
+  HasMany,
+	DataType
 } from "sequelize-typescript";
 import Company from "./Company";
 import Ticket from "./Ticket";
@@ -21,16 +22,16 @@ import ContactTag from "./ContactTag";
 class Tag extends Model<Tag> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
-  @Column
+  @Column(DataType.TEXT)
   color: string;
 
-  @Column
+  @Column(DataType.INTEGER)
   kanban: number;
 
   @HasMany(() => TicketTag)
@@ -46,7 +47,7 @@ class Tag extends Model<Tag> {
   contactTags: ContactTag[];
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @BelongsTo(() => Company)
@@ -58,16 +59,16 @@ class Tag extends Model<Tag> {
   @UpdatedAt
   updatedAt: Date;
 
-  @Column
+  @Column(DataType.INTEGER)
   timeLane: number;
 
-	@Column
+	@Column(DataType.INTEGER)
   nextLaneId: number;
 	
-  @Column
+  @Column(DataType.TEXT)
   greetingMessageLane: string;
 
-  @Column
+  @Column(DataType.INTEGER)
   rollbackLaneId: number;
 }
 

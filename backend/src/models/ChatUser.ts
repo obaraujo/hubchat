@@ -7,7 +7,8 @@ import {
   PrimaryKey,
   AutoIncrement,
   BelongsTo,
-  ForeignKey
+  ForeignKey,
+	DataType
 } from "sequelize-typescript";
 import User from "./User";
 import Chat from "./Chat";
@@ -16,18 +17,18 @@ import Chat from "./Chat";
 class ChatUser extends Model<ChatUser> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @ForeignKey(() => Chat)
-  @Column
+  @Column(DataType.INTEGER)
   chatId: number;
 
   @ForeignKey(() => User)
-  @Column
+  @Column(DataType.INTEGER)
   userId: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   unreads: number;
 
   @CreatedAt

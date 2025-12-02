@@ -6,50 +6,51 @@ import {
     Model,
     PrimaryKey,
     Default,
-    AutoIncrement
+    AutoIncrement,
+		DataType
 } from "sequelize-typescript";
 
 @Table
 class ApiUsages extends Model<ApiUsages> {
     @PrimaryKey
     @AutoIncrement
-    @Column
+    @Column(DataType.INTEGER)
     id: number;
 
     @Default(0)
-    @Column
+    @Column(DataType.INTEGER)
     companyId: number;
 
     @Default(null)
-    @Column
+    @Column(DataType.TEXT)
     dateUsed: string;
 
     @Default(0)
-    @Column
+    @Column(DataType.INTEGER)
     UsedOnDay: number;
 
     @Default(0)
-    @Column
+    @Column(DataType.INTEGER)
     usedText: number;
 
     @Default(0)
-    @Column
+    @Column(DataType.INTEGER)
     usedPDF: number;
 
     @Default(0)
-    @Column
+    @Column(DataType.INTEGER)
     usedImage: number;
 
     @Default(0)
-    @Column
+    @Column(DataType.INTEGER)
     usedVideo: number;
 
     @Default(0)
-    @Column
+    @Column(DataType.INTEGER)
     usedOther: number;
 
     @Default(0)
-    @Column
+    @Column(DataType.INTEGER)
     usedCheckNumber: number;
 
     @CreatedAt

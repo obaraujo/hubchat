@@ -5,7 +5,8 @@ import {
   UpdatedAt,
   Model,
   ForeignKey,
-  BelongsTo
+  BelongsTo,
+	DataType
 } from "sequelize-typescript";
 import Tag from "./Tag";
 import Ticket from "./Ticket";
@@ -15,11 +16,11 @@ import Ticket from "./Ticket";
 })
 class TicketTag extends Model<TicketTag> {
   @ForeignKey(() => Ticket)
-  @Column
+  @Column(DataType.INTEGER)
   ticketId: number;
 
   @ForeignKey(() => Tag)
-  @Column
+  @Column(DataType.INTEGER)
   tagId: number;
 
   @CreatedAt

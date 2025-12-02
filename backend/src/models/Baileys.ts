@@ -7,7 +7,8 @@ import {
   PrimaryKey,
   AutoIncrement,
   Default,
-  ForeignKey
+  ForeignKey,
+	DataType
 } from "sequelize-typescript";
 import Whatsapp from "./Whatsapp";
 
@@ -15,15 +16,15 @@ import Whatsapp from "./Whatsapp";
 class Baileys extends Model<Baileys> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @Default(null)
-  @Column
+  @Column(DataType.TEXT)
   contacts: string;
 
   @Default(null)
-  @Column
+  @Column(DataType.TEXT)
   chats: string;
 
   @CreatedAt
@@ -33,7 +34,7 @@ class Baileys extends Model<Baileys> {
   updatedAt: Date;
 
   @ForeignKey(() => Whatsapp)
-  @Column
+  @Column(DataType.INTEGER)
   whatsappId: number;
 }
 

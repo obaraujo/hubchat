@@ -28,7 +28,7 @@ class Whatsapp extends Model<Whatsapp> {
 	[x: string]: any;
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @AllowNull
@@ -42,26 +42,26 @@ class Whatsapp extends Model<Whatsapp> {
   @Column(DataType.TEXT)
   qrcode: string;
 
-  @Column
+  @Column(DataType.TEXT)
   status: string;
 
-  @Column
+  @Column(DataType.TEXT)
   battery: string;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   plugged: boolean;
 
-  @Column
+  @Column(DataType.INTEGER)
   retries: number;
 
-  @Column
+  @Column(DataType.TEXT)
   number: string;
 
   @Default("")
   @Column(DataType.TEXT)
   greetingMessage: string;
 
-  @Column
+  @Column(DataType.TEXT)
   greetingMediaAttachment: string
 
   @Default("")
@@ -76,17 +76,17 @@ class Whatsapp extends Model<Whatsapp> {
   @Column(DataType.TEXT)
   outOfHoursMessage: string;
 
-  @Column({ defaultValue: "stable" })
+  @Column({ defaultValue: "stable", type:DataType.TEXT })
   provider: string;
 
   @Default(false)
   @AllowNull
-  @Column
+  @Column(DataType.BOOLEAN)
   isDefault: boolean;
 
   @Default(false)
   @AllowNull
-  @Column
+  @Column(DataType.BOOLEAN)
   allowGroup: boolean;
 
   @CreatedAt
@@ -105,13 +105,13 @@ class Whatsapp extends Model<Whatsapp> {
   whatsappQueues: WhatsappQueue[];
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @BelongsTo(() => Company)
   company: Company;
 
-  @Column
+  @Column(DataType.TEXT)
   token: string;
 
   @Column(DataType.TEXT)
@@ -130,74 +130,74 @@ class Whatsapp extends Model<Whatsapp> {
   channel: string;
 
   @Default(3)
-  @Column
+  @Column(DataType.INTEGER)
   maxUseBotQueues: number;
 
   @Default(0)
-  @Column
+  @Column(DataType.TEXT)
   timeUseBotQueues: string;
 
   @AllowNull(true)
   @Default(0)
-  @Column
+  @Column(DataType.TEXT)
   expiresTicket: string;
 
   @Default(0)
-  @Column
+  @Column(DataType.INTEGER)
   timeSendQueue: number;
 
   @ForeignKey(() => Queue)
-  @Column
+  @Column(DataType.INTEGER)
   sendIdQueue: number;
 
   @BelongsTo(() => Queue)
   queueSend: Queue;
 
-  @Column
+  @Column(DataType.TEXT)
   timeInactiveMessage: string;
 
-  @Column
+  @Column(DataType.TEXT)
   inactiveMessage: string;
 
-  @Column
+  @Column(DataType.TEXT)
   ratingMessage: string;
 
-  @Column
+  @Column(DataType.INTEGER)
   maxUseBotQueuesNPS: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   expiresTicketNPS: number;
 
-  @Column
+  @Column(DataType.TEXT)
   whenExpiresTicket: string;
 
-  @Column
+  @Column(DataType.TEXT)
   expiresInactiveMessage: string;
 
   @Default("disabled")
-  @Column
+  @Column(DataType.TEXT)
   groupAsTicket: string;
   
-  @Column
+  @Column(DataType.DATE)
   importOldMessages: Date;
 
-  @Column
+  @Column(DataType.DATE)
   importRecentMessages: Date;
 
-  @Column
+  @Column(DataType.TEXT)
   statusImportMessages: string;
   
-  @Column
+  @Column(DataType.BOOLEAN)
   closedTicketsPostImported:boolean;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   importOldMessagesGroups:boolean;
 
-  @Column
+  @Column(DataType.INTEGER)
   timeCreateNewTicket: number;
 
   @ForeignKey(() => QueueIntegrations)
-  @Column
+  @Column(DataType.INTEGER)
   integrationId: number;
 
   @BelongsTo(() => QueueIntegrations)
@@ -209,34 +209,34 @@ class Whatsapp extends Model<Whatsapp> {
   schedules: [];
 
   @ForeignKey(() => Prompt)
-  @Column
+  @Column(DataType.INTEGER)
   promptId: number;
 
   @BelongsTo(() => Prompt)
   prompt: Prompt;
 
-  @Column
+  @Column(DataType.TEXT)
   collectiveVacationMessage: string;
 
-  @Column
+  @Column(DataType.TEXT)
   collectiveVacationStart: string;
 
-  @Column
+  @Column(DataType.TEXT)
   collectiveVacationEnd: string;
 
   @ForeignKey(() => Queue)
-  @Column
+  @Column(DataType.INTEGER)
   queueIdImportMessages: number;
 
   @BelongsTo(() => Queue)
   queueImport: Queue;
 
   @ForeignKey(() => FlowBuilderModel)
-  @Column
+  @Column(DataType.INTEGER)
   flowIdNotPhrase: number;
 
   @ForeignKey(() => FlowBuilderModel)
-  @Column
+  @Column(DataType.INTEGER)
   flowIdWelcome: number;
 
   @BelongsTo(() => FlowBuilderModel)

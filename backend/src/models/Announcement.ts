@@ -16,19 +16,19 @@ import Company from "./Company";
 class Announcement extends Model<Announcement> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   priority: number; //1 - alta, 2 - média, 3 - baixa
 
-  @Column
+  @Column(DataType.TEXT)
   title: string;
 
   @Column(DataType.TEXT)
   text: string;
 
-  @Column
+  @Column (DataType.STRING)
   get mediaPath(): string | null {
     if (this.getDataValue("mediaPath")) {
       
@@ -38,14 +38,14 @@ class Announcement extends Model<Announcement> {
     return null;
   }
 
-  @Column
+  @Column(DataType.TEXT)
   mediaName: string;
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   status: boolean;
 
   @CreatedAt

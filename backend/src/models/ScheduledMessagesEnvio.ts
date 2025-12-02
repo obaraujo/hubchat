@@ -5,7 +5,7 @@ class ScheduledMessagesEnvio extends Model<ScheduledMessagesEnvio> {
 
     @PrimaryKey
     @AutoIncrement
-    @Column
+    @Column(DataType.INTEGER)
     id: number;
 
     @CreatedAt
@@ -14,25 +14,25 @@ class ScheduledMessagesEnvio extends Model<ScheduledMessagesEnvio> {
     @UpdatedAt
     updatedAt: Date;
 
-    @Column
+    @Column(DataType.TEXT)
     mediaPath: string;
 
-    @Column
+    @Column(DataType.TEXT)
     mediaName: string;
 
     @Column(DataType.TEXT)
     mensagem: string;
 
-    @Column
+    @Column(DataType.INTEGER)
     companyId: number
 
-    @Column
+    @Column(DataType.DATE)
     data_envio: Date;
 
-    @Column
+    @Column(DataType.INTEGER)
     scheduledmessages: number;
 
-    @Column
+    @Column(DataType.TEXT)
     key: string;
 
 }

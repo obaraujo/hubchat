@@ -7,7 +7,8 @@ import {
   PrimaryKey,
   AutoIncrement,
   ForeignKey,
-  BelongsTo
+  BelongsTo,
+	DataType
 } from "sequelize-typescript";
 import Contact from "./Contact";
 
@@ -15,17 +16,17 @@ import Contact from "./Contact";
 class ContactCustomField extends Model<ContactCustomField> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
-  @Column
+  @Column(DataType.TEXT)
   value: string;
 
   @ForeignKey(() => Contact)
-  @Column
+  @Column(DataType.INTEGER)
   contactId: number;
 
   @BelongsTo(() => Contact)

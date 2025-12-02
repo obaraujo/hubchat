@@ -15,16 +15,16 @@ import {
 export class FlowImgModel extends Model<FlowImgModel> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   userId: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
   @CreatedAt

@@ -9,7 +9,8 @@ import {
   AllowNull,
   Default,
   ForeignKey,
-  BelongsTo
+  BelongsTo,
+	DataType
 } from "sequelize-typescript";
 import Company from "./Company";
 import ContactList from "./ContactList";
@@ -18,23 +19,23 @@ import ContactList from "./ContactList";
 class ContactListItem extends Model<ContactListItem> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @AllowNull(false)
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
   @AllowNull(false)
-  @Column
+  @Column(DataType.TEXT)
   number: string;
 
   @AllowNull(false)
   @Default("")
-  @Column
+  @Column(DataType.TEXT)
   email: string;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   isWhatsappValid: boolean;
 
   @CreatedAt
@@ -44,20 +45,20 @@ class ContactListItem extends Model<ContactListItem> {
   updatedAt: Date;
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @BelongsTo(() => Company)
   company: Company;
 
   @ForeignKey(() => ContactList)
-  @Column
+  @Column(DataType.INTEGER)
   contactListId: number;
 
   @BelongsTo(() => ContactList)
   contactList: ContactList;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   isGroup: boolean;
 }
 

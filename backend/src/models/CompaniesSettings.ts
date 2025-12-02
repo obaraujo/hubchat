@@ -13,7 +13,8 @@ import {
     AutoIncrement,
     ForeignKey,
     BelongsTo,
-    Default
+    Default,
+		DataType
   } from "sequelize-typescript";
   import Company from "./Company";
  
@@ -22,79 +23,79 @@ import {
   class CompaniesSettings extends Model<CompaniesSettings> {
     @PrimaryKey
     @AutoIncrement
-    @Column
+    @Column(DataType.INTEGER)
     id: number;
 
     @ForeignKey(() => Company)
-    @Column
+    @Column(DataType.INTEGER)
     companyId: number;
   
     @BelongsTo(() => Company)
     company: Company;
   
-    @Column
+    @Column(DataType.TEXT)
     hoursCloseTicketsAuto: string;
 
-    @Column
+    @Column(DataType.TEXT)
     chatBotType: string;
 
-    @Column
+    @Column(DataType.TEXT)
     acceptCallWhatsapp: string;
 
     //inicio de opções: enabled ou disabled
-    @Column
+    @Column(DataType.TEXT)
     userRandom: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     sendGreetingMessageOneQueues: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     sendSignMessage: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     sendFarewellWaitingTicket: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     userRating: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     sendGreetingAccepted: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     CheckMsgIsGroup: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     sendQueuePosition: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     scheduleType: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     acceptAudioMessageContact: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     sendMsgTransfTicket: string;
 
-    @Column
+    @Column(DataType.TEXT)
     enableLGPD: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     requiredTag: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     lgpdDeleteMessage: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     lgpdHideNumber: string; 
 
-    @Column
+    @Column(DataType.TEXT)
     lgpdConsent: string;
 
-    @Column
-    lgpdLink: string
+		@Column(DataType.TEXT)
+		lgpdLink: string
 
     //fim de opções: enabled ou disabled 
-    @Column
+    @Column(DataType.TEXT)
     lgpdMessage: string
 
     @CreatedAt
@@ -104,26 +105,26 @@ import {
     updatedAt: Date;
 
     @Default(false)
-    @Column
+    @Column(DataType.BOOLEAN)
     DirectTicketsToWallets: boolean;
 
     @Default(false)
-    @Column
+    @Column(DataType.BOOLEAN)
     closeTicketOnTransfer: boolean;
 
-    @Column
+    @Column(DataType.TEXT)
     transferMessage: string
 
-    @Column
+    @Column(DataType.TEXT)
     greetingAcceptedMessage: string
 
-    @Column
+    @Column(DataType.TEXT)
     AcceptCallWhatsappMessage: string
 
-    @Column
+    @Column(DataType.TEXT)
     sendQueuePositionMessage: string
 
-    @Column
+    @Column(DataType.BOOLEAN)
     showNotificationPending: boolean;
   }
   

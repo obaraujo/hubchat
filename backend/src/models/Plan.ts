@@ -8,52 +8,53 @@ import {
   AutoIncrement,
   AllowNull,
   Unique,
-  Default
+  Default,
+	DataType
 } from "sequelize-typescript";
 
 @Table
 class Plan extends Model<Plan> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @AllowNull(false)
   @Unique
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
-  @Column
+  @Column(DataType.INTEGER)
   users: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   connections: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   queues: number;
 
-  @Column
+  @Column(DataType.TEXT)
   amount: string;   
 
-  @Column
+  @Column(DataType.BOOLEAN)
   useWhatsapp: boolean;   
 
-  @Column
+  @Column(DataType.BOOLEAN)
   useFacebook: boolean;   
 
-  @Column
+  @Column(DataType.BOOLEAN)
   useInstagram: boolean;   
   
-  @Column
+  @Column(DataType.BOOLEAN)
   useCampaigns: boolean;   
 
-  @Column
+  @Column(DataType.BOOLEAN)
   useSchedules: boolean;   
 
-  @Column
+  @Column(DataType.BOOLEAN)
   useInternalChat: boolean;   
   
-  @Column
+  @Column(DataType.BOOLEAN)
   useExternalApi: boolean;   
 
   @CreatedAt
@@ -62,26 +63,26 @@ class Plan extends Model<Plan> {
   @UpdatedAt
   updatedAt: Date;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   useKanban: boolean;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   trial: boolean;
 
-  @Column
+  @Column(DataType.INTEGER)
   trialDays: number;
 
-  @Column
+  @Column(DataType.TEXT)
   recurrence: string;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   useOpenAi: boolean;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   useIntegrations: boolean;
 
   @Default(true)
-  @Column
+  @Column(DataType.BOOLEAN)
   isPublic: boolean;
 }
 

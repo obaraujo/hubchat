@@ -8,7 +8,8 @@ import {
   ForeignKey,
   BelongsTo,
   AutoIncrement,
-  HasMany
+  HasMany,
+	DataType
 } from "sequelize-typescript";
 
 import Company from "./Company";
@@ -25,35 +26,35 @@ import Queue from "./Queue";
 class TicketTraking extends Model<TicketTraking> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @ForeignKey(() => Ticket)
-  @Column
+  @Column(DataType.INTEGER)
   ticketId: number;
 
   @BelongsTo(() => Ticket)
   ticket: Ticket;
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @BelongsTo(() => Company)
   company: Company;
 
   @ForeignKey(() => Whatsapp)
-  @Column
+  @Column(DataType.INTEGER)
   whatsappId: number;
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;
 
   @ForeignKey(() => User)
-  @Column
+  @Column(DataType.INTEGER)
   userId: number;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   rated: boolean;
 
   @BelongsTo(() => User)
@@ -65,26 +66,26 @@ class TicketTraking extends Model<TicketTraking> {
   @UpdatedAt
   updatedAt: Date;
 
-  @Column
+  @Column(DataType.DATE)
   startedAt: Date;
 
-  @Column
+  @Column(DataType.DATE)
   queuedAt: Date;
 
-  @Column
+  @Column(DataType.DATE)
   closedAt: Date;
 
-  @Column
+  @Column(DataType.DATE)
   finishedAt: Date;
 
-  @Column
+  @Column(DataType.DATE)
   ratingAt: Date;
 
-  @Column
+  @Column(DataType.DATE)
   chatbotAt: Date;
 
   @ForeignKey(() => Queue)
-  @Column
+  @Column(DataType.INTEGER)
   queueId: number;
 
   @BelongsTo(() => Queue)

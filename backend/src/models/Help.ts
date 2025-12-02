@@ -5,7 +5,8 @@ import {
   UpdatedAt,
   Model,
   PrimaryKey,
-  AutoIncrement
+  AutoIncrement,
+	DataType
 } from "sequelize-typescript";
 
 @Table({
@@ -14,19 +15,19 @@ import {
 class Help extends Model<Help> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   title: string;
 
-  @Column
+  @Column(DataType.TEXT)
   description: string;
 
-  @Column
+  @Column(DataType.TEXT)
   video: string;
 
-  @Column
+  @Column(DataType.TEXT)
   link: string;
 
   @CreatedAt

@@ -6,44 +6,45 @@ import {
     Model,
     PrimaryKey,
     AutoIncrement,
-    AllowNull
+    AllowNull,
+		DataType
 } from "sequelize-typescript";
 
 @Table
 class Subscriptions extends Model<Subscriptions> {
     @PrimaryKey
     @AutoIncrement
-    @Column
+    @Column(DataType.INTEGER)
     id: number;
 
-    @Column
+    @Column(DataType.BOOLEAN)
     isActive: boolean;
 
     @AllowNull(true)
-    @Column
+    @Column(DataType.INTEGER)
     userPriceCents: number;
 
     @AllowNull(true)
-    @Column
+    @Column(DataType.INTEGER)
     whatsPriceCents: number;
 
     @AllowNull(true)
-    @Column
+    @Column(DataType.TEXT)
     lastInvoiceUrl: string;
 
     @AllowNull(true)
-    @Column
+    @Column(DataType.DATE)
     lastPlanChange: Date;
 
     @AllowNull(true)
-    @Column
+    @Column(DataType.DATE)
     expiresAt: Date;
 
     @AllowNull(true)
-    @Column
+    @Column(DataType.TEXT)
     providerSubscriptionId: string;
 
-    @Column
+    @Column(DataType.INTEGER)
     companyId: number;
 
     @CreatedAt

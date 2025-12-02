@@ -6,28 +6,28 @@ import { Model, Table, Column, PrimaryKey, AutoIncrement,DataType, CreatedAt, Up
 export class WebhookModel extends Model<WebhookModel> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   user_id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   hash_id: string;
 
-  @Column
+  @Column(DataType.INTEGER)
   company_id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   active: boolean;
 
-  @Column
+  @Column(DataType.INTEGER)
   requestMonth: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   requestAll: number;
 
   @Column(DataType.JSON)

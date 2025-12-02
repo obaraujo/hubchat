@@ -18,32 +18,32 @@ import Whatsapp from "./Whatsapp";
 export class FlowCampaignModel extends Model<FlowCampaignModel> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
-  @Column
+  @Column(DataType.INTEGER)
   userId: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
-  @Column
+  @Column(DataType.INTEGER)
   flowId: number;
 
-  @Column
+  @Column(DataType.TEXT)
   phrase: string;
 
   @ForeignKey(() => Whatsapp)
-  @Column
+  @Column(DataType.INTEGER)
   whatsappId: number;
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp
 
-  @Column
+  @Column(DataType.BOOLEAN)
   status: boolean;
 
   @CreatedAt

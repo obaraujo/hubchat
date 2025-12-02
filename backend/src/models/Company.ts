@@ -29,34 +29,34 @@ import Invoices from "./Invoices";
 class Company extends Model<Company> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
-  @Column
+  @Column(DataType.TEXT)
   phone: string;
 
-  @Column
+  @Column(DataType.TEXT)
   email: string;
 
-  @Column({ defaultValue: "" })
+  @Column({ defaultValue: "", type:DataType.TEXT })
   document: string;
 
-  @Column({ defaultValue: "" })
+  @Column({ defaultValue: "", type:DataType.TEXT })
   paymentMethod: string;
 
-  @Column
+  @Column(DataType.DATE)
   lastLogin: Date;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   status: boolean;
 
-  @Column
+  @Column(DataType.TEXT)
   dueDate: string;
 
-  @Column
+  @Column(DataType.TEXT)
   recurrence: string;
 
   @Column({
@@ -65,7 +65,7 @@ class Company extends Model<Company> {
   schedules: [];
 
   @ForeignKey(() => Plan)
-  @Column
+  @Column(DataType.INTEGER)
   planId: number;
 
   @BelongsTo(() => Plan)
@@ -77,13 +77,13 @@ class Company extends Model<Company> {
   @UpdatedAt
   updatedAt: Date;
 
-  @Column
+  @Column(DataType.TEXT)
   folderSize: string;
 
-  @Column
+  @Column(DataType.TEXT)
   numberFileFolder: string;
 
-  @Column
+  @Column(DataType.TEXT)
   updatedAtFolder: string;
 
   @HasMany(() => User, {

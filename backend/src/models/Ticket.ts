@@ -33,73 +33,73 @@ import { format } from "date-fns";
 class Ticket extends Model<Ticket> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column({ defaultValue: "pending" })
+  @Column({ defaultValue: "pending", type:DataType.STRING })
   status: string;
 
-  @Column
+  @Column(DataType.INTEGER)
   unreadMessages: number;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   flowWebhook: boolean;
 
-  @Column
+  @Column(DataType.TEXT)
   lastFlowId: string;
 
-  @Column
+  @Column(DataType.TEXT)
   hashFlowId: string;
 
-  @Column
+  @Column(DataType.TEXT)
   flowStopped: string;
 
   @Column(DataType.JSON)
   dataWebhook: {} | null;;
 
-  @Column
+  @Column(DataType.TEXT)
   lastMessage: string;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   isGroup: boolean;
 
-  @Column
+  @Column(DataType.DATE)
   createdAt: Date;
 
   @UpdatedAt
   updatedAt: Date;
 
   @ForeignKey(() => User)
-  @Column
+  @Column(DataType.INTEGER)
   userId: number;
 
   @BelongsTo(() => User)
   user: User;
 
   @ForeignKey(() => Contact)
-  @Column
+  @Column(DataType.INTEGER)
   contactId: number;
 
   @BelongsTo(() => Contact)
   contact: Contact;
 
   @ForeignKey(() => Whatsapp)
-  @Column
+  @Column(DataType.INTEGER)
   whatsappId: number;
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;
 
   @ForeignKey(() => Queue)
-  @Column
+  @Column(DataType.INTEGER)
   queueId: number;
 
   @BelongsTo(() => Queue)
   queue: Queue;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   isBot: boolean;
 
   @HasMany(() => Message)
@@ -112,28 +112,28 @@ class Ticket extends Model<Ticket> {
   tags: Tag[];
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @BelongsTo(() => Company)
   company: Company;
 
   @Default(uuidv4())
-  @Column
+  @Column(DataType.TEXT)
   uuid: string;
 
   @Default("whatsapp")
-  @Column
+  @Column(DataType.TEXT)
   channel: string;
 
   @AllowNull(false)
   @Default(0)
-  @Column
+  @Column(DataType.INTEGER)
   amountUsedBotQueues: number;
 
   @AllowNull(false)
   @Default(0)
-  @Column
+  @Column(DataType.INTEGER)
   amountUsedBotQueuesNPS: number;
 
   @BeforeCreate
@@ -142,48 +142,48 @@ class Ticket extends Model<Ticket> {
   }
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   fromMe: boolean;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   sendInactiveMessage: boolean;
 
-  @Column
+  @Column(DataType.DATE)
   lgpdSendMessageAt: Date;
 
-  @Column
+  @Column(DataType.DATE)
   lgpdAcceptedAt: Date;
 
-  @Column
+  @Column(DataType.DATE)
   imported: Date;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   isOutOfHour: boolean;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   useIntegration: boolean;
 
   @ForeignKey(() => QueueIntegrations)
-  @Column
+  @Column(DataType.INTEGER)
   integrationId: number;
 
   @BelongsTo(() => QueueIntegrations)
   queueIntegration: QueueIntegrations;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   isActiveDemand: boolean;
 
-  @Column
+  @Column(DataType.TEXT)
   typebotSessionId: string;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   typebotStatus: boolean
 
-  @Column
+  @Column(DataType.DATE)
   typebotSessionTime: Date
 }
 

@@ -7,7 +7,8 @@ import {
   PrimaryKey,
   AutoIncrement,
   BelongsTo,
-  ForeignKey
+  ForeignKey,
+	DataType
 } from "sequelize-typescript";
 import User from "./User";
 import Chat from "./Chat";
@@ -16,24 +17,24 @@ import Chat from "./Chat";
 class ChatMessage extends Model<ChatMessage> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
   @ForeignKey(() => Chat)
-  @Column
+  @Column(DataType.INTEGER)
   chatId: number;
 
   @ForeignKey(() => User)
-  @Column
+  @Column(DataType.INTEGER)
   senderId: number;
 
-  @Column({ defaultValue: "" })
+  @Column({ defaultValue: "" , type:DataType.STRING})
   message: string;
 
-  @Column
+  @Column(DataType.TEXT)
   mediaPath: string;
 
-  @Column
+  @Column(DataType.TEXT)
   mediaName: string;
 
   @CreatedAt

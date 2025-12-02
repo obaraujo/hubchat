@@ -29,72 +29,72 @@ import Chatbot from "./Chatbot";
 class User extends Model<User> {
   @PrimaryKey
   @AutoIncrement
-  @Column
+  @Column(DataType.INTEGER)
   id: number;
 
-  @Column
+  @Column(DataType.TEXT)
   name: string;
 
-  @Column
+  @Column(DataType.TEXT)
   email: string;
 
   @Column(DataType.VIRTUAL)
   password: string;
 
-  @Column
+  @Column(DataType.TEXT)
   passwordHash: string;
 
   @Default(0)
-  @Column
+  @Column(DataType.INTEGER)
   tokenVersion: number;
 
   @Default("admin")
-  @Column
+  @Column(DataType.TEXT)
   profile: string;
 
   @Default(null)
-  @Column
+  @Column(DataType.TEXT)
   profileImage: string;
   
   @ForeignKey(() => Whatsapp)
-  @Column
+  @Column(DataType.INTEGER)
   whatsappId: number;
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;
   
-  @Column
+  @Column(DataType.BOOLEAN)
   super: boolean;
 
-  @Column
+  @Column(DataType.BOOLEAN)
   online: boolean;
 
   @Default("00:00")
-  @Column
+  @Column(DataType.TEXT)
   startWork: string;
 
   @Default("23:59")
-  @Column
+  @Column(DataType.TEXT)
   endWork: string;
 
   @Default("")
-  @Column
+  @Column(DataType.TEXT)
   color: string;
 
   @Default("disable")
-  @Column
+  @Column(DataType.TEXT)
   allTicket: string;
 
   @Default(false)
-  @Column
+  @Column(DataType.BOOLEAN)
   allowGroup: boolean;
 
   @Default("light")
-  @Column
+  @Column(DataType.TEXT)
   defaultTheme: string;
 
   @Default("closed")
-  @Column
+  @Column(DataType.TEXT)
   defaultMenu: string;
 
   @Default("")
@@ -108,7 +108,7 @@ class User extends Model<User> {
   updatedAt: Date;
 
   @ForeignKey(() => Company)
-  @Column
+  @Column(DataType.INTEGER)
   companyId: number;
 
   @BelongsTo(() => Company)
@@ -140,7 +140,7 @@ class User extends Model<User> {
   };
 
   @Default("disabled")
-  @Column
+  @Column(DataType.TEXT)
   allHistoric: string;
 
   @HasMany(() => Chatbot, {
@@ -151,27 +151,27 @@ class User extends Model<User> {
   chatbot: Chatbot[];
 
   @Default("disabled")
-  @Column
+  @Column(DataType.TEXT)
   allUserChat: string;
 
   @Default("enabled")
-  @Column
+  @Column(DataType.TEXT)
   userClosePendingTicket: string;
 
   @Default("disabled")
-  @Column
+  @Column(DataType.TEXT)
   showDashboard: string;
 
   @Default(550)
-  @Column
+  @Column(DataType.INTEGER)
   defaultTicketsManagerWidth: number;
 
   @Default("disable")
-  @Column
+  @Column(DataType.TEXT)
   allowRealTime: string;
 
   @Default("disable")
-  @Column
+  @Column(DataType.TEXT)
   allowConnections: string;
 
   @BeforeDestroy
