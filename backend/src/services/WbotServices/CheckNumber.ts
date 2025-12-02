@@ -1,4 +1,5 @@
 import AppError from "../../errors/AppError";
+import { createJid } from "../../functionts";
 import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
 import { getWbot } from "../../libs/wbot";
 
@@ -22,7 +23,7 @@ const CheckContactNumber = async (
       }
     ];
   } else {
-    numberArray = await wbot.onWhatsApp(`${number}@s.whatsapp.net`);
+    numberArray = await wbot.onWhatsApp(`${createJid(number)}`);
   }
 
   const isNumberExit = numberArray;

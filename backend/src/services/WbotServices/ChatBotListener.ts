@@ -22,6 +22,7 @@ import { isNil, isNull } from "lodash";
 import SendWhatsAppMedia, { getMessageOptions } from "./SendWhatsAppMedia";
 import CompaniesSettings from "../../models/CompaniesSettings";
 import TicketTraking from "../../models/TicketTraking";
+import { createJid } from "../../functionts";
 
 const fs = require('fs')
 var axios = require('axios');
@@ -61,7 +62,7 @@ const sendMessage = async (
   body: string
 ) => {
   const sentMessage = await wbot.sendMessage(
-    `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+    createJid(contact.number, ticket.isGroup),
     {
       text: formatBody(body, ticket)
     }
@@ -80,7 +81,7 @@ export const sendMessageLink = async (
   let sentMessage
   try {
     sentMessage = await wbot.sendMessage(
-      `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      createJid(contact.number, ticket.isGroup),
       {
         document: url ? { url } : fs.readFileSync(`public/temp/${caption}-${makeid(10)}`),
         fileName: caption,
@@ -89,7 +90,7 @@ export const sendMessageLink = async (
     );
   } catch (error) {
     sentMessage = await wbot.sendMessage(
-      `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      createJid(contact.number, ticket.isGroup),
       {
         text: formatBody('\u200eNão consegui enviar o PDF, tente novamente!', ticket)
       }
@@ -109,7 +110,7 @@ export const sendMessageImage = async (
   let sentMessage
   try {
     sentMessage = await wbot.sendMessage(
-      `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      createJid(contact.number, ticket.isGroup),
       {
         image: url ? { url } : fs.readFileSync(`public/temp/${caption}-${makeid(10)}`),
         fileName: caption,
@@ -119,7 +120,7 @@ export const sendMessageImage = async (
     );
   } catch (error) {
     sentMessage = await wbot.sendMessage(
-      `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      createJid(contact.number, ticket.isGroup),
       {
         text: formatBody('Não consegui enviar o PDF, tente novamente!', ticket)
       }
@@ -187,17 +188,17 @@ export const sendMessageImage = async (
 //         };
 
 //         // const send = await wbot.sendMessage(
-//         //   `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+//         //   createJid(contact.number, ticket.isGroup),
 //         //   buttonMessage
 //         // );
 
-//         await wbot.presenceSubscribe(`${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,)
+//         await wbot.presenceSubscribe(createJid(contact.number, ticket.isGroup),)
 //         await sleep(1500)
-//         await wbot.sendPresenceUpdate('composing', `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,)
+//         await wbot.sendPresenceUpdate('composing', createJid(contact.number, ticket.isGroup),)
 //         await sleep(1000)
-//         await wbot.sendPresenceUpdate('paused', `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,)
+//         await wbot.sendPresenceUpdate('paused', createJid(contact.number, ticket.isGroup),)
 //         const send = await wbot.sendMessage(
-//           `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+//           createJid(contact.number, ticket.isGroup),
 //           buttonMessage
 //         );
 
@@ -235,14 +236,14 @@ export const sendMessageImage = async (
 //           sections
 //         };
 
-//         await wbot.presenceSubscribe(`${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,)
+//         await wbot.presenceSubscribe(createJid(contact.number, ticket.isGroup),)
 //         await sleep(1500)
-//         await wbot.sendPresenceUpdate('composing', `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,)
+//         await wbot.sendPresenceUpdate('composing', createJid(contact.number, ticket.isGroup),)
 //         await sleep(1000)
-//         await wbot.sendPresenceUpdate('paused', `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,)
+//         await wbot.sendPresenceUpdate('paused', createJid(contact.number, ticket.isGroup),)
 
 //         const sendMsg = await wbot.sendMessage(
-//           `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+//           createJid(contact.number, ticket.isGroup),
 //           listMessage
 //         );
 
@@ -340,7 +341,7 @@ const sendDialog = async (
         };
 
         const send = await wbot.sendMessage(
-          `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          createJid(contact.number, ticket.isGroup),
           buttonMessage
         );
 
@@ -380,7 +381,7 @@ const sendDialog = async (
         };
 
         const sendMsg = await wbot.sendMessage(
-          `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          createJid(contact.number, ticket.isGroup),
           listMessage
         );
 
@@ -453,13 +454,13 @@ const backToMainMenu = async (
       const messagePath = ticket.whatsapp.greetingMediaAttachment
       const optionsMsg = await getMessageOptions(messagePath, filePath, String(ticket.companyId), body);
 
-      const sentMessage = await wbot.sendMessage(`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, { ...optionsMsg });
+      const sentMessage = await wbot.sendMessage(createJid(ticket.contact.number, ticket.isGroup), { ...optionsMsg });
 
       await verifyMediaMessage(sentMessage, ticket, contact, ticketTraking, false, false, wbot);
 
     } else {
       const sentMessage = await wbot.sendMessage(
-        `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+        createJid(contact.number, ticket.isGroup),
         {
           text: body
         }

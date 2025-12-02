@@ -28,6 +28,7 @@ import path from "path";
 import Contact from "../models/Contact";
 import FindOrCreateATicketTrakingService from "../services/TicketServices/FindOrCreateATicketTrakingService";
 import { Mutex } from "async-mutex";
+import { createJid } from "../functionts";
 
 type WhatsappData = {
   whatsappId: number;
@@ -70,7 +71,7 @@ const createContact = async (whatsappId: number | undefined, companyId: number |
       isGroup: false,
       companyId,
       whatsappId,
-      remoteJid: validNumber.length > 17 ? `${validNumber}@g.us` : `${validNumber}@s.whatsapp.net`,
+      remoteJid: createJid(validNumber),
       wbot
     };
 
@@ -143,15 +144,6 @@ function formatBRNumber(jid: string) {
   } else {
     return jid;
   }
-}
-
-function createJid(number: string) {
-  if (number.includes('@g.us') || number.includes('@s.whatsapp.net')) {
-    return formatBRNumber(number) as string;
-  }
-  return number.includes('-')
-    ? `${number}@g.us`
-    : `${formatBRNumber(number)}@s.whatsapp.net`;
 }
 
 // export const indexLink = async (req: Request, res: Response): Promise<Response> => {
@@ -299,7 +291,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
             const options = await getMessageOptions(media.filename, filePath, companyId.toString(), `\u200e ${bodyMessage}`);
             await wbot.sendMessage(
-              `${newContact.number}@${newContact.number.length > 17 ? "g.us" : "s.whatsapp.net"}`,
+              createJid(newContact.number),
               options);
 
             const fileExists = fs.existsSync(filePath);
@@ -315,7 +307,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
       }
     } else {
       await wbot.sendMessage(
-        `${newContact.number}@${newContact.number.length > 17 ? "g.us" : "s.whatsapp.net"}`,
+        createJid(newContact.number),
         {
           text: `\u200e ${bodyMessage}`
         })

@@ -8,6 +8,7 @@ import Contact from "../../models/Contact";
 import { isNil } from "lodash";
 
 import formatBody from "../../helpers/Mustache";
+import { createJid } from "../../functionts";
 
 interface Request {
   body: string;
@@ -32,12 +33,10 @@ const SendWhatsAppMessage = async ({
 
   let number: string;
 
-  if (contactNumber.remoteJid && contactNumber.remoteJid !== "" && contactNumber.remoteJid.includes("@")) {
-    number = contactNumber.remoteJid;
-  } else {
-    number = `${contactNumber.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-      }`;
-  }
+
+					number = createJid(contactNumber.number,ticket.isGroup )
+		
+  
 
   if (quotedMsg) {
     const chatMessages = await Message.findOne({

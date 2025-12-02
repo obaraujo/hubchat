@@ -8,6 +8,8 @@ import logger from "../../utils/logger";
 import { isNil } from "lodash";
 import Whatsapp from "../../models/Whatsapp";
 import * as Sentry from "@sentry/node";
+import { createJid } from "../../functionts";
+import { Op } from "sequelize";
 
 const axios = require('axios');
 
@@ -52,8 +54,6 @@ const downloadProfileImage = async ({
       responseType: 'arraybuffer'
     });
 
-    console.log(contact)
-
     filename = `${new Date().getTime()}.jpeg`;
     fs.writeFileSync(join(folder, filename), response.data);
 
@@ -80,18 +80,29 @@ const CreateOrUpdateContactService = async ({
   try {
     let createContact = false;
     const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
-    const number = isGroup ? rawNumber : rawNumber.replace(/[^0-9]/g, "");
+    const number = isGroup ? rawNumber : rawNumber?.replace(/[^0-9]/g, "");
     const io = getIO();
     let contact: Contact | null;
 
-    contact = await Contact.findOne({
-      where: { number, companyId }
-    });
+		contact = await Contact.findOne({
+			where: {
+				[Op.and]: [
+					{ companyId },
+					{
+						[Op.or]: [
+							{ remoteJid },
+							...(number ? [{ number }] : [])
+						]
+					}
+				]
+			}
+		});
+		
 
     let updateImage = (!contact || contact?.profilePicUrl !== profilePicUrl && profilePicUrl !== "") && wbot || false;
 
     if (contact) {
-      contact.remoteJid = remoteJid;
+      // contact.remoteJid = remoteJid;
       contact.profilePicUrl = profilePicUrl || null;
       contact.isGroup = isGroup;
       if (isNil(contact.whatsappId)) {
@@ -138,7 +149,7 @@ const CreateOrUpdateContactService = async ({
       let newRemoteJid = remoteJid;
 
       if (!remoteJid && remoteJid !== "") {
-        newRemoteJid = isGroup ? `${rawNumber}@g.us` : `${rawNumber}@s.whatsapp.net`;
+        newRemoteJid = isGroup ? `${rawNumber}@g.us` : `${createJid(rawNumber)}`;
       }
 
       try {

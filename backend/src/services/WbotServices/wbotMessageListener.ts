@@ -91,6 +91,7 @@ import { WebhookModel } from "../../models/Webhook";
 import { add, differenceInMilliseconds } from "date-fns";
 import { FlowCampaignModel } from "../../models/FlowCampaign";
 import ShowTicketService from "../TicketServices/ShowTicketService";
+import { createJid } from "../../functionts";
 
 const os = require("os");
 
@@ -115,6 +116,7 @@ interface ImessageUpsert {
 interface IMe {
   name: string;
   id: string;
+	number?:string
 }
 
 interface SessionOpenAi extends OpenAI {
@@ -329,7 +331,10 @@ const getSenderMessage = (
 
 const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
   const isGroup = msg.key.remoteJid.includes("g.us");
+
   const rawNumber = msg.key.remoteJid.replace(/\D/g, "");
+	const number = rawNumber.length > 13 ? undefined : rawNumber
+
   return isGroup
     ? {
       id: getSenderMessage(msg, wbot),
@@ -337,7 +342,8 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
     }
     : {
       id: msg.key.remoteJid,
-      name: msg.key.fromMe ? rawNumber : msg.pushName
+			number:number,
+      name: msg.key.fromMe ? number : msg.pushName
     };
 };
 
@@ -590,7 +596,7 @@ const verifyContact = async (
 
   const contactData = {
     name: msgContact.name || msgContact.id.replace(/\D/g, ""),
-    number: msgContact.id.replace(/\D/g, ""),
+    number: msgContact.number??msgContact.id.replace(/\D/g, ""),
     profilePicUrl,
     isGroup: msgContact.id.includes("g.us"),
     companyId,
@@ -1228,7 +1234,7 @@ const verifyQueue = async (
           const debouncedSentgreetingMediaAttachment = debounce(
             async () => {
 
-              const sentMessage = await wbot.sendMessage(`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, { ...optionsMsg });
+              const sentMessage = await wbot.sendMessage(createJid(ticket.contact.number, ticket.isGroup), { ...optionsMsg });
 
               await verifyMediaMessage(sentMessage, ticket, contact, ticketTraking, false, false, wbot);
             },
@@ -1238,7 +1244,7 @@ const verifyQueue = async (
           debouncedSentgreetingMediaAttachment();
         } else {
           await wbot.sendMessage(
-            `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+            createJid(contact.number, ticket.isGroup),
             {
               text: body
             }
@@ -1246,7 +1252,7 @@ const verifyQueue = async (
         }
       } else {
         await wbot.sendMessage(
-          `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          createJid(contact.number, ticket.isGroup),
           {
             text: body
           }
@@ -1319,8 +1325,7 @@ const verifyQueue = async (
       const debouncedSentMessagePosicao = debounce(
         async () => {
           await wbot.sendMessage(
-            `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-            }`,
+            createJid(contact.number, ticket.isGroup),
             {
               text: bodyFila
             }
@@ -1479,8 +1484,7 @@ const verifyQueue = async (
           const debouncedSentMessage = debounce(
             async () => {
               await wbot.sendMessage(
-                `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-                }`,
+                createJid(ticket.contact.number, ticket.isGroup),
                 {
                   text: body
                 }
@@ -1533,7 +1537,7 @@ const verifyQueue = async (
         );
 
         const sentMessage = await wbot.sendMessage(
-          `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          createJid(contact.number, ticket.isGroup),
 
           {
             text: body
@@ -1558,7 +1562,7 @@ const verifyQueue = async (
           ticket
         );
         const sentMessage = await wbot.sendMessage(
-          `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          createJid(contact.number, ticket.isGroup),
           {
             text: body
           }
@@ -1656,8 +1660,7 @@ const verifyQueue = async (
         const debouncedSentMessagePosicao = debounce(
           async () => {
             await wbot.sendMessage(
-              `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-              }`,
+              createJid(contact.number, ticket.isGroup),
               {
                 text: bodyFila
               }
@@ -1750,7 +1753,7 @@ const verifyQueue = async (
           const debouncedSentgreetingMediaAttachment = debounce(
             async () => {
 
-              let sentMessage = await wbot.sendMessage(`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, { ...optionsMsg });
+              let sentMessage = await wbot.sendMessage(createJid(ticket.contact.number, ticket.isGroup), { ...optionsMsg });
 
               await verifyMediaMessage(sentMessage, ticket, contact, ticketTraking, false, false, wbot);
 
@@ -1763,7 +1766,7 @@ const verifyQueue = async (
           const debouncedSentMessage = debounce(
             async () => {
               const sentMessage = await wbot.sendMessage(
-                `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+                createJid(contact.number, ticket.isGroup),
                 {
                   text: body
                 }
@@ -1794,7 +1797,7 @@ const verifyQueue = async (
         const debouncedSentMessage = debounce(
           async () => {
             const sentMessage = await wbot.sendMessage(
-              `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+              createJid(contact.number, ticket.isGroup),
               {
                 text: body
               }
@@ -2816,6 +2819,7 @@ const handleMessage = async (
       groupContact = await verifyContact(msgGroupContact, wbot, companyId);
     }
 
+		console.log(msgContact);
     const contact = await verifyContact(msgContact, wbot, companyId);
 
     let unreadMessages = 0;
@@ -3368,7 +3372,7 @@ const filterMessages = (msg: WAMessage): boolean => {
 
 const wbotMessageListener = (wbot: Session, companyId: number): void => {
   wbot.ev.on("messages.upsert", async (messageUpsert: ImessageUpsert) => {
-    const messages = messageUpsert.messages
+		const messages = messageUpsert.messages
       .filter(filterMessages)
       .map(msg => msg);
 

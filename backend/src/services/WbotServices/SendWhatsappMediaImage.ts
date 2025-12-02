@@ -7,6 +7,7 @@ import formatBody from "../../helpers/Mustache";
 import Contact from "../../models/Contact";
 import path from "path";
 import fs from "fs";
+import { createJid } from "../../functionts";
 
 interface Request {
     body: string;
@@ -40,10 +41,9 @@ const SendWhatsAppMediaImage = async ({
 
     if (contactNumber.remoteJid && contactNumber.remoteJid !== "" && contactNumber.remoteJid.includes("@")) {
         number = contactNumber.remoteJid;
-    } else {
-        number = `${contactNumber.number}@${
-        ticket.isGroup ? "g.us" : "s.whatsapp.net"
-        }`;
+    } else {			number = createJid(contactNumber.number,ticket.isGroup )
+		
+     
     }
 
     try {

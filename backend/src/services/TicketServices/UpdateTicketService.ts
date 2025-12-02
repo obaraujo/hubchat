@@ -24,6 +24,7 @@ import CreateMessageService from "../MessageServices/CreateMessageService";
 import FindOrCreateTicketService from "./FindOrCreateTicketService";
 import formatBody from "../../helpers/Mustache";
 import { Mutex } from "async-mutex";
+import { createJid } from "../../functionts";
 
 interface TicketData {
   status?: string;
@@ -390,7 +391,7 @@ const UpdateTicketService = async ({
             const msgtxt = formatBody(`\u200e ${settings.transferMessage.replace("${queue.name}", queue?.name)}`, ticket);
             // const msgtxt = `\u200e *Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
             const queueChangedMessage = await wbot.sendMessage(
-              `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+              createJid(ticket.contact.number, ticket.isGroup),
               {
                 text: msgtxt
               }
@@ -405,7 +406,7 @@ const UpdateTicketService = async ({
           //     const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
 
           //     const queueChangedMessage = await wbot.sendMessage(
-          //       `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          //       createJid(ticket.contact.number, ticket.isGroup),
           //       {
           //         text: msgtxt
           //       }
@@ -420,7 +421,7 @@ const UpdateTicketService = async ({
           //       const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
 
           //       const queueChangedMessage = await wbot.sendMessage(
-          //         `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          //         createJid(ticket.contact.number, ticket.isGroup),
           //         {
           //           text: msgtxt
           //         }
@@ -433,7 +434,7 @@ const UpdateTicketService = async ({
           //         const msgtxt = "\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
 
           //         const queueChangedMessage = await wbot.sendMessage(
-          //           `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          //           createJid(ticket.contact.number, ticket.isGroup),
           //           {
           //             text: msgtxt
           //           }
@@ -530,7 +531,7 @@ const UpdateTicketService = async ({
             // const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
 
             const queueChangedMessage = await wbot.sendMessage(
-              `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+              createJid(ticket.contact.number, ticket.isGroup),
               {
                 text: msgtxt
               }
@@ -545,7 +546,7 @@ const UpdateTicketService = async ({
           //     const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
 
           //     const queueChangedMessage = await wbot.sendMessage(
-          //       `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          //       createJid(ticket.contact.number, ticket.isGroup),
           //       {
           //         text: msgtxt
           //       }
@@ -560,7 +561,7 @@ const UpdateTicketService = async ({
           //       const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
 
           //       const queueChangedMessage = await wbot.sendMessage(
-          //         `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          //         createJid(ticket.contact.number, ticket.isGroup),
           //         {
           //           text: msgtxt
           //         }
@@ -573,7 +574,7 @@ const UpdateTicketService = async ({
           //         const msgtxt = "\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
 
           //         const queueChangedMessage = await wbot.sendMessage(
-          //           `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          //           createJid(ticket.contact.number, ticket.isGroup),
           //           {
           //             text: msgtxt
           //           }

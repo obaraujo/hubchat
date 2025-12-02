@@ -4,6 +4,7 @@ import fs from "fs";
 import formatBody from "./Mustache";
 
 import { getMessageOptions } from "../services/WbotServices/SendWhatsAppMedia";
+import { createJid } from "../functionts";
 
 export type MessageData = {
   number: number | string;
@@ -21,7 +22,7 @@ export const SendMessage = async (
 ): Promise<any> => {
   try {
     const wbot = await GetWhatsappWbot(whatsapp);
-    const chatId = `${messageData.number}@${!!isGroup ? 'g.us' : 's.whatsapp.net'}`;
+    const chatId = createJid(messageData.number,isGroup );
     const companyId = messageData?.companyId ? messageData.companyId.toString(): null;
 
     let message;

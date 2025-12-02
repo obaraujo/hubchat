@@ -12,6 +12,7 @@ import Contact from "../../models/Contact";
 import { getWbot } from "../../libs/wbot";
 import CreateMessageService from "../MessageServices/CreateMessageService";
 import formatBody from "../../helpers/Mustache";
+import { createJid } from "../../functionts";
 interface Request {
   media: Express.Multer.File;
   ticket: Ticket;
@@ -260,8 +261,7 @@ const SendWhatsAppMedia = async ({
     if (contactNumber.remoteJid && contactNumber.remoteJid !== "" && contactNumber.remoteJid.includes("@")) {
       number = contactNumber.remoteJid;
     } else {
-      number = `${contactNumber.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-        }`;
+			number = createJid(contactNumber.number,ticket.isGroup)
     }
 
     const sentMessage = await wbot.sendMessage(

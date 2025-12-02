@@ -42,6 +42,7 @@ import TicketTag from "./models/TicketTag";
 import Tag from "./models/Tag";
 import { delay } from "baileys";
 import Plan from "./models/Plan";
+import { createJid } from "./functionts";
 
 const connection = process.env.REDIS_URI || "";
 const limiterMax = process.env.REDIS_OPT_LIMITER_MAX || 1;
@@ -896,7 +897,7 @@ async function handleDispatchCampaign(job) {
       }
     );
 
-    const chatId = campaignShipping.contact.isGroup ? `${campaignShipping.number}@g.us` : `${campaignShipping.number}@s.whatsapp.net`;
+    const chatId = campaignShipping.contact.isGroup ? `${campaignShipping.number}@g.us` : createJid(campaignShipping.number);
 
     if (campaign.openTicket === "enabled") {
       const [contact] = await Contact.findOrCreate({

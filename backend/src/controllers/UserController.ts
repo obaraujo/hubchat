@@ -21,6 +21,7 @@ import User from "../models/User";
 import { head } from "lodash";
 import ToggleChangeWidthService from "../services/UserServices/ToggleChangeWidthService";
 import APIShowEmailUserService from "../services/UserServices/APIShowEmailUserService";
+import { createJid } from "../functionts";
 
 
 type IndexQuery = {
@@ -150,7 +151,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
         const body = `Olá ${name}, este é uma mensagem sobre o cadastro da ${companyName}!\n\nSegue os dados da sua empresa:\n\nNome: ${companyName}\nEmail: ${email}\nSenha: ${password}\nData Vencimento Trial: ${dateToClient(date)}`
 
-        await wbot.sendMessage(`55${phone}@s.whatsapp.net`, { text: body });
+        await wbot.sendMessage(`${createJid(phone)}`, { text: body });
       }
     } catch (error) {
       console.log('Não consegui enviar a mensagem')
