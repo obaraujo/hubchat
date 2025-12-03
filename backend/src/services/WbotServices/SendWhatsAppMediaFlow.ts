@@ -71,10 +71,10 @@ const SendWhatsAppMediaFlow = async ({
   try {
     const wbot = await GetTicketWbot(ticket);
 
-    const mimetype = mime.lookup(media)
+    const mimetype = String(mime.lookup(media))
     const pathMedia = media
 
-    const typeMessage = mimetype.split("/")[0];
+    const typeMessage = String(mimetype).split("/")[0];
     const mediaName= nameFileDiscovery(media)
     
     let options: AnyMessageContent;
@@ -108,14 +108,14 @@ const SendWhatsAppMediaFlow = async ({
         document: fs.readFileSync(pathMedia),
         caption: body,
         fileName: mediaName,
-        mimetype: mimetype
+        mimetype: mimetype as any
       };
      } else if (typeMessage === "application") {
       options = {
         document: fs.readFileSync(pathMedia),
         caption: body,
         fileName: mediaName,
-        mimetype: mimetype
+        mimetype: mimetype as any
       };
     } else {
       options = {

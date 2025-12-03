@@ -258,7 +258,6 @@ export const ActionsWebhookFacebookService = async (
                     const fileNameWithoutExtension = path.basename(mediaPath, fileExtension);
 
                     //Obtendo o tipo do arquivo
-                    const mimeType = mime.lookup(mediaPath);
 
                     const domain = `${process.env.BACKEND_URL}/public/${fileNameWithoutExtension}${fileExtension}`
 
@@ -316,7 +315,6 @@ export const ActionsWebhookFacebookService = async (
                     const fileNameWithoutExtension = path.basename(mediaDirectory, fileExtension);
 
                     //Obtendo o tipo do arquivo
-                    const mimeType = mime.lookup(mediaDirectory);
 
                     const fileNotExists = path.resolve(__dirname, "..", "..", "..", "..", "public", fileNameWithoutExtension + ".mp4");
 
@@ -383,7 +381,6 @@ export const ActionsWebhookFacebookService = async (
                     const fileNameWithoutExtension = path.basename(mediaDirectory, fileExtension);
 
                     //Obtendo o tipo do arquivo
-                    const mimeType = mime.lookup(mediaDirectory);
 
                     const domain = `${process.env.BACKEND_URL}/public/${fileNameWithoutExtension}${fileExtension}`
 
@@ -432,7 +429,6 @@ export const ActionsWebhookFacebookService = async (
             const fileNameWithoutExtension = path.basename(mediaPath, fileExtension);
 
             //Obtendo o tipo do arquivo
-            const mimeType = mime.lookup(mediaPath);
 
             const domain = `${process.env.BACKEND_URL}/public/${fileNameWithoutExtension}${fileExtension}`
 
@@ -487,7 +483,6 @@ export const ActionsWebhookFacebookService = async (
             const fileNameWithoutExtension = path.basename(mediaDirectory, fileExtension);
 
             //Obtendo o tipo do arquivo
-            const mimeType = mime.lookup(mediaDirectory);
 
             const domain = `${process.env.BACKEND_URL}/public/${fileNameWithoutExtension}${fileExtension}`
 
@@ -530,7 +525,6 @@ export const ActionsWebhookFacebookService = async (
             const fileNameWithoutExtension = path.basename(mediaDirectory, fileExtension);
 
             //Obtendo o tipo do arquivo
-            const mimeType = mime.lookup(mediaDirectory);
 
             const domain = `${process.env.BACKEND_URL}/public/${fileNameWithoutExtension}${fileExtension}`
 

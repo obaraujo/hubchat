@@ -74,7 +74,7 @@ export const getMessageOptions = async (
   body: string = " "
 ): Promise<any> => {
   const mimeType = mime.lookup(pathMedia);
-  const typeMessage = mimeType.split("/")[0];
+  const typeMessage = String(mimeType).split("/")[0];
 
   try {
     if (!mimeType) {

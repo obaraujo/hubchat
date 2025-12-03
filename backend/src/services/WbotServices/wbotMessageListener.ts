@@ -519,7 +519,7 @@ const downloadMedia = async (msg: proto.IWebMessageInfo, isImported: Date = null
   let buffer
   try {
     buffer = await downloadMediaMessage(
-      msg,
+      msg as any,
       'buffer',
       {},
       {
@@ -2649,7 +2649,7 @@ export const handleMessageIntegration = async (
         await sendDialogflowAwswer(
           wbot,
           ticket,
-          msg,
+          msg as any,
           ticket.contact,
           inputAudio,
           companyId,
@@ -3200,7 +3200,7 @@ const handleMessage = async (
 
 
 const handleMsgAck = async (
-  msg: WAMessage,
+  msg: any,
   chat: number | null | undefined
 ) => {
   await new Promise(r => setTimeout(r, 500));

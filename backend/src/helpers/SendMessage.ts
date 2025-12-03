@@ -22,7 +22,7 @@ export const SendMessage = async (
 ): Promise<any> => {
   try {
     const wbot = await GetWhatsappWbot(whatsapp);
-    const chatId = createJid(messageData.number,isGroup );
+    const chatId = createJid(String(messageData.number),isGroup );
     const companyId = messageData?.companyId ? messageData.companyId.toString(): null;
 
     let message;

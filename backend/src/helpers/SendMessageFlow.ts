@@ -19,7 +19,7 @@ export const SendMessageFlow = async (
 ): Promise<any> => {
   try {
     const wbot = await GetWhatsappWbot(whatsapp);
-    const chatId = `${createJid(messageData.number)}`;
+    const chatId = `${createJid(String(messageData.number))}`;
 
     let message;
 

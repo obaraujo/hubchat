@@ -4,7 +4,7 @@ import {
   Contact as BContact,
   isJidBroadcast,
   isJidStatusBroadcast,
-  isJidUser,
+  
 } from "baileys";
 import * as Sentry from "@sentry/node";
 import fs from "fs";

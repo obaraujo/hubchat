@@ -6,7 +6,7 @@ import type {
 import { BufferJSON, initAuthCreds, proto } from "baileys";
 import Whatsapp from "../models/Whatsapp";
 
-const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
+const KEY_MAP = {
   "pre-key": "preKeys",
   session: "sessions",
   "sender-key": "senderKeys",
@@ -46,7 +46,7 @@ const authState = async (
     state: {
       creds,
       keys: {
-        get: (type, ids) => {
+        get: (type:any, ids) => {
           const key = KEY_MAP[type];
           return ids.reduce((dict: any, id) => {
             let value = keys[key]?.[id];
