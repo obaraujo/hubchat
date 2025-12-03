@@ -39,6 +39,10 @@ import sequelize from "../database";
 import Message from "../models/Message";
 import Schedule from "../models/Schedule";
 import { Op } from "sequelize";
+import { createJid } from "../functionts";
+import TicketTraking from "../models/TicketTraking";
+import TicketTag from "../models/TicketTag";
+import LogTicket from "../models/LogTicket";
 
 type IndexQuery = {
   searchParam: string;
@@ -278,7 +282,7 @@ export const update = async (
 		})
 
 
-    if (duplicate) {
+    if (duplicate&&duplicate.id.toString()!==contactId.toString()) {
       // Temos um par: contact e duplicate.
       // Precisamos decidir quem sobrevive. 
       // Critério: Quem tem mais Tickets associados ou quem é mais recente com o 9?
@@ -287,14 +291,10 @@ export const update = async (
       let master: Contact;
       let slave: Contact;
 
-      // Preferência: Manter o que tem 13 dígitos (com 9) pois é o padrão atual do WhatsApp
-      if (oldContact.number.length === 13) {
-        master = oldContact;
-        slave = duplicate;
-      } else {
+   
         master = duplicate;
         slave = oldContact;
-      }
+      
 
       console.log(`Unificando: Master ${master.number} (ID: ${master.id}) <- Slave ${slave.number} (ID: ${slave.id})`);
 
@@ -302,12 +302,18 @@ export const update = async (
       const t = await sequelize.transaction();
 
       try {
-        // 1. Atualizar Tickets
-        await Ticket.update({ contactId: master.id }, { where: { contactId: slave.id, companyId}, transaction: t });
-        const oldTicket = await Ticket.findOne({ where:{contactId: master.id }, order:[['id','DESC']], transaction:t});
+				// Pega o ticket do usuário master
+        const ticketMaster = await Ticket.findOne({ where:{contactId: master.id }, order:[['id','DESC']], transaction:t});
+        const ticketSlave = await Ticket.findOne({ where:{contactId: slave.id }, order:[['id','DESC']], transaction:t});
+        
+        await Message.update({ contactId: master.id , tickedId: ticketMaster.id}, { where: { contactId: slave.id,companyId }, transaction: t });
+				await TicketTraking.update({tickedId: ticketMaster.id},{where:{ticketId: ticketSlave.id}, transaction: t})
+				await TicketTag.update({tickedId: ticketMaster.id},{where:{ticketId: ticketSlave.id}, transaction: t})
+				await LogTicket.update({tickedId: ticketMaster.id},{where:{ticketId: ticketSlave.id}, transaction: t})
+				// 1. Atualizar Tickets
+        // await Ticket.update({ contactId: master.id }, { where: { contactId: slave.id, companyId}, transaction: t });
 
         // 2. Atualizar Mensagens (se houver associação direta em sua versão do banco)
-        await Message.update({ contactId: master.id , tickedId: oldTicket.id}, { where: { contactId: slave.id,companyId }, transaction: t });
 
         // 3. Atualizar Agendamentos
         await Schedule.update({ contactId: master.id }, { where: { contactId: slave.id,companyId }, transaction: t });
@@ -338,9 +344,12 @@ export const update = async (
 
         // 6. Finalmente, deletar o contato duplicado (slave)
         await slave.destroy({ transaction: t });
-				await Ticket.destroy({where:{[Op.and]:{contactId: master.id, [Op.not]:{id:oldTicket.id}}},transaction:t})
-
-				await master.update({...contactData, remoteJid:`${oldContact.number}@lid`}, { transaction: t })
+				await Ticket.destroy({
+					where: { contactId: slave.id },
+					transaction: t
+				});
+				
+				await master.update({...contactData, remoteJid: createJid(oldContact.number)}, { transaction: t })
 
         await t.commit();
 

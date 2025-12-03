@@ -1,7 +1,15 @@
 export function createJid(number: string, isGroup=false) {
-	return number.includes('-')
-		? `${number}@g.us`
-		: number.length>13?`${number.replace(/\D+/g, "")}@lid`: `${formatBRNumber(number)}@s.whatsapp.net`;
+	if (isGroup||number.includes('-')){
+		return `${number}@g.us`
+	}
+
+	number=number.replace(/\D+/g, "")
+
+	if (number.length>13){
+	return `${number}@lid`
+	}
+
+	return `${formatBRNumber(number)}@s.whatsapp.net`;
 }
 
 function formatBRNumber(jid: string) {

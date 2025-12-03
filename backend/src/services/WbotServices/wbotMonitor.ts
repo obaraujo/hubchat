@@ -133,7 +133,7 @@ const wbotMonitor = async (
       try {
         Promise.all(
           contacts.map(async contact => {
-            if (!isJidBroadcast(contact.id) && !isJidStatusBroadcast(contact.id) && isJidUser(contact.id)) {
+            if (!isJidBroadcast(contact.id) && !isJidStatusBroadcast(contact.id) ) {
 
               const contactArray = {
                 'id': contact.id,

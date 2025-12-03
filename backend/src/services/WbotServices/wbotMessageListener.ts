@@ -332,7 +332,11 @@ const getSenderMessage = (
 const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
   const isGroup = msg.key.remoteJid.includes("g.us");
 
-  const rawNumber = msg.key.remoteJid.replace(/\D/g, "");
+  let rawNumber = msg.key.remoteJid.replace(/\D/g, "");
+	if (rawNumber.length>13&&'remoteJidAlt' in msg.key&&msg.key.remoteJidAlt){
+		rawNumber=(msg.key.remoteJidAlt as string).replace(/\D/g, "")
+	}
+	
 	const number = rawNumber.length > 13 ? undefined : rawNumber
 
   return isGroup
@@ -2819,7 +2823,6 @@ const handleMessage = async (
       groupContact = await verifyContact(msgGroupContact, wbot, companyId);
     }
 
-		console.log(msgContact);
     const contact = await verifyContact(msgContact, wbot, companyId);
 
     let unreadMessages = 0;
@@ -3372,6 +3375,7 @@ const filterMessages = (msg: WAMessage): boolean => {
 
 const wbotMessageListener = (wbot: Session, companyId: number): void => {
   wbot.ev.on("messages.upsert", async (messageUpsert: ImessageUpsert) => {
+		
 		const messages = messageUpsert.messages
       .filter(filterMessages)
       .map(msg => msg);
