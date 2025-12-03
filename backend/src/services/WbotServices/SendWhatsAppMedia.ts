@@ -36,29 +36,21 @@ const os = require("os");
 // }
 
 const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
-
 const processAudio = async (audio: string, companyId: string): Promise<string> => {
   const outputAudio = `${publicFolder}/company${companyId}/${new Date().getTime()}.mp3`;
+
   return new Promise((resolve, reject) => {
     exec(
-      `${ffmpegPath.path} -i ${audio}  -vn -ar 44100 -ac 2 -b:a 192k ${outputAudio} -y`,
+      `${ffmpegPath.path} -i ${audio} -vn -ab 128k -ar 44100 -f ipod ${outputAudio} -y`,
       (error, _stdout, _stderr) => {
-        if (error) reject(error);
-        // fs.unlinkSync(audio);
+        if (error) {
+            console.error('Erro no FFmpeg:', error);
+            reject(error);
+        }
         resolve(outputAudio);
       }
     );
   });
-  // return new Promise((resolve, reject) => {
-  //   exec(
-  //     `${ffmpegPath} -i ${audio} -vn -ab 128k -ar 44100 -f ipod ${outputAudio} -y`,
-  //     (error, _stdout, _stderr) => {
-  //       if (error) reject(error);
-  //       // fs.unlinkSync(audio);
-  //       resolve(outputAudio);
-  //     }
-  //   );
-  // });
 };
 
 const processAudioFile = async (audio: string, companyId: string): Promise<string> => {
@@ -175,8 +167,8 @@ const SendWhatsAppMedia = async ({
         const convert = await processAudio(media.path, companyId);
         options = {
           audio: fs.readFileSync(convert),
-          mimetype: "audio/mpeg",
-          ptt: true,
+					mimetype: "audio/mp4",
+					ptt: true,
           caption: bodyMedia,
           contextInfo: { forwardingScore: isForwarded ? 2 : 0, isForwarded: isForwarded },
         };
