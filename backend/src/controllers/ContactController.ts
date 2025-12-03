@@ -273,102 +273,11 @@ export const update = async (
 
 	let contact;
 	
-	if (contactData.number){
-		const duplicate = await Contact.findOne({
-			where: {
-				number: contactData.number.replace("-", "").replace(" ", ""),
-				companyId
-			}
-		})
-
-
-    if (duplicate&&duplicate.id.toString()!==contactId.toString()) {
-      // Temos um par: contact e duplicate.
-      // Precisamos decidir quem sobrevive. 
-      // Critério: Quem tem mais Tickets associados ou quem é mais recente com o 9?
-      // Pela lógica de padronização, preferimos manter o número COM O 9 (formato atual) ou o que já tiver mais dados.
-      
-      let master: Contact;
-      let slave: Contact;
-
-   
-        master = duplicate;
-        slave = oldContact;
-      
-
-      console.log(`Unificando: Master ${master.number} (ID: ${master.id}) <- Slave ${slave.number} (ID: ${slave.id})`);
-
-      // Transaction para garantir atomicidade
-      const t = await sequelize.transaction();
-
-      try {
-				// Pega o ticket do usuário master
-        const ticketMaster = await Ticket.findOne({ where:{contactId: master.id }, order:[['id','DESC']], transaction:t});
-        const ticketSlave = await Ticket.findOne({ where:{contactId: slave.id }, order:[['id','DESC']], transaction:t});
-        
-        await Message.update({ contactId: master.id , tickedId: ticketMaster.id}, { where: { contactId: slave.id,companyId }, transaction: t });
-				await TicketTraking.update({tickedId: ticketMaster.id},{where:{ticketId: ticketSlave.id}, transaction: t})
-				await TicketTag.update({tickedId: ticketMaster.id},{where:{ticketId: ticketSlave.id}, transaction: t})
-				await LogTicket.update({tickedId: ticketMaster.id},{where:{ticketId: ticketSlave.id}, transaction: t})
-				// 1. Atualizar Tickets
-        // await Ticket.update({ contactId: master.id }, { where: { contactId: slave.id, companyId}, transaction: t });
-
-        // 2. Atualizar Mensagens (se houver associação direta em sua versão do banco)
-
-        // 3. Atualizar Agendamentos
-        await Schedule.update({ contactId: master.id }, { where: { contactId: slave.id,companyId }, transaction: t });
-
-        // 4. Migrar Campos Personalizados (Custom Fields)
-        // Aqui é delicado para não duplicar chave única, então fazemos um findOrCreate ou update ignorando erros se já existir
-        const slaveFields = await ContactCustomField.findAll({ where: { contactId: slave.id } });
-        for (const field of slaveFields) {
-           const exists = await ContactCustomField.findOne({ where: { contactId: master.id, name: field.name } });
-           if (!exists) {
-             await field.update({ contactId: master.id }, { transaction: t });
-           } else {
-             // Se já existe no master, deletamos o do slave para não dar erro
-             await field.destroy({ transaction: t });
-           }
-        }
-
-        // 5. Migrar Tags
-        const slaveTags = await ContactTag.findAll({ where: { contactId: slave.id } });
-        for (const tagRel of slaveTags) {
-          const exists = await ContactTag.findOne({ where: { contactId: master.id, tagId: tagRel.tagId } });
-          if (!exists) {
-            await tagRel.update({ contactId: master.id }, { transaction: t });
-          } else {
-             await tagRel.destroy({ transaction: t });
-          }
-        }
-
-        // 6. Finalmente, deletar o contato duplicado (slave)
-        await slave.destroy({ transaction: t });
-				await Ticket.destroy({
-					where: { contactId: slave.id },
-					transaction: t
-				});
-				
-				await master.update({...contactData, remoteJid: createJid(oldContact.number)}, { transaction: t })
-
-        await t.commit();
-
-      } catch (error) {
-        await t.rollback();
-        console.error(`Erro ao unificar contatos ${master.id} e ${slave.id}:`, error);
-      }
-			
-	
-		}
-
-	}else {
-		   contact = await UpdateContactService({
+	contact = await UpdateContactService({
     contactData,
     contactId,
     companyId
   });
-	}
-
 
 
   const io = getIO();
