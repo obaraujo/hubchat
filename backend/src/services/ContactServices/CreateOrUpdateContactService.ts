@@ -9,7 +9,7 @@ import { isNil } from "lodash";
 import Whatsapp from "../../models/Whatsapp";
 import * as Sentry from "@sentry/node";
 import { createJid } from "../../functionts";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 
 const axios = require('axios');
 
@@ -84,25 +84,40 @@ const CreateOrUpdateContactService = async ({
     const io = getIO();
     let contact: Contact | null;
 
-		contact = await Contact.findOne({
-			where: {
-				[Op.and]: [
-					{ companyId },
-					{
-						[Op.or]: [
-							{ remoteJid },
-							...(number ? [{ number }] : [])
-						]
-					}
-				]
-			}
-		});
-		
+	const useRemote = remoteJid?.includes('@lid');
+
+ contact = await Contact.findOne({
+  where: {
+    companyId,
+    ...(useRemote
+      ? { remoteJid, ...(number ? { number } : {}) }
+      : { number }
+    )
+  }
+});
+
+if (contact===null &&number && number.length<=13){
+	contact = await Contact.findOne({
+		where: {
+			companyId,
+				number
+		}
+	});
+}
 
     let updateImage = (!contact || contact?.profilePicUrl !== profilePicUrl && profilePicUrl !== "") && wbot || false;
 
-    if (contact) {
-      // contact.remoteJid = remoteJid;
+    if (contact) {		
+			contact = await Contact.findOne({
+				where: {
+					companyId,
+					remoteJid: contact.remoteJid,
+					[Op.and]: Sequelize.literal('CHAR_LENGTH(number) <= 13')  }
+			});
+				
+			if (remoteJid.includes('@lid')){
+				contact.remoteJid = remoteJid;
+			}
       contact.profilePicUrl = profilePicUrl || null;
       contact.isGroup = isGroup;
       if (isNil(contact.whatsappId)) {
