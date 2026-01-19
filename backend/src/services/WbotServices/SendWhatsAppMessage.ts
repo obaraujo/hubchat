@@ -31,10 +31,7 @@ const SendWhatsAppMessage = async ({
   const wbot = await GetTicketWbot(ticket);
   const contactNumber = await Contact.findByPk(ticket.contactId)
 
-  let number: string;
-
-
-					number = createJid(contactNumber.number,ticket.isGroup )
+  let number = createJid(contactNumber.number,ticket.isGroup )
 		
   
 

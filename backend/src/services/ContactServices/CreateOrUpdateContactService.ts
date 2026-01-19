@@ -68,8 +68,6 @@ const CreateOrUpdateContactService = async ({
   whatsappId,
   wbot
 }: Request): Promise<Contact> => {
-  console.log("🚀 ~ CreateOrUpdateContactService ~ rawNumber:", rawNumber)
-  console.log("🚀 ~ CreateOrUpdateContactService ~ remoteJid:", remoteJid)
   try {
     const io = getIO();
     let contact: Contact | null = null;
