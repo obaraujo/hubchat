@@ -1,6 +1,5 @@
 import AppError from "../../errors/AppError";
 import Plan from "../../models/Plan";
-import ShowPlanService from "./ShowPlanService";
 
 interface PlanData {
   name: string;
@@ -20,6 +19,11 @@ interface PlanData {
   useOpenAi?: boolean;
   useIntegrations?: boolean;
   isPublic?: boolean;
+  useWhatsappOfficial?: boolean;
+  trial?: boolean;
+  trialDays?: number;
+  recurrence?: string;
+  wavoip?: boolean;
 }
 
 const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {

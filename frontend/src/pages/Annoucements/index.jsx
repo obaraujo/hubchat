@@ -140,7 +140,7 @@ const Announcements = () => {
   }, [searchParam, pageNumber]);
 
   useEffect(() => {
-    if (user.companyId) {
+    if (user.companyId && socket) {
 //    const socket = socketManager.GetSocket();
 
       const onCompanyAnnouncement = (data) => {
@@ -157,6 +157,7 @@ const Announcements = () => {
         socket.off(`company-announcement`, onCompanyAnnouncement);
       }
     }
+    return undefined;
   }, [user]);
 
   const fetchAnnouncements = async () => {
@@ -236,7 +237,7 @@ const Announcements = () => {
       <ConfirmationModal
         title={
           deletingAnnouncement &&
-          `${i18n.t("announcements.confirmationModal.deleteTitle")} ${deletingAnnouncement.name
+          `${i18n.t("announcements.confirmationModal.deleteTitle")} ${deletingAnnouncement.title
           }?`
         }
         open={confirmModalOpen}

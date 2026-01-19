@@ -1,72 +1,76 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
-
-import * as Yup from "yup";
-import { Formik, Form, Field } from "formik";
-import { toast } from "react-toastify";
-import { head } from "lodash";
-
-import { makeStyles } from "@material-ui/core/styles";
-import { green } from "@material-ui/core/colors";
-import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
-import TextField from "@material-ui/core/TextField";
-import Dialog from "@material-ui/core/Dialog";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import AttachFileIcon from "@material-ui/icons/AttachFile";
-import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
-
-import { i18n } from "../../translate/i18n";
-import moment from "moment";
-
-import api from "../../services/api";
-import toastError from "../../errors/toastError";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import {
-  Box,
-  FormControl,
-  Grid,
-  InputLabel,
-  ListItemText,
-  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogActions,
+  Button,
+  TextField,
+  Stack,
+  Typography,
   Select,
-  Tab,
-  Tabs,
-  Typography
-} from "@material-ui/core";
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Checkbox,
+  IconButton,
+  Box,
+  Autocomplete,
+  ListItemText,
+  Divider,
+  Alert,
+  Chip
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Help as HelpIcon
+} from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
+import { green, red } from "@mui/material/colors";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import ConfirmationModal from "../ConfirmationModal";
-import { Autocomplete, Checkbox, Chip, Stack } from "@mui/material";
+import { i18n } from "../../translate/i18n";
+import api from "../../services/api";
+import { toast } from "react-toastify";
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   root: {
     display: "flex",
-    flexWrap: "wrap"
+    flexWrap: "wrap",
   },
-
   textField: {
-    marginRight: theme.spacing(1),
-    flex: 1
+    marginRight: 8,
+    flex: 1,
   },
-
-  extraAttr: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-
   btnWrapper: {
-    position: "relative"
+    position: "relative",
   },
-
   buttonProgress: {
     color: green[500],
     position: "absolute",
     top: "50%",
     left: "50%",
     marginTop: -12,
-    marginLeft: -12
+    marginLeft: -12,
+  },
+  online: {
+    color: green[500],
+  },
+  offline: {
+    color: red[500],
+  },
+  phraseContainer: {
+    border: "1px solid #e0e0e0",
+    borderRadius: "8px",
+    padding: "16px",
+    marginBottom: "8px",
+    backgroundColor: "#fafafa"
+  },
+  addButton: {
+    alignSelf: 'flex-start',
+    marginTop: "8px"
+  },
+  whatsappChip: {
+    margin: "2px"
   }
 }));
 
@@ -74,372 +78,592 @@ const CampaignModalPhrase = ({ open, onClose, FlowCampaignId, onSave }) => {
   const classes = useStyles();
   const isMounted = useRef(true);
   const { user } = useContext(AuthContext);
-  const { companyId } = user;
+  
+  const companyId = user?.companyId;
 
+  // Estados básicos
   const [campaignEditable, setCampaignEditable] = useState(true);
-  const attachmentFile = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [active, setActive] = useState(true);
 
+  // Estados do formulário
   const [dataItem, setDataItem] = useState({
     name: "",
-    phrase: ""
   });
 
   const [dataItemError, setDataItemError] = useState({
     name: false,
     flowId: false,
-    phrase: false
+    phrases: false,
+    whatsappIds: false, // NOVA VALIDAÇÃO
   });
 
-  const [flowSelected, setFlowSelected] = useState();
+  // Estado para múltiplas frases
+  const [phrases, setPhrases] = useState([
+    { text: "", type: "exact" }
+  ]);
+
+  // Estados para flows e whatsapp
+  const [flowSelected, setFlowSelected] = useState(null);
   const [flowsData, setFlowsData] = useState([]);
   const [flowsDataComplete, setFlowsDataComplete] = useState([]);
+  
+  // ALTERAÇÃO: Estado para múltiplas conexões
+  const [selectedWhatsapps, setSelectedWhatsapps] = useState([]);
+  const [whatsApps, setWhatsApps] = useState([]);
 
-  const [selectedWhatsapp, setSelectedWhatsapp] = useState("")
-  const [whatsAppNames, setWhatsAppNames] = useState([])
-  const [whatsApps, setWhatsApps] = useState([])
-  const [whatsAppSelected, setWhatsAppSelected] = useState({})
-
-  const [active, setActive] = useState(true)
-
-  const [loading, setLoading] = useState(true);
-
+  // Buscar flows
   const getFlows = async () => {
-    const flows = await api.get("/flowbuilder");
-    setFlowsDataComplete(flows.data.flows);
-    setFlowsData(flows.data.flows.map(flow => flow.name));
-    return flows.data.flows;
+    try {
+      const flows = await api.get("/flowbuilder");
+      if (isMounted.current) {
+        setFlowsDataComplete(flows.data.flows || []);
+        setFlowsData((flows.data.flows || []).map((flow) => flow.name));
+      }
+      return flows.data.flows || [];
+    } catch (error) {
+      console.error("Erro ao buscar flows:", error);
+      if (isMounted.current) {
+        toast.error("Erro ao carregar fluxos");
+      }
+      return [];
+    }
   };
 
-  const detailsPhrase = async flows => {
-    setLoading(true);
-    await api.get(`/flowcampaign/${FlowCampaignId}`).then(res => {
-      console.log("dete", res.data);
-      setDataItem({
-        name: res.data.details.name,
-        phrase: res.data.details.phrase
-      });
-      setActive(res.data.details.status)
-      const nameFlow = flows.filter(
-        itemFlows => itemFlows.id === res.data.details.flowId
-      );
-      if (nameFlow.length > 0) {
-        setFlowSelected(nameFlow[0].name);
+  // Buscar WhatsApps
+  const getWhatsApps = async () => {
+    try {
+      const response = await api.get("/whatsapp");
+      if (isMounted.current) {
+        setWhatsApps(response.data || []);
       }
-      setLoading(false);
+    } catch (error) {
+      console.error("Erro ao buscar WhatsApps:", error);
+      if (isMounted.current) {
+        toast.error("Erro ao carregar conexões");
+      }
+    }
+  };
+
+  // Carregar dados se for edição
+  const detailsPhrase = async (flows) => {
+    if (!FlowCampaignId || !isMounted.current) return;
+    
+    setLoading(true);
+    try {
+      console.log(`Buscando dados da campanha ID: ${FlowCampaignId}`);
+      const response = await api.get(`/flowcampaign/${FlowCampaignId}`);
+      console.log("Resposta da API detailsPhrase:", response.data);
+      
+      const details = response.data;
+      
+      if (!isMounted.current) return;
+      
+      // Preencher nome da campanha
+      setDataItem({
+        name: details.name || "",
+      });
+      
+      // Preencher status
+      setActive(details.status !== false);
+      
+      // ALTERAÇÃO: Preencher WhatsApps selecionados (múltiplos)
+      if (details.whatsappIds && Array.isArray(details.whatsappIds)) {
+        setSelectedWhatsapps(details.whatsappIds);
+      } else if (details.whatsappId) {
+        // Compatibilidade com formato antigo
+        setSelectedWhatsapps([details.whatsappId]);
+      }
+      
+      // Processar frases
+      let parsedPhrases = [];
+      try {
+        if (details.phrase) {
+          if (typeof details.phrase === 'string') {
+            try {
+              const parsed = JSON.parse(details.phrase);
+              if (Array.isArray(parsed)) {
+                parsedPhrases = parsed;
+              } else {
+                parsedPhrases = [{ text: details.phrase, type: 'exact' }];
+              }
+            } catch {
+              parsedPhrases = [{ text: details.phrase, type: 'exact' }];
+            }
+          } else if (Array.isArray(details.phrase)) {
+            parsedPhrases = details.phrase;
+          } else if (typeof details.phrase === 'object') {
+            parsedPhrases = [details.phrase];
+          }
+        }
+        
+        parsedPhrases = parsedPhrases.map(phrase => ({
+          text: phrase.text || phrase,
+          type: phrase.type || 'exact'
+        }));
+        
+        if (parsedPhrases.length === 0) {
+          parsedPhrases = [{ text: "", type: "exact" }];
+        }
+        
+        console.log("Frases processadas:", parsedPhrases);
+        setPhrases(parsedPhrases);
+      } catch (error) {
+        console.error("Erro ao processar frases:", error);
+        setPhrases([{ text: "", type: "exact" }]);
+      }
+      
+      // Selecionar flow
+      if (details.flowId && flows && flows.length > 0) {
+        const foundFlow = flows.find((flow) => flow.id === details.flowId);
+        if (foundFlow) {
+          console.log("Flow encontrado:", foundFlow.name);
+          setFlowSelected(foundFlow.name);
+        } else {
+          console.warn("Flow não encontrado para ID:", details.flowId);
+        }
+      }
+      
+    } catch (error) {
+      console.error("Erro ao carregar detalhes:", error);
+      if (isMounted.current) {
+        toast.error("Erro ao carregar dados da campanha");
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Resetar estados quando modal abre/fecha
+  const resetForm = () => {
+    setDataItem({ name: "" });
+    setPhrases([{ text: "", type: "exact" }]);
+    setFlowSelected(null);
+    setSelectedWhatsapps([]); // ALTERAÇÃO: Resetar array
+    setActive(true);
+    clearErrors();
+  };
+
+  // Inicialização
+  useEffect(() => {
+    isMounted.current = true;
+    
+    const initData = async () => {
+      if (open) {
+        console.log("Modal aberto. FlowCampaignId:", FlowCampaignId);
+        
+        resetForm();
+        
+        const flows = await getFlows();
+        await getWhatsApps();
+        
+        if (FlowCampaignId) {
+          await detailsPhrase(flows);
+        }
+      }
+    };
+    
+    initData();
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, [open, FlowCampaignId]);
+
+  // Função para adicionar nova frase
+  const addPhraseField = () => {
+    setPhrases(prevPhrases => [...prevPhrases, { text: "", type: "exact" }]);
+  };
+
+  // Função para remover frase
+  const removePhraseField = (index) => {
+    if (phrases.length > 1) {
+      setPhrases(prevPhrases => prevPhrases.filter((_, i) => i !== index));
+    }
+  };
+
+  // Função para atualizar frase específica
+  const updatePhrase = (index, field, value) => {
+    setPhrases(prevPhrases => {
+      const newPhrases = [...prevPhrases];
+      if (newPhrases[index]) {
+        newPhrases[index] = { ...newPhrases[index], [field]: value };
+      }
+      return newPhrases;
     });
   };
 
-  const handleClose = () => {
-    onClose();
+  // Validação
+  const validateForm = () => {
+    const errors = {
+      name: !dataItem.name.trim(),
+      flowId: !flowSelected,
+      phrases: phrases.length === 0 || phrases.some(p => !p.text.trim()),
+      whatsappIds: selectedWhatsapps.length === 0 // NOVA VALIDAÇÃO
+    };
+    
+    setDataItemError(errors);
+    return !Object.values(errors).some(error => error);
   };
 
-  const openModal = async () => {
-    const flows = await getFlows();
-    if (FlowCampaignId) {
-      await detailsPhrase(flows);
-    } else {
-      clearData();
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    setLoading(true)
-    const delayDebounceFn = setTimeout(() => {
-      const fetchContacts = async () => {
-        api
-          .get(`/whatsapp`, { params: { companyId, session: 0 } })
-          .then(({ data }) => {
-            setWhatsApps(data)
-          })
-      }
-      fetchContacts();
-      setLoading(false)
-    }, 500)
-    return () => clearTimeout(delayDebounceFn)
-  }, [])
-
-
-  useEffect(() => {
-    setLoading(true)
-    if (open === true) {
-      openModal();
-    }
-  }, [open]);
-
+  // Limpar erros
   const clearErrors = () => {
     setDataItemError({
       name: false,
       flowId: false,
-      whatsappId: false,
-      phrase: false
+      phrases: false,
+      whatsappIds: false,
     });
   };
 
-  const clearData = () => {
-    setFlowSelected();
-    setDataItem({
-      name: "",
-      phrase: ""
-    });
+  // Handler para mudanças no campo nome
+  const handleNameChange = (event) => {
+    const value = event.target.value;
+    setDataItem(prev => ({ ...prev, name: value }));
+    
+    if (value.trim() && dataItemError.name) {
+      setDataItemError(prev => ({ ...prev, name: false }));
+    }
   };
 
-  const applicationSaveAndEdit = () => {
-    let error = 0;
-    if (dataItem.name === "" || dataItem.name.length === 0) {
-      setDataItemError(old => ({ ...old, name: true }));
-      error++;
+  // NOVA FUNÇÃO: Handler para mudanças na seleção de WhatsApps
+  const handleWhatsappChange = (event) => {
+    const value = event.target.value;
+    setSelectedWhatsapps(typeof value === 'string' ? value.split(',') : value);
+    
+    if (value.length > 0 && dataItemError.whatsappIds) {
+      setDataItemError(prev => ({ ...prev, whatsappIds: false }));
     }
-    if (!flowSelected) {
-      setDataItemError(old => ({ ...old, flowId: true }));
-      error++;
-    }
-    if (dataItem.phrase === "" || dataItem.phrase.length === 0) {
-      setDataItemError(old => ({ ...old, phrase: true }));
-      error++;
-    }
-    if(!selectedWhatsapp){
-      setDataItemError(old => ({ ...old, whatsappId: true }))
-    }
+  };
 
-    if (error !== 0) {
+  // Salvar
+  const handleSave = async () => {
+    if (!validateForm()) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
-    const idFlow = flowsDataComplete.filter(
-      item => item.name === flowSelected
-    )[0].id;
+    setLoading(true);
+    
+    try {
+      const flowIdSelected = flowsDataComplete.find(flow => flow.name === flowSelected)?.id;
+      
+      if (!flowIdSelected) {
+        toast.error("Fluxo selecionado não encontrado");
+        return;
+      }
 
-    const whatsappId = selectedWhatsapp !== "" ? selectedWhatsapp : null
+      // Filtrar frases vazias
+      const validPhrases = phrases.filter(p => p.text.trim());
+      
+      const payload = {
+        name: dataItem.name.trim(),
+        flowId: flowIdSelected,
+        phrases: validPhrases,
+        whatsappIds: selectedWhatsapps, // ALTERAÇÃO: Enviar array
+        status: active,
+        ...(FlowCampaignId && { id: FlowCampaignId })
+      };
 
-    if (FlowCampaignId) {
-      api.put("/flowcampaign", {
-        id: FlowCampaignId,
-        name: dataItem.name,
-        flowId: idFlow,
-        whatsappId: whatsappId,
-        phrase: dataItem.phrase,
-        status: active
-      })
-      onClose();
-      onSave('ok');
-      toast.success("Frase alterada com sucesso!");
-      clearData();
-    } else {
-      api.post("/flowcampaign", {
-        name: dataItem.name,
-        flowId: idFlow,
-        whatsappId: whatsappId,
-        phrase: dataItem.phrase
-      });
-      onClose();
-      onSave('ok');
-      toast.success("Frase criada com sucesso!");
-      clearData();
+      console.log("Payload para salvar:", payload);
+
+      if (FlowCampaignId) {
+        await api.put("/flowcampaign", payload);
+        toast.success("Campanha atualizada com sucesso!");
+      } else {
+        await api.post("/flowcampaign", payload);
+        toast.success("Campanha criada com sucesso!");
+      }
+
+      onSave && onSave();
+      handleClose();
+      
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar campanha");
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
-  return (
-    <div className={classes.root}>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        fullWidth
-        maxWidth="md"
-        scroll="paper"
-      >
-        <DialogTitle id="form-dialog-title">
-          {campaignEditable ? (
-            <>
-              {FlowCampaignId
-                ? `Editar campanha com fluxo por frase`
-                : `Nova campanha com fluxo por frase`}
-            </>
-          ) : (
-            <>{`${i18n.t("campaigns.dialog.readonly")}`}</>
-          )}
-        </DialogTitle>
-        <div style={{ display: "none" }}>
-          <input type="file" ref={attachmentFile} />
-        </div>
-        {!loading && (
-          <Stack sx={{ padding: "52px" }}>
-            <Stack sx={{ gap: "14px" }}>
-              <Stack gap={1}>
-                <Typography>Nome do disparo por frase</Typography>
-                <TextField
-                  label={""}
-                  name="text"
-                  variant="outlined"
-                  error={dataItemError.name}
-                  defaultValue={dataItem.name}
-                  margin="dense"
-                  onChange={e => {
-                    setDataItem(old => {
-                      let newValue = old;
-                      newValue.name = e.target.value;
-                      return newValue;
-                    });
-                  }}
-                  className={classes.textField}
-                  style={{ width: "100%" }}
-                />
-              </Stack>
-              <Stack gap={1}>
-                <Typography>Escolha um fluxo</Typography>
-                <Autocomplete
-                  disablePortal
-                  id="combo-box-demo"
-                  value={flowSelected}
-                  error={dataItemError.flowId}
-                  defaultValue={flowSelected}
-                  options={flowsData}
-                  onChange={(event, newValue) => {
-                    setFlowSelected(newValue);
-                  }}
-                  sx={{ width: "100%" }}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      error={dataItemError.flowId}
-                      variant="outlined"
-                      style={{ width: "100%" }}
-                      placeholder="Escolha um fluxo"
-                    />
-                  )}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
-                      <Chip
-                        variant="outlined"
-                        label={option}
-                        {...getTagProps({ index })}
-                        style={{ borderRadius: "8px" }}
-                      />
-                    ))
-                  }
-                />
-              </Stack>
-              <Stack gap={1}>
-                <Select
-                  required
-                  fullWidth
-                  displayEmpty
-                  variant="outlined"
-                  value={selectedWhatsapp}
-                  onChange={(e) => {
-                    setSelectedWhatsapp(e.target.value)
-                  }}
-                  MenuProps={{
-                    anchorOrigin: {
-                      vertical: "bottom",
-                      horizontal: "left"
-                    },
-                    transformOrigin: {
-                      vertical: "top",
-                      horizontal: "left"
-                    },
-                    getContentAnchorEl: null,
-                  }}
-                  renderValue={() => {
-                    if (selectedWhatsapp === "") {
-                      return "Selecione uma Conexão"
-                    }
-                    const whatsapp = whatsApps.find(w => w.id === selectedWhatsapp)
-                    return whatsapp.name
-                  }}
-                >
+  // Fechar modal
+  const handleClose = () => {
+    if (!isMounted.current) return;
+    
+    resetForm();
+    onClose();
+  };
 
-                  {whatsApps?.length > 0 &&
-                    whatsApps.map((whatsapp, key) => (
-                      <MenuItem dense key={key} value={whatsapp.id}>
-                        <ListItemText
-                          primary={
-                            <>
-                              <Typography component="span" style={{ fontSize: 14, marginLeft: "10px", display: "inline-flex", alignItems: "center", lineHeight: "2" }}>
-                                {whatsapp.name} &nbsp; <p className={(whatsapp.status) === 'CONNECTED' ? classes.online : classes.offline} >({whatsapp.status})</p>
-                              </Typography>
-                            </>
-                          }
-                        />
-                      </MenuItem>
-                    ))
-                  }
-                </Select>
-              </Stack>
-              <Stack gap={1}>
-                <Typography>Qual frase dispara o fluxo?</Typography>
+  // Verificação de segurança antes de renderizar
+  if (!user || !companyId) {
+    return null;
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="md"
+      scroll="paper"
+      disableEscapeKeyDown={loading}
+    >
+      <DialogTitle>
+        {campaignEditable ? (
+          <>
+            {FlowCampaignId
+              ? `${i18n.t("campaignsPhrase.editCampaignWithFlowByPhrase")}`
+              : `${i18n.t("campaignsPhrase.newCampaignWithFlowByPhrase")}`}
+          </>
+        ) : (
+          <>{`${i18n.t("campaigns.dialog.readonly")}`}</>
+        )}
+      </DialogTitle>
+
+      {!loading && (
+        <Stack sx={{ padding: "24px", gap: "20px" }}>
+          {/* Nome da Campanha */}
+          <Stack gap={1}>
+            <Typography variant="subtitle1" fontWeight={500}>
+              {i18n.t("campaignsPhrase.phraseTriggerName")}
+            </Typography>
+            <TextField
+              label="Nome da campanha"
+              name="name"
+              variant="outlined"
+              error={dataItemError.name}
+              value={dataItem.name}
+              margin="dense"
+              onChange={handleNameChange}
+              className={classes.textField}
+              style={{ width: "100%" }}
+              helperText={dataItemError.name ? "Nome é obrigatório" : ""}
+              disabled={loading}
+            />
+          </Stack>
+
+          {/* Seleção do Fluxo */}
+          <Stack gap={1}>
+            <Typography variant="subtitle1" fontWeight={500}>
+              {i18n.t("campaignsPhrase.chooseAStream")}
+            </Typography>
+            <Autocomplete
+              value={flowSelected}
+              onChange={(event, newValue) => {
+                setFlowSelected(newValue);
+                if (newValue && dataItemError.flowId) {
+                  setDataItemError(prev => ({ ...prev, flowId: false }));
+                }
+              }}
+              options={flowsData}
+              disabled={loading}
+              renderInput={(params) => (
                 <TextField
-                  label={""}
-                  name="text"
+                  {...params}
+                  label="Selecione um fluxo"
                   variant="outlined"
-                  error={dataItemError.phrase}
-                  defaultValue={dataItem.phrase}
-                  margin="dense"
-                  onChange={e => {
-                    setDataItem(old => {
-                      let newValue = old;
-                      newValue.phrase = e.target.value;
-                      return newValue;
-                    });
-                  }}
-                  className={classes.textField}
-                  style={{ width: "100%" }}
+                  error={dataItemError.flowId}
+                  helperText={dataItemError.flowId ? "Fluxo é obrigatório" : ""}
                 />
-              </Stack>
-              <Stack direction={'row'} gap={2}>
-                <Stack justifyContent={'center'}>
-                  <Typography>Status</Typography>
-                </Stack>
-                <Checkbox checked={active} onChange={() => setActive(old => !old)} />
-              </Stack>
-            </Stack>
-            <Stack
-              direction={"row"}
-              spacing={2}
-              alignSelf={"end"}
-              marginTop={"16px"}
-            >
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  onClose();
-                  clearErrors();
-                }}
-              >
-                Cancelar
-              </Button>
-              {FlowCampaignId ? (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => applicationSaveAndEdit()}
-                >
-                  Salvar campanha
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => applicationSaveAndEdit()}
-                >
-                  Criar campanha
-                </Button>
               )}
-            </Stack>
+              style={{ width: "100%" }}
+            />
           </Stack>
-        )}
-        {loading && (
-          <Stack
-            justifyContent={"center"}
-            alignItems={"center"}
-            minHeight={"10vh"}
-            sx={{ padding: "52px" }}
-          >
-            <CircularProgress />
+
+          {/* ALTERAÇÃO: Seleção de Múltiplas Conexões WhatsApp */}
+          <Stack gap={1}>
+            <Typography variant="subtitle1" fontWeight={500}>
+              {i18n.t("campaignsPhrase.selectAConnection")} (Múltiplas)
+            </Typography>
+            <FormControl fullWidth variant="outlined" error={dataItemError.whatsappIds}>
+              <InputLabel>Conexões WhatsApp</InputLabel>
+              <Select
+                multiple
+                value={selectedWhatsapps}
+                onChange={handleWhatsappChange}
+                label="Conexões WhatsApp"
+                disabled={loading}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((whatsappId) => {
+                      const whatsapp = whatsApps.find(w => w.id === whatsappId);
+                      return (
+                        <Chip 
+                          key={whatsappId} 
+                          label={whatsapp ? whatsapp.name : `ID: ${whatsappId}`}
+                          className={classes.whatsappChip}
+                          size="small"
+                          color={whatsapp?.status === "CONNECTED" ? "success" : "default"}
+                        />
+                      );
+                    })}
+                  </Box>
+                )}
+              >
+                {whatsApps?.length > 0 &&
+                  whatsApps.map((whatsapp) => (
+                    <MenuItem key={whatsapp.id} value={whatsapp.id}>
+                      <Checkbox checked={selectedWhatsapps.indexOf(whatsapp.id) > -1} />
+                      <ListItemText
+                        primary={
+                          <Typography component="span" style={{ fontSize: 14 }}>
+                            {whatsapp.name} &nbsp;
+                            <span
+                              className={
+                                whatsapp.status === "CONNECTED"
+                                  ? classes.online
+                                  : classes.offline
+                              }
+                            >
+                              ({whatsapp.status})
+                            </span>
+                          </Typography>
+                        }
+                      />
+                    </MenuItem>
+                  ))}
+              </Select>
+              {dataItemError.whatsappIds && (
+                <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                  Pelo menos uma conexão deve ser selecionada
+                </Typography>
+              )}
+            </FormControl>
+            
+            {/* Informação sobre conexões selecionadas */}
+            {selectedWhatsapps.length > 0 && (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                <Typography variant="body2">
+                  <strong>{selectedWhatsapps.length} conexão(ões) selecionada(s):</strong><br/>
+                  A campanha será executada quando qualquer uma dessas conexões receber mensagens que façam match com as frases configuradas.
+                </Typography>
+              </Alert>
+            )}
           </Stack>
-        )}
-      </Dialog>
-    </div>
+
+          <Divider />
+
+          {/* Seção de Frases Múltiplas */}
+          <Stack gap={2}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="subtitle1" fontWeight={500}>
+                Frases/Palavras que disparam o fluxo
+              </Typography>
+              <IconButton size="small">
+                <HelpIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                <strong>Correspondência Exata:</strong> A mensagem deve ser idêntica à frase configurada.<br/>
+                <strong>Correspondência Parcial:</strong> A frase pode estar contida em qualquer parte da mensagem.
+              </Typography>
+            </Alert>
+
+            {phrases.map((phrase, index) => (
+              <Box key={index} className={classes.phraseContainer}>
+                <Stack direction="row" gap={2} alignItems="flex-start">
+                  <TextField
+                    label={`Frase ${index + 1}`}
+                    value={phrase.text}
+                    onChange={(e) => {
+                      updatePhrase(index, 'text', e.target.value);
+                      if (e.target.value.trim() && dataItemError.phrases) {
+                        setDataItemError(prev => ({ ...prev, phrases: false }));
+                      }
+                    }}
+                    variant="outlined"
+                    fullWidth
+                    placeholder="Digite a frase ou palavra-chave"
+                    error={dataItemError.phrases && !phrase.text.trim()}
+                    helperText={
+                      dataItemError.phrases && !phrase.text.trim() 
+                        ? "Frase é obrigatória" 
+                        : ""
+                    }
+                    disabled={loading}
+                  />
+                  
+                  <FormControl sx={{ minWidth: 140 }}>
+                    <InputLabel>Tipo</InputLabel>
+                    <Select
+                      value={phrase.type}
+                      onChange={(e) => updatePhrase(index, 'type', e.target.value)}
+                      label="Tipo"
+                      disabled={loading}
+                    >
+                      <MenuItem value="exact">Exata</MenuItem>
+                      <MenuItem value="partial">Parcial</MenuItem>
+                    </Select>
+                  </FormControl>
+                  
+                  {phrases.length > 1 && (
+                    <IconButton 
+                      onClick={() => removePhraseField(index)}
+                      color="error"
+                      sx={{ mt: 1 }}
+                      disabled={loading}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
+                </Stack>
+              </Box>
+            ))}
+            
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={addPhraseField}
+              className={classes.addButton}
+              disabled={loading}
+            >
+              Adicionar Frase
+            </Button>
+          </Stack>
+
+          <Divider />
+
+          {/* Status */}
+          <Stack direction="row" gap={2} alignItems="center">
+            <Typography variant="subtitle1" fontWeight={500}>
+              {i18n.t("campaignsPhrase.status")}
+            </Typography>
+            <Checkbox
+              checked={active}
+              onChange={() => setActive(prev => !prev)}
+              disabled={loading}
+            />
+            <Typography variant="body2" color="textSecondary">
+              {active ? "Ativa" : "Inativa"}
+            </Typography>
+          </Stack>
+        </Stack>
+      )}
+
+      <DialogActions sx={{ padding: "16px 24px" }}>
+        <Button
+          variant="outlined"
+          onClick={handleClose}
+          disabled={loading}
+        >
+          {i18n.t("campaignsPhrase.cancel")}
+        </Button>
+        
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={loading}
+        >
+          {loading ? "Salvando..." : FlowCampaignId ? "Atualizar" : "Criar"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

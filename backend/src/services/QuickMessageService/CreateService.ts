@@ -10,7 +10,10 @@ interface Data {
   geral: boolean;
   isMedia: boolean;
   mediaPath?: string | null;
+  mediaName?: string | null;
+  mediaType?: string | null;
   visao: boolean;
+  isStarter?: boolean;
 }
 
 const CreateService = async (data: Data): Promise<QuickMessage> => {

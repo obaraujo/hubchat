@@ -8,16 +8,18 @@ interface Request {
   companyId: number;
   flowIdWelcome: number
   flowIdPhrase:number
+  flowIdInactiveTime?: number
 }
 
 const UpdateFlowDefaultService = async ({
   companyId,
   flowIdWelcome,
-  flowIdPhrase
+  flowIdPhrase,
+  flowIdInactiveTime
 }: Request): Promise<String> => {
   try {
 
-    const flow = await FlowDefaultModel.update({ flowIdWelcome, flowIdNotPhrase: flowIdPhrase }, {
+    const flow = await FlowDefaultModel.update({ flowIdWelcome, flowIdNotPhrase: flowIdPhrase, flowIdInactiveTime }, {
       where: {companyId}
     });
 

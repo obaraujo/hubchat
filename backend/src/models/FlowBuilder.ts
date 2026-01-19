@@ -6,8 +6,10 @@ import {
   AutoIncrement,
   DataType,
   CreatedAt,
-  UpdatedAt
+  UpdatedAt,
+  HasMany
 } from "sequelize-typescript";
+import { FlowCampaignModel } from "./FlowCampaign";
 
 @Table({
   tableName: "FlowBuilders"
@@ -15,23 +17,26 @@ import {
 export class FlowBuilderModel extends Model<FlowBuilderModel> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.INTEGER)
+  @Column
   user_id: number;
 
-  @Column(DataType.TEXT)
+  @Column
   name: string;
 
-  @Column(DataType.INTEGER)
+  @Column
   company_id: number;
 
-  @Column(DataType.BOOLEAN)
+  @Column
   active: boolean;
 
   @Column(DataType.JSON)
   flow: {} | null;
+
+  @HasMany(() => FlowCampaignModel, 'flowId')
+  campaigns: FlowCampaignModel[];
 
   @CreatedAt
   createdAt: Date;
@@ -39,3 +44,4 @@ export class FlowBuilderModel extends Model<FlowBuilderModel> {
   @UpdatedAt
   updatedAt: Date;
 }
+export default FlowBuilderModel;

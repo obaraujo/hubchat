@@ -37,19 +37,35 @@ interface Request {
   expiresInactiveMessage?: string;
   groupAsTicket?: string;
   importOldMessages?: string;
-  importRecentMessages?:string;
+  importRecentMessages?: string;
   importOldMessagesGroups?: boolean;
   closedTicketsPostImported?: boolean;
   timeCreateNewTicket?: number;
   integrationId?: number;
+  integrationTypeId?: number;
   schedules?: any[];
   promptId?: number;
   collectiveVacationMessage?: string;
   collectiveVacationStart?: string;
   collectiveVacationEnd?: string;
   queueIdImportMessages?: number;
+  phone_number_id?: string;
+  waba_id?: string;
+  send_token?: string;
+  business_id?: string;
+  phone_number?: string;
+  waba_webhook?: string;
   flowIdNotPhrase?: number;
   flowIdWelcome?: number;
+  color?: string;
+  flowIdInactiveTime?: number;
+  flowInactiveTime?: number;
+  maxUseInactiveTime?: number;
+  timeToReturnQueue?: number;
+  timeAwaitActiveFlowId?: number;
+  timeAwaitActiveFlow?: number;
+  triggerIntegrationOnClose?: boolean;
+  wavoip?: string;
 }
 
 interface Response {
@@ -93,18 +109,34 @@ const CreateWhatsAppService = async ({
   importOldMessagesGroups,
   timeCreateNewTicket,
   integrationId,
+  integrationTypeId,
   schedules,
   promptId,
   collectiveVacationEnd,
   collectiveVacationMessage,
   collectiveVacationStart,
   queueIdImportMessages,
+  phone_number_id,
+  waba_id,
+  send_token,
+  business_id,
+  phone_number,
+  waba_webhook,
   flowIdNotPhrase,
-  flowIdWelcome
+  flowIdWelcome,
+  flowIdInactiveTime,
+  flowInactiveTime,
+  maxUseInactiveTime,
+  color,
+  timeToReturnQueue,
+  timeAwaitActiveFlowId,
+  timeAwaitActiveFlow,
+  triggerIntegrationOnClose,
+  wavoip
 }: Request): Promise<Response> => {
   const company = await Company.findOne({
     where: {
-      id: companyId,
+      id: companyId
     },
     include: [{ model: Plan, as: "plan" }]
   });
@@ -126,8 +158,8 @@ const CreateWhatsAppService = async ({
 
   const schema = Yup.object().shape({
     name: Yup.string()
-      .required()
-      .min(2)
+      .required("ERR_WAPP_NAME_REQUIRED")
+      .min(2, "ERR_WAPP_INVALID_NAME")
       .test(
         "Check-name",
         "Esse nome já está sendo utilizado por outra conexão",
@@ -150,11 +182,11 @@ const CreateWhatsAppService = async ({
 
   const whatsappFound = await Whatsapp.findOne({ where: { companyId } });
 
-  isDefault = channel === "whatsapp" ? !whatsappFound : false
+  isDefault = channel === "whatsapp" ? !whatsappFound : false;
 
   let oldDefaultWhatsapp: Whatsapp | null = null;
 
-  if (channel === 'whatsapp' && isDefault) {
+  if (channel === "whatsapp" && isDefault) {
     oldDefaultWhatsapp = await Whatsapp.findOne({
       where: { isDefault: true, companyId, channel: channel }
     });
@@ -228,16 +260,32 @@ const CreateWhatsAppService = async ({
       importOldMessagesGroups,
       timeCreateNewTicket,
       integrationId,
+      integrationTypeId,
       schedules,
       promptId,
       collectiveVacationEnd,
       collectiveVacationMessage,
       collectiveVacationStart,
       queueIdImportMessages,
+      phone_number_id,
+      waba_id,
+      send_token,
+      business_id,
+      phone_number,
+      waba_webhook,
       flowIdNotPhrase,
-      flowIdWelcome
+      flowIdWelcome,
+      flowIdInactiveTime,
+      flowInactiveTime,
+      maxUseInactiveTime,
+      color,
+      timeToReturnQueue,
+      timeAwaitActiveFlowId,
+      timeAwaitActiveFlow,
+      triggerIntegrationOnClose,
+      wavoip
     },
-    { include: ["queues"] }
+    { include: ["queues", "company"] }
   );
 
   await AssociateWhatsappQueue(whatsapp, queueIds);

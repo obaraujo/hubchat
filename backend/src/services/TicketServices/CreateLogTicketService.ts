@@ -6,6 +6,7 @@ type logType =
   | "access"
   | "create"
   | "closed"
+  | "clientClosed"
   | "transfered"
   | "receivedTransfer"
   | "open"
@@ -20,7 +21,8 @@ type logType =
   | "autoClose"
   | "retriesLimitQueue"
   | "retriesLimitUserDefine"
-  | "redirect";
+  | "redirect"
+  | "autoReturnQueue";
 
 interface Request {
   type: logType;
@@ -41,12 +43,6 @@ const CreateLogTicketService = async ({
     type,
     queueId
   });
-
-  // socketEmit({
-  //   companyId,
-  //   type: "ticket:update",
-  //   payload: ticket
-  // });
 };
 
 export default CreateLogTicketService;

@@ -31,40 +31,26 @@ const ListMessagesServiceAll = async ({
   dateEnd
 }: Request): Promise<Response> => {
 
-  let ticketsCounter: any
-  if (dateStart && dateEnd) {
-    if (fromMe) {
-      ticketsCounter = await sequelize.query(
-        `select COUNT(*) from "Messages" m where "companyId" = ${companyId} and "fromMe" = ${fromMe} and "createdAt"  between '${dateStart} 00:00:00' and '${dateEnd} 23:59:59'`,
-        {
-          type: QueryTypes.SELECT
-        }
-      );
-    } else {
-      ticketsCounter = await sequelize.query(
-        `select COUNT(*) from "Messages" m where "companyId" = ${companyId} and "createdAt" between '${dateStart} 00:00:00' and '${dateEnd} 23:59:59'`,
-        {
-          type: QueryTypes.SELECT
-        }
-      );
-    }
-  } else {
-    if (fromMe) {
-      ticketsCounter = await sequelize.query(
-        `select COUNT(*) from "Messages" m where "companyId" = ${companyId} and "fromMe" = ${fromMe}`,
-        {
-          type: QueryTypes.SELECT
-        }
-      );
-    } else {
-      ticketsCounter = await sequelize.query(
-        `select COUNT(*) from "Messages" m where "companyId" = ${companyId}`,
-        {
-          type: QueryTypes.SELECT
-        }
-      );
-    }
+  let ticketsCounter: any;
+  const queryParams: any = { companyId };
+
+  let query = `SELECT COUNT(1) FROM "Messages" m WHERE "companyId" = :companyId`;
+
+  if (fromMe) {
+    query += ` AND "fromMe" = :fromMe`;
+    queryParams.fromMe = fromMe;
   }
+
+  if (dateStart && dateEnd) {
+    query += ` AND "createdAt" BETWEEN :dateStart AND :dateEnd`;
+    queryParams.dateStart = `${dateStart} 00:00:00`;
+    queryParams.dateEnd = `${dateEnd} 23:59:59`;
+  }
+
+  ticketsCounter = await sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    replacements: queryParams
+  });
 
   return {
     count: ticketsCounter,

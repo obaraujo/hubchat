@@ -1,17 +1,14 @@
+// src/services/ContactServices/UpdateContactService.ts - CORRIGIDO
 import AppError from "../../errors/AppError";
 import Contact from "../../models/Contact";
 import ContactCustomField from "../../models/ContactCustomField";
-import ContactWallet from "../../models/ContactWallet";
+import DeleteContactWalletService from "./DeleteContactWalletService";
+import UpdateContactWalletsService from "./UpdateContactWalletsService";
 
 interface ExtraInfo {
   id?: number;
   name: string;
   value: string;
-}
-interface Wallet {
-  walletId: number | string;
-  contactId: number | string;
-  companyId: number | string;
 }
 
 interface ContactData {
@@ -23,7 +20,8 @@ interface ContactData {
   extraInfo?: ExtraInfo[];
   disableBot?: boolean;
   remoteJid?: string;
-  wallets?: null | number[] | string[];
+  contactWallets?: null | number[] | string[];
+  birthDate?: Date | string; // 🎂 NOVO CAMPO ADICIONADO
 }
 
 interface Request {
@@ -32,68 +30,106 @@ interface Request {
   companyId: number;
 }
 
+const updateCustomFields = async (
+  contactId: number,
+  extraInfo: ExtraInfo[]
+) => {
+  const currentFields = await ContactCustomField.findAll({
+    where: { contactId }
+  });
+
+  await Promise.all(
+    extraInfo.map(async (info: ExtraInfo) => {
+      const existingField = currentFields.find(
+        field => field.name === info.name
+      );
+      if (existingField) {
+        await existingField.update({ value: info.value });
+      } else {
+        await ContactCustomField.create({ ...info, contactId });
+      }
+    })
+  );
+
+  await Promise.all(
+    currentFields.map(async oldInfo => {
+      const stillExists = extraInfo.find(info => info.name === oldInfo.name);
+      if (!stillExists) {
+        await ContactCustomField.destroy({ where: { id: oldInfo.id } });
+      }
+    })
+  );
+};
+
 const UpdateContactService = async ({
   contactData,
   contactId,
   companyId
 }: Request): Promise<Contact> => {
-  const { email, name, number, extraInfo, acceptAudioMessage, active, disableBot, remoteJid, wallets } = contactData;
+  const {
+    email,
+    name,
+    number,
+    extraInfo,
+    acceptAudioMessage,
+    active,
+    disableBot,
+    remoteJid,
+    contactWallets,
+    birthDate // 🎂 INCLUIR NO DESTRUCTURING
+  } = contactData;
 
   const contact = await Contact.findOne({
     where: { id: contactId },
-    attributes: ["id", "name", "number", "channel", "email", "companyId", "acceptAudioMessage", "active", "profilePicUrl", "remoteJid", "urlPicture"],
-    include: ["extraInfo", "tags",
-      {
-        association: "wallets",
-        attributes: ["id", "name"]
-      }]
+    include: ["extraInfo"]
   });
 
-  if (contact?.companyId !== companyId) {
+  if (!contact) {
+    throw new AppError("Contato não encontrado", 404);
+  }
+
+  if (contact.companyId !== companyId) {
     throw new AppError("Não é possível alterar registros de outra empresa");
   }
 
-  if (!contact) {
-    throw new AppError("ERR_NO_CONTACT_FOUND", 404);
-  }
-
   if (extraInfo) {
-    await Promise.all(
-      extraInfo.map(async (info: any) => {
-        await ContactCustomField.upsert({ ...info, contactId: contact.id });
-      })
-    );
-
-    await Promise.all(
-      contact.extraInfo.map(async oldInfo => {
-        const stillExists = extraInfo.findIndex(info => info.id === oldInfo.id);
-
-        if (stillExists === -1) {
-          await ContactCustomField.destroy({ where: { id: oldInfo.id } });
-        }
-      })
-    );
+    await updateCustomFields(contact.id, extraInfo);
   }
 
-  if (wallets) {
-    await ContactWallet.destroy({
-      where: {
-        companyId,
-        contactId
-      }
+  if (contactWallets) {
+    await DeleteContactWalletService({
+      contactId,
+      companyId
     });
 
-    const contactWallets: Wallet[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    wallets.forEach((wallet: any) => {
-      contactWallets.push({
-        walletId: !wallet.id ? wallet : wallet.id,
+    contactWallets.forEach(async (wallet: any) => {
+      await UpdateContactWalletsService({
+        userId: wallet.walletId,
+        queueId: wallet.queueId,
         contactId,
         companyId
       });
     });
+  }
 
-    await ContactWallet.bulkCreate(contactWallets);
+  // 🎂 PROCESSAR DATA DE NASCIMENTO - CORREÇÃO DE TIMEZONE
+  let processedBirthDate: Date | null = contact.birthDate;
+  if (birthDate !== undefined) {
+    if (birthDate === null || birthDate === '') {
+      processedBirthDate = null;
+    } else if (typeof birthDate === 'string') {
+      // Se vier no formato ISO, extrair apenas a parte da data
+      const dateOnly = birthDate.split('T')[0];
+      // Criar data local com meio-dia para evitar problemas de timezone
+      const [year, month, day] = dateOnly.split('-').map(Number);
+      processedBirthDate = new Date(year, month - 1, day, 12, 0, 0);
+    } else if (birthDate instanceof Date) {
+      // Se for objeto Date, criar nova data local com meio-dia
+      const year = birthDate.getFullYear();
+      const month = birthDate.getMonth();
+      const day = birthDate.getDate();
+      processedBirthDate = new Date(year, month, day, 12, 0, 0);
+    }
   }
 
   await contact.update({
@@ -103,16 +139,12 @@ const UpdateContactService = async ({
     acceptAudioMessage,
     active,
     disableBot,
-    remoteJid
+    remoteJid,
+    birthDate: processedBirthDate // 🎂 INCLUIR NO UPDATE
   });
 
   await contact.reload({
-    attributes: ["id", "name", "number", "channel", "email", "companyId", "acceptAudioMessage", "active", "profilePicUrl", "remoteJid", "urlPicture"],
-    include: ["extraInfo", "tags",
-      {
-        association: "wallets",
-        attributes: ["id", "name"]
-      }]
+    include: ["extraInfo"]
   });
 
   return contact;

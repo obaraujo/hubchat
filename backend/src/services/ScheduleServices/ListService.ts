@@ -79,7 +79,7 @@ const ListService = async ({
     include: [
       { model: Contact, as: "contact", attributes: ["id", "name", "companyId", "urlPicture"] },
       { model: User, as: "user", attributes: ["id", "name"] },
-      { model: Whatsapp, as: "whatsapp", attributes: ["id", "name", "channel"] }
+      { model: Whatsapp, as: "whatsapp", attributes: ["id", "name", "channel", "color"] }
     ]
   });
 

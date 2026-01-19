@@ -10,10 +10,10 @@ tagRoutes.get("/tags", isAuth, TagController.index);
 tagRoutes.get("/tags/:tagId", isAuth, TagController.show);
 tagRoutes.get("/tag/kanban", isAuth, TagController.kanban);
 
-tagRoutes.post("/tags", isAuth, TagController.store);
+tagRoutes.post("/tags", isAuth, TagController.uploadMiddleware, TagController.store);
 tagRoutes.post("/tags/sync", isAuth, TagController.syncTags);
 
-tagRoutes.put("/tags/:tagId", isAuth, TagController.update);
+tagRoutes.put("/tags/:tagId", isAuth, TagController.uploadMiddleware, TagController.update);
 
 tagRoutes.delete("/tags/:tagId", isAuth, TagController.remove);
 tagRoutes.delete("/tags-contacts/:tagId/:contactId", isAuth, TagController.removeContactTag);

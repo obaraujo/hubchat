@@ -16,6 +16,7 @@ interface CompanyData {
   document?: string;
   paymentMethod?: string;
   password?: string;
+  generateInvoice?: boolean;
 }
 
 const UpdateCompanyService = async (
@@ -34,7 +35,8 @@ const UpdateCompanyService = async (
     recurrence,
     document,
     paymentMethod,
-    password
+    password,
+    generateInvoice
   } = companyData;
 
   if (!company) {
@@ -65,7 +67,6 @@ const UpdateCompanyService = async (
   
   await user.update({ email, password });
 
-
   await company.update({
     name,
     phone,
@@ -75,7 +76,8 @@ const UpdateCompanyService = async (
     dueDate,
     recurrence,
     document,
-    paymentMethod
+    paymentMethod,
+    generateInvoice
   });
 
   if (companyData.campaignsEnabled !== undefined) {

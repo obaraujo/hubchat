@@ -6,7 +6,7 @@ const FindCompaniesWhatsappService = async (id: string | number): Promise<Compan
     where: { id },
     order: [["name", "ASC"]],
     include: [
-      { model: Whatsapp, attributes: ["id", "name", "status"], where: { isDefault: true } },
+      { model: Whatsapp, attributes: ["id", "name", "status", "color"], where: { isDefault: true } },
     ]
   });
   return companies;

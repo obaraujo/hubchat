@@ -106,7 +106,7 @@ const DispatchWebHookService = async ({
         whatsappIds.push(usuario.toJSON());
       });
       ActionsWebhookService(
-        0,
+        whatsappIds[0].id, //possivel bug aqui
         webhook.config["details"].idFlow,
         companyId,
         nodes,

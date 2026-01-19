@@ -16,6 +16,7 @@ const whatsappRoutes = express.Router();
 whatsappRoutes.get("/whatsapp/", isAuth, WhatsAppController.index);
 whatsappRoutes.get("/whatsapp/filter", isAuth, WhatsAppController.indexFilter);
 whatsappRoutes.get("/whatsapp/all", isAuth, WhatsAppController.listAll);
+whatsappRoutes.get("/whatsapp/sync-templates/:whatsappId", isAuth, WhatsAppController.syncTemplatesOficial);
 
 whatsappRoutes.post("/whatsapp/", isAuth, WhatsAppController.store);
 whatsappRoutes.post("/facebook/", isAuth, WhatsAppController.storeFacebook);

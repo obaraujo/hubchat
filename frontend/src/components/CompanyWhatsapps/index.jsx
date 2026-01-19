@@ -22,7 +22,7 @@ import {
   Tooltip,
   Typography,
   CircularProgress,
-  Divider
+  Divider,
 } from "@material-ui/core";
 import {
   Edit,
@@ -34,59 +34,58 @@ import {
   DeleteOutline,
   Facebook,
   Instagram,
-  WhatsApp
+  WhatsApp,
 } from "@material-ui/icons";
 
 import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
 
-import MainContainer from "../MainContainer";
-import MainHeader from "../MainHeader";
-import MainHeaderButtonsWrapper from "../MainHeaderButtonsWrapper";
-import Title from "../Title";
-import TableRowSkeleton from "../TableRowSkeleton";
+import MainContainer from "../../components/MainContainer";
+import MainHeader from "../../components/MainHeader";
+import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
+import Title from "../../components/Title";
+import TableRowSkeleton from "../../components/TableRowSkeleton";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import useCompanies from "../../hooks/useCompanies";
 import api from "../../services/api";
-import WhatsAppModalAdmin from "../WhatsAppModalAdmin";
-import ConfirmationModal from "../ConfirmationModal";
-import QrcodeModal from "../QrcodeModal";
+import WhatsAppModalAdmin from "../../components/WhatsAppModalAdmin";
+import ConfirmationModal from "../../components/ConfirmationModal";
+import QrcodeModal from "../../components/QrcodeModal";
 import { i18n } from "../../translate/i18n";
 import { WhatsAppsContext } from "../../context/WhatsApp/WhatsAppsContext";
 import toastError from "../../errors/toastError";
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   mainPaper: {
     flex: 1,
     padding: theme.spacing(1),
     overflowY: "scroll",
     borderRadius: "10px",
     boxShadow: "rgba(0, 0, 0, 0.1) 0px 4px 12px",
-    ...theme.scrollbarStyles
+    ...theme.scrollbarStyles,
   },
   customTableCell: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   tooltip: {
     backgroundColor: "#f5f5f9",
     color: "rgba(0, 0, 0, 0.87)",
     fontSize: theme.typography.pxToRem(14),
     border: "1px solid #dadde9",
-    maxWidth: 450
+    maxWidth: 450,
   },
   tooltipPopper: {
-    textAlign: "center"
+    textAlign: "center",
   },
   buttonProgress: {
-    color: green[500]
-  }
-  ,
+    color: green[500],
+  },
   TableHead: {
-    backgroundColor: theme.palette.barraSuperior,//"#3d3d3d",
+    backgroundColor: theme.palette.barraSuperior, //"#3d3d3d",
     color: "textSecondary",
-    borderRadius: "5px"
-  }
+    borderRadius: "5px",
+  },
 }));
 
 const CustomToolTip = ({ title, content, children }) => {
@@ -97,7 +96,7 @@ const CustomToolTip = ({ title, content, children }) => {
       arrow
       classes={{
         tooltip: classes.tooltip,
-        popper: classes.tooltipPopper
+        popper: classes.tooltipPopper,
       }}
       title={
         <React.Fragment>
@@ -117,7 +116,7 @@ const WhatsAppModalCompany = ({
   onClose,
   whatsAppId,
   filteredWhatsapps,
-  companyInfos
+  companyInfos,
 }) => {
   //console.log(filteredWhatsapps,"teste")
   //console.log(companyInfos,"testeeeee")
@@ -136,30 +135,30 @@ const WhatsAppModalCompany = ({
     title: "",
     message: "",
     whatsAppId: "",
-    open: false
+    open: false,
   };
   const [confirmModalInfo, setConfirmModalInfo] = useState(
     confirmationModalInitialState
   );
 
-  const responseFacebook = response => {
+  const responseFacebook = (response) => {
     if (response.status !== "unknown") {
       const { accessToken, id } = response;
 
       api
         .post("/facebook", {
           facebookUserId: id,
-          facebookUserToken: accessToken
+          facebookUserToken: accessToken,
         })
-        .then(response => {
+        .then((response) => {
           toast.success(i18n.t("connections.facebook.success"));
         })
-        .catch(error => {
+        .catch((error) => {
           toastError(error);
         });
     }
   };
-  const responseInstagram = response => {
+  const responseInstagram = (response) => {
     if (response.status !== "unknown") {
       const { accessToken, id } = response;
 
@@ -167,18 +166,18 @@ const WhatsAppModalCompany = ({
         .post("/facebook", {
           addInstagram: true,
           facebookUserId: id,
-          facebookUserToken: accessToken
+          facebookUserToken: accessToken,
         })
-        .then(response => {
+        .then((response) => {
           toast.success(i18n.t("connections.facebook.success"));
         })
-        .catch(error => {
+        .catch((error) => {
           toastError(error);
         });
     }
   };
 
-  const handleStartWhatsAppSession = async whatsAppId => {
+  const handleStartWhatsAppSession = async (whatsAppId) => {
     try {
       await api.post(`/whatsappsession/${whatsAppId}`);
     } catch (err) {
@@ -186,7 +185,7 @@ const WhatsAppModalCompany = ({
     }
   };
 
-  const handleRequestNewQrCode = async whatsAppId => {
+  const handleRequestNewQrCode = async (whatsAppId) => {
     try {
       await api.put(`/whatsappsession/${whatsAppId}`);
     } catch (err) {
@@ -204,7 +203,7 @@ const WhatsAppModalCompany = ({
     setSelectedWhatsApp(null);
   }, [setSelectedWhatsApp, setWhatsAppModalOpen]);
 
-  const handleOpenQrModal = whatsApp => {
+  const handleOpenQrModal = (whatsApp) => {
     setSelectedWhatsApp(whatsApp);
     setQrModalOpen(true);
   };
@@ -214,7 +213,7 @@ const WhatsAppModalCompany = ({
     setQrModalOpen(false);
   }, [setQrModalOpen, setSelectedWhatsApp]);
 
-  const handleEditWhatsApp = whatsApp => {
+  const handleEditWhatsApp = (whatsApp) => {
     setSelectedWhatsApp(whatsApp);
     setWhatsAppModalOpen(true);
   };
@@ -225,7 +224,7 @@ const WhatsAppModalCompany = ({
         action: action,
         title: i18n.t("connections.confirmationModal.disconnectTitle"),
         message: i18n.t("connections.confirmationModal.disconnectMessage"),
-        whatsAppId: whatsAppId
+        whatsAppId: whatsAppId,
       });
     }
 
@@ -234,7 +233,7 @@ const WhatsAppModalCompany = ({
         action: action,
         title: i18n.t("connections.confirmationModal.deleteTitle"),
         message: i18n.t("connections.confirmationModal.deleteMessage"),
-        whatsAppId: whatsAppId
+        whatsAppId: whatsAppId,
       });
     }
     setConfirmModalOpen(true);
@@ -261,7 +260,7 @@ const WhatsAppModalCompany = ({
     setConfirmModalInfo(confirmationModalInitialState);
   };
 
-  const renderStatusToolTips = whatsApp => {
+  const renderStatusToolTips = (whatsApp) => {
     return (
       <div className={classes.customTableCell}>
         {whatsApp.status === "DISCONNECTED" && (
@@ -300,7 +299,7 @@ const WhatsAppModalCompany = ({
     );
   };
 
-  const renderActionButtons = whatsApp => {
+  const renderActionButtons = (whatsApp) => {
     return (
       <>
         {whatsApp.status === "qrcode" && (
@@ -336,17 +335,17 @@ const WhatsAppModalCompany = ({
         {(whatsApp.status === "CONNECTED" ||
           whatsApp.status === "PAIRING" ||
           whatsApp.status === "TIMEOUT") && (
-            <Button
-              size="small"
-              variant="outlined"
-              color="secondary"
-              onClick={() => {
-                handleOpenConfirmationModal("disconnect", whatsApp.id);
-              }}
-            >
-              {i18n.t("connections.buttons.disconnect")}
-            </Button>
-          )}
+          <Button
+            size="small"
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              handleOpenConfirmationModal("disconnect", whatsApp.id);
+            }}
+          >
+            {i18n.t("connections.buttons.disconnect")}
+          </Button>
+        )}
         {whatsApp.status === "OPENING" && (
           <Button size="small" variant="outlined" disabled color="default">
             {i18n.t("connections.buttons.connecting")}
@@ -356,7 +355,7 @@ const WhatsAppModalCompany = ({
     );
   };
 
-  const IconChannel = channel => {
+  const IconChannel = (channel) => {
     switch (channel) {
       case "facebook":
         return <Facebook />;
@@ -415,17 +414,17 @@ const WhatsAppModalCompany = ({
                   style={{
                     fontWeight: "bold",
                     marginLeft: "10px",
-                    marginTop: "10px"
+                    marginTop: "10px",
                   }}
                   gutterBottom
                 >
-                  Conexões de: {companyInfos?.name}
+                  {i18n.t("connections.connections")} {companyInfos?.name}
                 </Typography>
               </Stack>
 
               <MainHeaderButtonsWrapper>
                 <PopupState variant="popover" popupId="demo-popup-menu">
-                  {popupState => (
+                  {(popupState) => (
                     <React.Fragment>
                       <Menu {...bindMenu(popupState)}>
                         <MenuItem
@@ -437,24 +436,24 @@ const WhatsAppModalCompany = ({
                           <WhatsApp
                             fontSize="small"
                             style={{
-                              marginRight: "10px"
+                              marginRight: "10px",
                             }}
                           />
                           WhatsApp
                         </MenuItem>
                         <FacebookLogin
-                          appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                          appId={process.env.REACT_APP_FACEBOOK_APP_ID}
                           autoLoad={false}
                           fields="name,email,picture"
                           version="13.0"
                           scope="public_profile,pages_messaging,pages_show_list,pages_manage_metadata,pages_read_engagementnt,business_management"
                           callback={responseFacebook}
-                          render={renderProps => (
+                          render={(renderProps) => (
                             <MenuItem onClick={renderProps.onClick}>
                               <Facebook
                                 fontSize="small"
                                 style={{
-                                  marginRight: "10px"
+                                  marginRight: "10px",
                                 }}
                               />
                               Facebook
@@ -463,18 +462,18 @@ const WhatsAppModalCompany = ({
                         />
 
                         <FacebookLogin
-                          appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                          appId={process.env.REACT_APP_FACEBOOK_APP_ID}
                           autoLoad={false}
                           fields="name,email,picture"
                           version="13.0"
                           scope="public_profile,instagram_basic,instagram_manage_messages,pages_messaging,pages_show_list,pages_manage_metadata,pages_read_engagement,business_management"
                           callback={responseInstagram}
-                          render={renderProps => (
+                          render={(renderProps) => (
                             <MenuItem onClick={renderProps.onClick}>
                               <Instagram
                                 fontSize="small"
                                 style={{
-                                  marginRight: "10px"
+                                  marginRight: "10px",
                                 }}
                               />
                               Instagram
@@ -493,14 +492,12 @@ const WhatsAppModalCompany = ({
                 padding: "20px",
                 backgroundColor: "rgb(244 244 244 / 53%)",
                 borderRadius: "5px",
-                height: "93%"
+                height: "93%",
               }}
             >
               <Paper>
                 <Table size="small">
-                  <TableHead
-                    className={classes.TableHead}
-                  >
+                  <TableHead className={classes.TableHead}>
                     <TableRow style={{ color: "#fff" }}>
                       <TableCell style={{ color: "#fff" }} align="center">
                         Channel
@@ -535,7 +532,7 @@ const WhatsAppModalCompany = ({
                     ) : (
                       <>
                         {filteredWhatsapps?.length > 0 &&
-                          filteredWhatsapps.map(whatsApp => (
+                          filteredWhatsapps.map((whatsApp) => (
                             <TableRow key={whatsApp.id}>
                               <TableCell align="center">
                                 {IconChannel(whatsApp.channel)}
@@ -577,7 +574,7 @@ const WhatsAppModalCompany = ({
 
                                   <IconButton
                                     size="small"
-                                    onClick={e => {
+                                    onClick={(e) => {
                                       handleOpenConfirmationModal(
                                         "delete",
                                         whatsApp.id

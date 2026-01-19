@@ -7,36 +7,43 @@ import {
   PrimaryKey,
   AutoIncrement,
   ForeignKey,
-  BelongsTo,
-	DataType
+  BelongsTo
 } from "sequelize-typescript";
 import Contact from "./Contact";
 import Company from "./Company";
 import User from "./User";
+import Queue from "./Queue";
 
 @Table
 class ContactWallet extends Model<ContactWallet> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @ForeignKey(() => Contact)
-  @Column(DataType.INTEGER)
+  @Column
   contactId: number;
 
   @BelongsTo(() => Contact)
   contact: Contact;
 
   @ForeignKey(() => User)
-  @Column(DataType.INTEGER)
+  @Column
   walletId: number;
 
   @BelongsTo(() => User)
   wallet: User;
 
+  @ForeignKey(() => Queue)
+  @Column
+  queueId: number;
+
+  @BelongsTo(() => Queue)
+  queue: Queue;
+
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @BelongsTo(() => Company)

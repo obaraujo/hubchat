@@ -7,8 +7,7 @@ import {
   PrimaryKey,
   AutoIncrement,
   ForeignKey,
-  BelongsTo,
-	DataType
+  BelongsTo
 } from "sequelize-typescript";
 import Campaign from "./Campaign";
 import ContactListItem from "./ContactListItem";
@@ -17,39 +16,39 @@ import ContactListItem from "./ContactListItem";
 class CampaignShipping extends Model<CampaignShipping> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.TEXT)
+  @Column
   jobId: string;
 
-  @Column(DataType.TEXT)
+  @Column
   number: string;
 
-  @Column(DataType.TEXT)
+  @Column
   message: string;
 
-  @Column(DataType.TEXT)
+  @Column
   confirmationMessage: string;
 
-  @Column(DataType.BOOLEAN)
+  @Column
   confirmation: boolean;
 
   @ForeignKey(() => ContactListItem)
-  @Column(DataType.INTEGER)
+  @Column
   contactId: number;
 
   @ForeignKey(() => Campaign)
-  @Column(DataType.INTEGER)
+  @Column
   campaignId: number;
 
-  @Column(DataType.DATE)
+  @Column
   confirmationRequestedAt: Date;
 
-  @Column(DataType.DATE)
+  @Column
   confirmedAt: Date;
 
-  @Column(DataType.DATE)
+  @Column
   deliveredAt: Date;
 
   @CreatedAt

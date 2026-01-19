@@ -20,19 +20,25 @@ import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
 import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
 import Title from "../../components/Title";
-import whatsappIcon from '../../assets/nopicture.png'
+import whatsappIcon from "../../assets/nopicture.png";
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import UserModal from "../../components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
-import { SocketContext, socketManager } from "../../context/Socket/SocketContext";
+import {
+  SocketContext,
+  socketManager,
+} from "../../context/Socket/SocketContext";
 import UserStatusIcon from "../../components/UserModal/statusIcon";
 import { getBackendUrl } from "../../config";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Avatar } from "@material-ui/core";
 import ForbiddenPage from "../../components/ForbiddenPage";
+import ChatBubbleOutlineIcon from "@material-ui/icons/ChatBubbleOutline";
+import { useHistory } from "react-router-dom";
+import usePlans from "../../hooks/usePlans";
 
 const backendUrl = getBackendUrl();
 
@@ -109,6 +115,7 @@ const useStyles = makeStyles((theme) => ({
 
 const Users = () => {
   const classes = useStyles();
+  const history = useHistory();
 
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -120,8 +127,34 @@ const Users = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [searchParam, setSearchParam] = useState("");
   const [users, dispatch] = useReducer(reducer, []);
-  const { user: loggedInUser, socket } = useContext(AuthContext)
+  const { user: loggedInUser, socket } = useContext(AuthContext);
   const { profileImage } = loggedInUser;
+  const companyId = loggedInUser.companyId;
+
+  const [showInternalChat, setShowInternalChat] = useState(false);
+
+  const { getPlanCompany } = usePlans();
+
+  useEffect(() => {
+    async function fetchData() {
+      if (!companyId) {
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const planConfigs = await getPlanCompany(undefined, companyId);
+
+        setShowInternalChat(planConfigs.plan.useInternalChat);
+      } catch (err) {
+        console.error("Error fetching plan:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId]);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -147,23 +180,26 @@ const Users = () => {
     fetchUsers();
   }, [searchParam, pageNumber]);
 
-  useEffect(() => {
-    if (loggedInUser) {
-      const companyId = loggedInUser.companyId;
-      const onCompanyUser = (data) => {
-        if (data.action === "update" || data.action === "create") {
-          dispatch({ type: "UPDATE_USERS", payload: data.user });
-        }
-        if (data.action === "delete") {
-          dispatch({ type: "DELETE_USER", payload: +data.userId });
-        }
-      };
-      socket.on(`company-${companyId}-user`, onCompanyUser);
-      return () => {
-        socket.off(`company-${companyId}-user`, onCompanyUser);
-      };
-    }
-  }, [socket]);
+useEffect(() => {
+  if (loggedInUser) {
+    const companyId = loggedInUser.companyId;
+    
+    const onCompanyUser = (data) => {
+      if (data.action === "update" || data.action === "create") {
+        dispatch({ type: "UPDATE_USERS", payload: data.user });
+      }
+      if (data.action === "delete") {
+        dispatch({ type: "DELETE_USER", payload: +data.userId });
+      }
+    };
+    
+    socket.on(`company-${companyId}-user`, onCompanyUser);
+    
+    return () => {
+      socket.off(`company-${companyId}-user`, onCompanyUser);
+    };
+  }
+}, [socket, loggedInUser]);
 
   const handleOpenUserModal = () => {
     setSelectedUser(null);
@@ -209,28 +245,79 @@ const Users = () => {
     }
   };
 
-  const renderProfileImage = (user) => {
-    if (user.id === loggedInUser.id) {
-      return (
-        <Avatar
-          src={`${backendUrl}/public/company${user.companyId}/user/${profileImage ? profileImage : whatsappIcon}`}
-          alt={user.name}
-          className={classes.userAvatar}
-        />
-      )
+const renderProfileImage = (user) => {
+  const buildImageUrl = (userData) => {
+    if (!userData.profileImage) {
+      return whatsappIcon;
     }
-    if (user.id !== loggedInUser.id) {
-      return (
-        <Avatar
-          src={user.profileImage ? `${backendUrl}/public/company${user.companyId}/user/${user.profileImage}` : whatsappIcon}
-          alt={user.name}
-          className={classes.userAvatar}
-        />
-      )
-    }
+    return `${backendUrl}/public/company${userData.companyId}/user/${userData.profileImage}`;
+  };
+
+  // Para o usuário logado, verificar localStorage também
+  if (user.id === loggedInUser.id) {
+    const savedProfileImage = localStorage.getItem("profileImage");
+    const profileImageToUse = savedProfileImage || user.profileImage;
+    
+    const imageUrl = profileImageToUse 
+      ? `${backendUrl}/public/company${user.companyId}/user/${profileImageToUse}`
+      : whatsappIcon;
+
     return (
-      <AccountCircle />
-    )
+      <Avatar
+        src={imageUrl}
+        alt={user.name}
+        className={classes.userAvatar}
+        onError={(e) => {
+          e.target.src = whatsappIcon;
+        }}
+      />
+    );
+  }
+  
+  // Para outros usuários
+  return (
+    <Avatar
+      src={buildImageUrl(user)}
+      alt={user.name}
+      className={classes.userAvatar}
+    />
+  );
+};
+
+  const handleCreateChat = async (targetUser) => {
+    try {
+      setLoading(true);
+      const { data } = await api.post("/chats", {
+        users: [{ id: loggedInUser.id }, { id: targetUser.id }],
+        isGroup: false,
+        title: targetUser.name,
+      });
+      toast.success("Chat criado com sucesso!");
+      history.push(`/chats/${data.uuid}`);
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBackfillChats = async () => {
+    if (
+      !window.confirm(
+        "Tem certeza que deseja gerar chats para todos os usuários existentes? Isso pode demorar e criar muitos chats."
+      )
+    ) {
+      return;
+    }
+    setLoading(true);
+    try {
+      await api.post("/chats/backfill");
+      toast.success("Chats gerados com sucesso!");
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -238,7 +325,8 @@ const Users = () => {
       <ConfirmationModal
         title={
           deletingUser &&
-          `${i18n.t("users.confirmationModal.deleteTitle")} ${deletingUser.name
+          `${i18n.t("users.confirmationModal.deleteTitle")} ${
+            deletingUser.name
           }?`
         }
         open={confirmModalOpen}
@@ -253,12 +341,14 @@ const Users = () => {
         aria-labelledby="form-dialog-title"
         userId={selectedUser && selectedUser.id}
       />
-      {loggedInUser.profile === "user" ?
+      {loggedInUser.profile === "user" ? (
         <ForbiddenPage />
-        :
+      ) : (
         <>
           <MainHeader>
-            <Title>{i18n.t("users.title")} ({users.length})</Title>
+            <Title>
+              {i18n.t("users.title")} ({users.length})
+            </Title>
             <MainHeaderButtonsWrapper>
               <TextField
                 placeholder={i18n.t("contacts.searchPlaceholder")}
@@ -280,6 +370,16 @@ const Users = () => {
               >
                 {i18n.t("users.buttons.add")}
               </Button>
+              {loggedInUser.profile === "admin" && showInternalChat && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleBackfillChats}
+                  disabled={loading}
+                >
+                  Gerar Chats Existentes
+                </Button>
+              )}
             </MainHeaderButtonsWrapper>
           </MainHeader>
           <Paper
@@ -290,17 +390,31 @@ const Users = () => {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell align="center">{i18n.t("users.table.ID")}</TableCell>
-                  <TableCell align="center">{i18n.t("users.table.status")}</TableCell>
                   <TableCell align="center">
-                    Avatar
+                    {i18n.t("users.table.ID")}
                   </TableCell>
-                  <TableCell align="center">{i18n.t("users.table.name")}</TableCell>
-                  <TableCell align="center">{i18n.t("users.table.email")}</TableCell>
-                  <TableCell align="center">{i18n.t("users.table.profile")}</TableCell>
-                  <TableCell align="center">{i18n.t("users.table.startWork")}</TableCell>
-                  <TableCell align="center">{i18n.t("users.table.endWork")}</TableCell>
-                  <TableCell align="center">{i18n.t("users.table.actions")}</TableCell>
+                  <TableCell align="center">
+                    {i18n.t("users.table.status")}
+                  </TableCell>
+                  <TableCell align="center">Avatar</TableCell>
+                  <TableCell align="center">
+                    {i18n.t("users.table.name")}
+                  </TableCell>
+                  <TableCell align="center">
+                    {i18n.t("users.table.email")}
+                  </TableCell>
+                  <TableCell align="center">
+                    {i18n.t("users.table.profile")}
+                  </TableCell>
+                  <TableCell align="center">
+                    {i18n.t("users.table.startWork")}
+                  </TableCell>
+                  <TableCell align="center">
+                    {i18n.t("users.table.endWork")}
+                  </TableCell>
+                  <TableCell align="center">
+                    {i18n.t("users.table.actions")}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -308,8 +422,10 @@ const Users = () => {
                   {users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell align="center">{user.id}</TableCell>
-                      <TableCell align="center"><UserStatusIcon user={user} /></TableCell>
-                      <TableCell align="center" >
+                      <TableCell align="center">
+                        <UserStatusIcon user={user} />
+                      </TableCell>
+                      <TableCell align="center">
                         <div className={classes.avatarDiv}>
                           {renderProfileImage(user)}
                         </div>
@@ -320,6 +436,13 @@ const Users = () => {
                       <TableCell align="center">{user.startWork}</TableCell>
                       <TableCell align="center">{user.endWork}</TableCell>
                       <TableCell align="center">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleCreateChat(user)}
+                          disabled={!showInternalChat}
+                        >
+                          <ChatBubbleOutlineIcon />
+                        </IconButton>
                         <IconButton
                           size="small"
                           onClick={() => handleEditUser(user)}
@@ -357,7 +480,7 @@ const Users = () => {
             )}
           </Paper>
         </>
-      }
+      )}
     </MainContainer>
   );
 };

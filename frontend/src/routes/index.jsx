@@ -1,28 +1,30 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { BrowserRouter, Switch } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import moment from "moment";
 
 import LoggedInLayout from "../layout";
-import Dashboard from "../pages/Dashboard";
+import Dashboard from "../pages/Dashboard/";
 import TicketResponsiveContainer from "../pages/TicketResponsiveContainer";
 import Signup from "../pages/Signup";
-import Login from "../pages/Login";
-import Connections from "../pages/Connections";
-import SettingsCustom from "../pages/SettingsCustom";
-import Financeiro from "../pages/Financeiro";
+import Login from "../pages/Login/";
+import Connections from "../pages/Connections/";
+import Settings from "../pages/Settings/";
+import Financeiro from "../pages/Financeiro/";
 import Users from "../pages/Users";
-import Contacts from "../pages/Contacts";
+import Contacts from "../pages/Contacts/";
 import ContactImportPage from "../pages/Contacts/import";
-import ChatMoments from "../pages/Moments"
-import Queues from "../pages/Queues";
-import Tags from "../pages/Tags";
-import MessagesAPI from "../pages/MessagesAPI";
-import Helps from "../pages/Helps";
-import ContactLists from "../pages/ContactLists";
-import ContactListItems from "../pages/ContactListItems";
-import Companies from "../pages/Companies";
-import QuickMessages from "../pages/QuickMessages";
-import { AuthProvider } from "../context/Auth/AuthContext";
+import ChatMoments from "../pages/Moments";
+import Queues from "../pages/Queues/";
+import Tags from "../pages/Tags/";
+import MessagesAPI from "../pages/MessagesAPI/";
+import Helps from "../pages/Helps/";
+import ContactLists from "../pages/ContactLists/";
+import ContactListItems from "../pages/ContactListItems/";
+import Companies from "../pages/Companies/";
+import Wallets from "../pages/Wallets/";
+import QuickMessages from "../pages/QuickMessages/";
+import { AuthProvider, AuthContext } from "../context/Auth/AuthContext";
 import { TicketsContextProvider } from "../context/Tickets/TicketsContext";
 import { WhatsAppsProvider } from "../context/WhatsApp/WhatsAppsContext";
 import Route from "./Route";
@@ -33,22 +35,25 @@ import CampaignReport from "../pages/CampaignReport";
 import Annoucements from "../pages/Annoucements";
 import Chat from "../pages/Chat";
 import Prompts from "../pages/Prompts";
-import AllConnections from "../pages/AllConnections";
+import AllConnections from "../pages/AllConnections/";
 import Reports from "../pages/Reports";
-import { FlowBuilderConfig } from "../pages/FlowBuilderConfig";
-// import Integrations from '../pages/Integrations';
-// import GoogleCalendarComponent from '../pages/Integrations/components/GoogleCalendarComponent';
-import FlowBuilder from "../pages/FlowBuilder";
-import FlowDefault from "../pages/FlowDefault"
-import CampaignsPhrase from "../pages/CampaignsPhrase";
-import Subscription from "../pages/Subscription";
+import RelatorioVendas from "../pages/RelatorioVendas";
+import Subscription from "../pages/Subscription/";
 import QueueIntegration from "../pages/QueueIntegration";
-import Files from "../pages/Files";
-import ToDoList from "../pages/ToDoList";
+import Files from "../pages/Files/";
+import ToDoList from "../pages/ToDoList/";
 import Kanban from "../pages/Kanban";
 import TagsKanban from "../pages/TagsKanban";
-const Routes = () => {
+import BirthdaySettingsPage from "../pages/BirthdaySettings";
+import CallHistoricals from "../pages/CallHistoricals";
+import { FlowBuilderConfig } from "../pages/FlowBuilderConfig";
+import FlowBuilder from "../pages/FlowBuilder";
+import FlowDefault from "../pages/FlowDefault";
+import CampaignsPhrase from "../pages/CampaignsPhrase";
+
+const RoutesContent = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     const cshow = localStorage.getItem("cshow");
@@ -57,35 +62,149 @@ const Routes = () => {
     }
   }, []);
 
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <TicketsContextProvider>
-          <Switch>
-            <Route exact path="/login" component={Login} />
-            <Route exact path="/signup" component={Signup} />
-            <WhatsAppsProvider>
-              <LoggedInLayout>
-                <Route exact path="/financeiro" component={Financeiro} isPrivate />
+  // Verificar se a empresa está vencida
+  const isCompanyExpired = () => {
+    if (!user || !user.company || user.company.id === 1) {
+      return false; // Empresa ID 1 nunca expira
+    }
 
-                <Route exact path="/companies" component={Companies} isPrivate />
+    const dueDate = user.company.dueDate;
+    if (!dueDate) return false;
+
+    // Comparar apenas as datas (sem horas) para permitir acesso até 23h59 do dia do vencimento
+    const hojeInicio = moment().startOf('day');
+    const vencimentoInicio = moment(dueDate).startOf('day');
+    
+    // Empresa está vencida apenas após o dia do vencimento
+    return hojeInicio.isAfter(vencimentoInicio, 'day');
+  };
+
+  return (
+    <TicketsContextProvider>
+      <Switch>
+        <Route exact path="/login" component={Login} />
+        <Route exact path="/signup" component={Signup} />
+        <WhatsAppsProvider>
+          <LoggedInLayout hideMenu={isCompanyExpired()}>
+                <Route
+                  exact
+                  path="/financeiro"
+                  component={Financeiro}
+                  isPrivate
+                />
+
+                <Route
+                  exact
+                  path="/financeiro-aberto"
+                  component={Financeiro}
+                  isPrivate
+                />
+
+                <Route
+                  exact
+                  path="/companies"
+                  component={Companies}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/birthday-settings"
+                  component={BirthdaySettingsPage}
+                  isPrivate
+                />
                 <Route exact path="/" component={Dashboard} isPrivate />
-                <Route exact path="/tickets/:ticketId?" component={TicketResponsiveContainer} isPrivate />
-                <Route exact path="/connections" component={Connections} isPrivate />
-                <Route exact path="/quick-messages" component={QuickMessages} isPrivate />
+                <Route exact path="/call-historicals" component={CallHistoricals} isPrivate />
+                <Route
+                  exact
+                  path="/tickets/:ticketId?"
+                  component={TicketResponsiveContainer}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/connections"
+                  component={Connections}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/quick-messages"
+                  component={QuickMessages}
+                  isPrivate
+                />
                 <Route exact path="/todolist" component={ToDoList} isPrivate />
-                <Route exact path="/schedules" component={Schedules} isPrivate />
+                <Route
+                  exact
+                  path="/schedules"
+                  component={Schedules}
+                  isPrivate
+                />
                 <Route exact path="/tags" component={Tags} isPrivate />
                 <Route exact path="/contacts" component={Contacts} isPrivate />
-                <Route exact path="/contacts/import" component={ContactImportPage} isPrivate />
+                <Route
+                  exact
+                  path="/contacts/import"
+                  component={ContactImportPage}
+                  isPrivate
+                />
+                <Route exact path="/wallets" component={Wallets} isPrivate />
                 <Route exact path="/helps" component={Helps} isPrivate />
                 <Route exact path="/users" component={Users} isPrivate />
-                <Route exact path="/messages-api" component={MessagesAPI} isPrivate />
-                <Route exact path="/settings" component={SettingsCustom} isPrivate />
+                <Route
+                  exact
+                  path="/messages-api"
+                  component={MessagesAPI}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/settings"
+                  component={Settings}
+                  isPrivate
+                />
                 <Route exact path="/queues" component={Queues} isPrivate />
                 <Route exact path="/reports" component={Reports} isPrivate />
-                <Route exact path="/queue-integration" component={QueueIntegration} isPrivate />
-                <Route exact path="/announcements" component={Annoucements} isPrivate />
+                <Route
+                  exact
+                  path="/relatorio-vendas"
+                  component={RelatorioVendas}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/queue-integration"
+                  component={QueueIntegration}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/announcements"
+                  component={Annoucements}
+                  isPrivate
+                />
+                <Route exact path="/chats/:id?" component={Chat} isPrivate />
+                <Route exact path="/files" component={Files} isPrivate />
+                <Route
+                  exact
+                  path="/moments"
+                  component={ChatMoments}
+                  isPrivate
+                />
+                <Route exact path="/Kanban" component={Kanban} isPrivate />
+                <Route
+                  exact
+                  path="/TagsKanban"
+                  component={TagsKanban}
+                  isPrivate
+                />
+                <Route exact path="/prompts" component={Prompts} isPrivate />
+                <Route
+                  exact
+                  path="/allConnections"
+                  component={AllConnections}
+                  isPrivate
+                />
+
                 <Route
                   exact
                   path="/phrase-lists"
@@ -104,20 +223,39 @@ const Routes = () => {
                   component={FlowBuilderConfig}
                   isPrivate
                 />
-                <Route exact path="/chats/:id?" component={Chat} isPrivate />
-                <Route exact path="/files" component={Files} isPrivate />
-                <Route exact path="/moments" component={ChatMoments} isPrivate />
-                <Route exact path="/Kanban" component={Kanban} isPrivate />
-                <Route exact path="/TagsKanban" component={TagsKanban} isPrivate />
-                <Route exact path="/prompts" component={Prompts} isPrivate />
-                <Route exact path="/allConnections" component={AllConnections} isPrivate />
+
                 {showCampaigns && (
                   <>
-                    <Route exact path="/contact-lists" component={ContactLists} isPrivate />
-                    <Route exact path="/contact-lists/:contactListId/contacts" component={ContactListItems} isPrivate />
-                    <Route exact path="/campaigns" component={Campaigns} isPrivate />
-                    <Route exact path="/campaign/:campaignId/report" component={CampaignReport} isPrivate />
-                    <Route exact path="/campaigns-config" component={CampaignsConfig} isPrivate />
+                    <Route
+                      exact
+                      path="/contact-lists"
+                      component={ContactLists}
+                      isPrivate
+                    />
+                    <Route
+                      exact
+                      path="/contact-lists/:contactListId/contacts"
+                      component={ContactListItems}
+                      isPrivate
+                    />
+                    <Route
+                      exact
+                      path="/campaigns"
+                      component={Campaigns}
+                      isPrivate
+                    />
+                    <Route
+                      exact
+                      path="/campaign/:campaignId/report"
+                      component={CampaignReport}
+                      isPrivate
+                    />
+                    <Route
+                      exact
+                      path="/campaigns-config"
+                      component={CampaignsConfig}
+                      isPrivate
+                    />
                   </>
                 )}
               </LoggedInLayout>
@@ -125,6 +263,14 @@ const Routes = () => {
           </Switch>
           <ToastContainer position="top-center" autoClose={3000} />
         </TicketsContextProvider>
+  );
+};
+
+const Routes = () => {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <RoutesContent />
       </AuthProvider>
     </BrowserRouter>
   );

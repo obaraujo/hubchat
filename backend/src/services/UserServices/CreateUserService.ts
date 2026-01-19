@@ -1,3 +1,4 @@
+// src/services/UserServices/CreateUserService.ts - ATUALIZADO COM NOVA COLUNA
 import * as Yup from "yup";
 
 import AppError from "../../errors/AppError";
@@ -27,6 +28,12 @@ interface Request {
   defaultTicketsManagerWidth?: number;
   allowRealTime?: string;
   allowConnections?: string;
+  showContacts?: string;
+  showCampaign?: string;
+  showFlow?: string;
+  finalizacaoComValorVendaAtiva?: boolean;
+  birthDate?: Date | string;
+  allowSeeMessagesInPendingTickets?: string; // 🆕 NOVO CAMPO ADICIONADO
 }
 
 interface Response {
@@ -56,7 +63,13 @@ const CreateUserService = async ({
   showDashboard,
   defaultTicketsManagerWidth = 550,
   allowRealTime,
-  allowConnections
+  allowConnections,
+  showContacts,
+  showCampaign,
+  showFlow,
+  finalizacaoComValorVendaAtiva,
+  birthDate,
+  allowSeeMessagesInPendingTickets = "enabled" // 🆕 INCLUIR NO DESTRUCTURING COM VALOR PADRÃO
 }: Request): Promise<Response> => {
   if (companyId !== undefined) {
     const company = await Company.findOne({
@@ -98,13 +111,37 @@ const CreateUserService = async ({
           return !emailExists;
         }
       ),
-    password: Yup.string().required().min(5)
+    password: Yup.string().required().min(5),
+    birthDate: Yup.date().nullable().max(new Date(), "Data de nascimento não pode ser no futuro"),
+    // 🆕 VALIDAÇÃO PARA NOVA COLUNA
+    allowSeeMessagesInPendingTickets: Yup.string()
+      .oneOf(["enabled", "disabled"], "allowSeeMessagesInPendingTickets deve ser 'enabled' ou 'disabled'")
+      .default("enabled")
   });
 
   try {
-    await schema.validate({ email, password, name });
+    await schema.validate({ 
+      email, 
+      password, 
+      name, 
+      birthDate
+    });
   } catch (err) {
     throw new AppError(err.message);
+  }
+
+  // Processar data de nascimento
+  let processedBirthDate: Date | null = null;
+  if (birthDate) {
+    if (typeof birthDate === 'string') {
+      const dateOnly = birthDate.split('T')[0];
+      processedBirthDate = new Date(dateOnly + 'T12:00:00');
+    } else if (birthDate instanceof Date) {
+      const year = birthDate.getFullYear();
+      const month = birthDate.getMonth();
+      const day = birthDate.getDate();
+      processedBirthDate = new Date(year, month, day, 12, 0, 0);
+    }
   }
 
   const user = await User.create(
@@ -127,7 +164,13 @@ const CreateUserService = async ({
       showDashboard,
       defaultTicketsManagerWidth,
       allowRealTime,
-      allowConnections
+      allowConnections,
+      showContacts,
+      showCampaign,
+      showFlow,
+      finalizacaoComValorVendaAtiva,
+      birthDate: processedBirthDate,
+      allowSeeMessagesInPendingTickets // 🆕 INCLUIR NO CREATE
     },
     { include: ["queues", "company"] }
   );

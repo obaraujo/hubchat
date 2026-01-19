@@ -12,7 +12,7 @@ import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingServi
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import { verifyMessage } from "../WbotServices/wbotMessageListener";
 import { isNil } from "lodash";
-import sendFaceMessage from "../FacebookServices/sendFacebookMessage";
+import { sendFacebookMessage } from "../FacebookServices/sendFacebookMessage";
 import { verifyMessageFace } from "../FacebookServices/facebookMessageListener";
 import ShowUserService from "../UserServices/ShowUserService";
 import User from "../../models/User";
@@ -24,7 +24,10 @@ import CreateMessageService from "../MessageServices/CreateMessageService";
 import FindOrCreateTicketService from "./FindOrCreateTicketService";
 import formatBody from "../../helpers/Mustache";
 import { Mutex } from "async-mutex";
-import { createJid } from "../../functionts";
+import { getJidOf } from "../WbotServices/getJidOf";
+import logger from "../../utils/logger";
+import ListUserQueueImmediateService from "../UserQueueServices/ListUserQueueImmediateService";
+import SendWhatsAppOficialMessage from "../WhatsAppOficial/SendWhatsAppOficialMessage";
 
 interface TicketData {
   status?: string;
@@ -40,6 +43,15 @@ interface TicketData {
   unreadMessages?: number;
   msgTransfer?: string;
   isTransfered?: boolean;
+  valorVenda?: number;
+  motivoNaoVenda?: string;
+  motivoFinalizacao?: string;
+  finalizadoComVenda?: boolean;
+  flowWebhook?: boolean;
+  flowStopped?: boolean;
+  dataWebhook?: any;
+  lastFlowId?: string;
+  hashFlowId?: string;
 }
 
 interface Request {
@@ -71,7 +83,11 @@ const UpdateTicketService = async ({
       unreadMessages,
       msgTransfer,
       isTransfered = false,
-      status
+      status,
+      valorVenda,
+      motivoNaoVenda,
+      motivoFinalizacao,
+      finalizadoComVenda
     } = ticketData;
     let isBot: boolean | null = ticketData.isBot || false;
     let queueOptionId: number | null = ticketData.queueOptionId || null;
@@ -85,8 +101,6 @@ const UpdateTicketService = async ({
     });
 
     let ticket = await ShowTicketService(ticketId, companyId);
-
-
 
     if (ticket.channel === "whatsapp" && ticket.whatsappId) {
       SetTicketMessagesAsRead(ticket);
@@ -105,7 +119,9 @@ const UpdateTicketService = async ({
       });
 
       await ticket.update({
-        status: "closed"
+        status: "closed",
+        useIntegration: null,
+        integrationId: null
       });
 
       io.of(String(companyId))
@@ -115,12 +131,10 @@ const UpdateTicketService = async ({
           action: "delete",
           ticketId: ticket.id
         });
-      console.log(117, "UpdateTicketService")
       return { ticket, oldStatus, oldUserId };
     }
 
     if (oldStatus === "closed") {
-      console.log(122, "UpdateTicketService")
       let otherTicket = await Ticket.findOne({
         where: {
           contactId: ticket.contactId,
@@ -130,8 +144,8 @@ const UpdateTicketService = async ({
       });
       if (otherTicket) {
         if (otherTicket.id !== ticket.id) {
-          otherTicket = await ShowTicketService(otherTicket.id, companyId)
-          return { ticket: otherTicket, oldStatus, oldUserId }
+          otherTicket = await ShowTicketService(otherTicket.id, companyId);
+          return { ticket: otherTicket, oldStatus, oldUserId };
         }
       }
 
@@ -139,45 +153,76 @@ const UpdateTicketService = async ({
       isBot = false;
     }
 
+    // ✅ CORRIGIDO: Desabilitar integração quando ticket é aceito por um usuário
+    if (userId && userId !== oldUserId && status === "open") {
+      logger.info(`[TICKET ACCEPTED] Ticket ${ticketId} aceito por usuário ${userId} - desabilitando integração`);
+      isBot = false;
+      useIntegration = false;
+    }
+
     const ticketTraking = await FindOrCreateATicketTrakingService({
       ticketId,
       companyId,
-      whatsappId: ticket?.whatsappId
+      whatsappId: ticket?.whatsappId,
+      userId: ticket.userId
     });
     // console.log("GETTING WHATSAPP UPDATE TICKETSERVICE", ticket?.whatsappId)
-    const { complationMessage, ratingMessage, groupAsTicket } = await ShowWhatsAppService(
-      ticket?.whatsappId,
+    const { complationMessage, ratingMessage, groupAsTicket } =
+      await ShowWhatsAppService(
+        ticket?.whatsappId,
 
-      companyId
-    );
+        companyId
+      );
 
     if (status !== undefined && ["closed"].indexOf(status) > -1) {
-
       const _userId = ticket.userId || userId;
-      let user
+      let user;
       if (_userId) {
         user = await User.findByPk(_userId);
       }
 
-      if (settings.userRating === "enabled" &&
+      if (
+        settings.userRating === "enabled" &&
         (sendFarewellMessage || sendFarewellMessage === undefined) &&
-        (!isNil(ratingMessage) && ratingMessage !== "") &&
-        !ticket.isGroup) {
-
+        !isNil(ratingMessage) &&
+        ratingMessage !== "" &&
+        !ticket.isGroup
+      ) {
         if (ticketTraking.ratingAt == null) {
-
           const ratingTxt = ratingMessage || "";
           let bodyRatingMessage = `\u200e ${ratingTxt}\n`;
 
-          if (ticket.channel === "whatsapp" && ticket.whatsapp.status === 'CONNECTED') {
-            const msg = await SendWhatsAppMessage({ body: bodyRatingMessage, ticket, isForwarded: false });
+          if (
+            ticket.channel === "whatsapp" &&
+            ticket.whatsapp.status === "CONNECTED"
+          ) {
+            const msg = await SendWhatsAppMessage({
+              body: bodyRatingMessage,
+              ticket,
+              isForwarded: false
+            });
             await verifyMessage(msg, ticket, ticket.contact);
-          } else
-            if (["facebook", "instagram"].includes(ticket.channel)) {
-
-              const msg = await sendFaceMessage({ body: bodyRatingMessage, ticket });
-              await verifyMessageFace(msg, bodyRatingMessage, ticket, ticket.contact);
-            }
+          } else if (["facebook", "instagram"].includes(ticket.channel)) {
+            const msg = await sendFacebookMessage({
+              body: bodyRatingMessage,
+              ticket
+            });
+            await verifyMessageFace(
+              msg,
+              bodyRatingMessage,
+              ticket,
+              ticket.contact
+            );
+          } else if (ticket.channel === "whatsapp_oficial") {
+            await SendWhatsAppOficialMessage({
+              body: bodyRatingMessage,
+              ticket: ticket,
+              quotedMsg: null,
+              type: 'text',
+              media: null,
+              vCard: null
+            });
+          }
 
           await ticketTraking.update({
             userId: ticket.userId,
@@ -215,7 +260,7 @@ const UpdateTicketService = async ({
           await ticket.update({
             status: "nps",
             amountUsedBotQueuesNPS: 1
-          })
+          });
 
           io.of(String(companyId))
             // .to(oldStatus)
@@ -225,36 +270,65 @@ const UpdateTicketService = async ({
               ticketId: ticket.id
             });
 
-          console.log(277, "UpdateTicketService")
           return { ticket, oldStatus, oldUserId };
-
         }
       }
 
-      if (((!isNil(user?.farewellMessage) && user?.farewellMessage !== "") ||
-        (!isNil(complationMessage) && complationMessage !== "")) &&
-        (sendFarewellMessage || sendFarewellMessage === undefined)) {
+      if (
+        ((!isNil(user?.farewellMessage) && user?.farewellMessage !== "") ||
+          (!isNil(complationMessage) && complationMessage !== "")) &&
+        (sendFarewellMessage || sendFarewellMessage === undefined)
+      ) {
+        let body: any;
 
-        let body: any
-
-        if ((ticket.status !== 'pending') || (ticket.status === 'pending' && settings.sendFarewellWaitingTicket === 'enabled')) {
-          if (!isNil(user) && !isNil(user?.farewellMessage) && user?.farewellMessage !== "") {
+        if (
+          ticket.status !== "pending" ||
+          (ticket.status === "pending" &&
+            settings.sendFarewellWaitingTicket === "enabled")
+        ) {
+          if (
+            !isNil(user) &&
+            !isNil(user?.farewellMessage) &&
+            user?.farewellMessage !== ""
+          ) {
             body = `\u200e ${user.farewellMessage}`;
           } else {
             body = `\u200e ${complationMessage}`;
           }
-          if (ticket.channel === "whatsapp" && (!ticket.isGroup || groupAsTicket === "enabled") && ticket.whatsapp.status === 'CONNECTED') {
-            const sentMessage = await SendWhatsAppMessage({ body, ticket, isForwarded: false });
+          if (
+            ticket.channel === "whatsapp" &&
+            (!ticket.isGroup || groupAsTicket === "enabled") &&
+            ticket.whatsapp.status === "CONNECTED"
+          ) {
+            const sentMessage = await SendWhatsAppMessage({
+              body,
+              ticket,
+              isForwarded: false
+            });
 
             await verifyMessage(sentMessage, ticket, ticket.contact);
-
           }
 
-          if (["facebook", "instagram"].includes(ticket.channel) && (!ticket.isGroup || groupAsTicket === "enabled")) {
-            const sentMessage = await sendFaceMessage({ body, ticket });
+          if (
+            ["facebook", "instagram"].includes(ticket.channel) &&
+            (!ticket.isGroup || groupAsTicket === "enabled")
+          ) {
+            const sentMessage = await sendFacebookMessage({ body, ticket });
 
             // await verifyMessageFace(sentMessage, body, ticket, ticket.contact );
           }
+
+          if (ticket.channel === "whatsapp_oficial") {
+            await SendWhatsAppOficialMessage({
+              body: body,
+              ticket: ticket,
+              quotedMsg: null,
+              type: 'text',
+              media: null,
+              vCard: null
+            });
+          }
+          
         }
       }
 
@@ -301,6 +375,15 @@ const UpdateTicketService = async ({
         lastFlowId: null,
         dataWebhook: null,
         hashFlowId: null,
+        valorVenda,
+        motivoNaoVenda,
+        motivoFinalizacao,
+        useIntegration: null,
+        integrationId: null,
+        finalizadoComVenda:
+          finalizadoComVenda === undefined || finalizadoComVenda === null
+            ? false
+            : finalizadoComVenda
       });
 
       io.of(String(companyId))
@@ -310,13 +393,65 @@ const UpdateTicketService = async ({
           action: "delete",
           ticketId: ticket.id
         });
-      console.log(309, "UpdateTicketService")
       return { ticket, oldStatus, oldUserId };
     }
-    let queue
+    let queue;
     if (!isNil(queueId)) {
       queue = await Queue.findByPk(queueId);
       ticketTraking.queuedAt = moment().toDate();
+    }
+
+    // ✅ CORRIGIDO: NUNCA randomizar quando isTransfered = true (transferência manual)
+    // A randomização automática só deve ocorrer em OUTROS fluxos, não em transferências
+    if (!isTransfered && !isNil(queueId) && queue) {
+      // Só aplicar randomização se NÃO for uma transferência E não há usuário fornecido
+      if (isNil(userId) && queue.randomizeImmediate && queue.ativarRoteador) {
+        logger.info(
+          `[AUTO ASSIGN] Aplicando randomização imediata da fila ${queueId}`,
+          { ticketId, queueId, oldQueueId }
+        );
+
+        try {
+          const randomizationResult = await ListUserQueueImmediateService(queueId, Number(ticketId));
+
+          if (randomizationResult && randomizationResult.userId) {
+            userId = randomizationResult.userId;
+
+            logger.info(
+              `[AUTO ASSIGN] Usuário atribuído pela randomização imediata`,
+              {
+                ticketId,
+                queueId,
+                newUserId: userId,
+                typeRandomMode: queue.typeRandomMode
+              }
+            );
+
+            // Se um usuário foi atribuído pela randomização, o status deve ser "open" (ou "group" para grupos)
+            if (!isNil(userId)) {
+              status = ticket.isGroup ? "group" : "pending";
+            }
+          }
+        } catch (error) {
+          logger.error(
+            `[AUTO ASSIGN] Erro ao aplicar randomização imediata`,
+            { ticketId, queueId, error: error.message }
+          );
+        }
+      }
+    }
+
+    // Log para transferências manuais
+    if (isTransfered) {
+      logger.info(
+        `[TICKET TRANSFER] Transferência manual - IGNORANDO randomização automática`,
+        {
+          ticketId,
+          queueId,
+          userId: userId || 'null (sem usuário específico)',
+          isTransfered
+        }
+      );
     }
 
     if (isTransfered) {
@@ -324,7 +459,9 @@ const UpdateTicketService = async ({
         let newTicketTransfer = ticket;
         if (oldQueueId !== queueId) {
           await ticket.update({
-            status: "closed"
+            status: "closed",
+            useIntegration: null,
+            integrationId: null
           });
 
           await ticket.reload();
@@ -337,7 +474,6 @@ const UpdateTicketService = async ({
               ticketId: ticket.id
             });
 
-
           newTicketTransfer = await FindOrCreateTicketService(
             ticket.contact,
             ticket.whatsapp,
@@ -346,20 +482,31 @@ const UpdateTicketService = async ({
             queueId,
             userId,
             null,
-            ticket.channel, false, false, settings, isTransfered);
+            ticket.channel,
+            false,
+            false,
+            settings,
+            isTransfered
+          );
 
-          await FindOrCreateATicketTrakingService({ ticketId: newTicketTransfer.id, companyId, whatsappId: ticket.whatsapp.id, userId });
-
+          await FindOrCreateATicketTrakingService({
+            ticketId: newTicketTransfer.id,
+            companyId,
+            whatsappId: ticket.whatsapp.id,
+            userId
+          });
         }
 
         if (!isNil(msgTransfer)) {
           const messageData = {
-            wid: `PVT${newTicketTransfer.updatedAt.toString().replace(' ', '')}`,
+            wid: `PVT${newTicketTransfer.updatedAt
+              .toString()
+              .replace(" ", "")}`,
             ticketId: newTicketTransfer.id,
             contactId: undefined,
             body: msgTransfer,
             fromMe: true,
-            mediaType: 'extendedTextMessage',
+            mediaType: "extendedTextMessage",
             read: true,
             quotedMsgId: null,
             ack: 2,
@@ -370,33 +517,69 @@ const UpdateTicketService = async ({
             isPrivate: true
           };
 
-          await CreateMessageService({ messageData, companyId: ticket.companyId });
+          await CreateMessageService({
+            messageData,
+            companyId: ticket.companyId
+          });
         }
 
         await newTicketTransfer.update({
           queueId,
           userId,
           status
-        })
-
-
+        });
 
         await newTicketTransfer.reload();
 
         if (settings.sendMsgTransfTicket === "enabled") {
           // Mensagem de transferencia da FILA
-          if ((oldQueueId !== queueId || oldUserId !== userId) && !isNil(oldQueueId) && !isNil(queueId) && !isNil(queueId) && ticket.whatsapp.status === 'CONNECTED') {
+          if (
+            (oldQueueId !== queueId || oldUserId !== userId) &&
+            !isNil(oldQueueId) &&
+            !isNil(queueId) &&
+            !isNil(queueId) &&
+            ticket.whatsapp.status === "CONNECTED"
+          ) {
 
-            const wbot = await GetTicketWbot(ticket);
-            const msgtxt = formatBody(`\u200e ${settings.transferMessage.replace("${queue.name}", queue?.name)}`, ticket);
-            // const msgtxt = `\u200e *Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
-            const queueChangedMessage = await wbot.sendMessage(
-              createJid(ticket.contact.number, ticket.isGroup),
-              {
-                text: msgtxt
-              }
+            const msgtxt = formatBody(
+              `\u200e ${settings.transferMessage.replace(
+                "${queue.name}",
+                queue?.name
+              )}`,
+              ticket
             );
-            await verifyMessage(queueChangedMessage, ticket, ticket.contact, ticketTraking);
+
+            if (msgtxt.length > 0) {
+
+              if (ticket.channel === "whatsapp") {
+                const wbot = await GetTicketWbot(ticket);
+                const queueChangedMessage = await wbot.sendMessage(
+                  getJidOf(ticket),
+                  {
+                    text: msgtxt
+                  }
+                );
+
+                await verifyMessage(
+                  queueChangedMessage,
+                  ticket,
+                  ticket.contact,
+                  ticketTraking
+                );
+              }
+
+              if (ticket.channel === "whatsapp_oficial") {
+                await SendWhatsAppOficialMessage({
+                  body: msgtxt,
+                  ticket: ticket,
+                  quotedMsg: null,
+                  type: 'text',
+                  media: null,
+                  vCard: null
+                });
+              }
+            }
+
           }
           // else
           //   // Mensagem de transferencia do ATENDENTE
@@ -406,7 +589,7 @@ const UpdateTicketService = async ({
           //     const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
 
           //     const queueChangedMessage = await wbot.sendMessage(
-          //       createJid(ticket.contact.number, ticket.isGroup),
+          //       `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
           //       {
           //         text: msgtxt
           //       }
@@ -421,7 +604,7 @@ const UpdateTicketService = async ({
           //       const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
 
           //       const queueChangedMessage = await wbot.sendMessage(
-          //         createJid(ticket.contact.number, ticket.isGroup),
+          //         `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
           //         {
           //           text: msgtxt
           //         }
@@ -434,17 +617,21 @@ const UpdateTicketService = async ({
           //         const msgtxt = "\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
 
           //         const queueChangedMessage = await wbot.sendMessage(
-          //           createJid(ticket.contact.number, ticket.isGroup),
+          //           `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
           //           {
           //             text: msgtxt
           //           }
           //         );
           //         await verifyMessage(queueChangedMessage, ticket, ticket.contact);
           //       }
-
         }
 
-        if (oldUserId !== userId && oldQueueId === queueId && !isNil(oldUserId) && !isNil(userId)) {
+        if (
+          oldUserId !== userId &&
+          oldQueueId === queueId &&
+          !isNil(oldUserId) &&
+          !isNil(userId)
+        ) {
           //transferiu o atendimento para fila
           await CreateLogTicketService({
             userId: oldUserId,
@@ -452,54 +639,68 @@ const UpdateTicketService = async ({
             ticketId,
             type: "transfered"
           });
+        } else if (
+          oldUserId !== userId &&
+          oldQueueId === queueId &&
+          !isNil(oldUserId) &&
+          !isNil(userId)
+        ) {
+          //transferiu o atendimento para atendente na mesma fila
+          await CreateLogTicketService({
+            userId: oldUserId,
+            queueId: oldQueueId,
+            ticketId,
+            type: "transfered"
+          });
+          //recebeu atendimento
+          await CreateLogTicketService({
+            userId,
+            queueId: oldQueueId,
+            ticketId: newTicketTransfer.id,
+            type: "receivedTransfer"
+          });
+        } else if (
+          oldUserId !== userId &&
+          oldQueueId !== queueId &&
+          !isNil(oldUserId) &&
+          !isNil(userId)
+        ) {
+          //transferiu o atendimento para fila e atendente
 
-        } else
-          if (oldUserId !== userId && oldQueueId === queueId && !isNil(oldUserId) && !isNil(userId)) {
-            //transferiu o atendimento para atendente na mesma fila
-            await CreateLogTicketService({
-              userId: oldUserId,
-              queueId: oldQueueId,
-              ticketId,
-              type: "transfered"
-            });
-            //recebeu atendimento
-            await CreateLogTicketService({
-              userId,
-              queueId: oldQueueId,
-              ticketId: newTicketTransfer.id,
-              type: "receivedTransfer"
-            });
-          } else
-            if (oldUserId !== userId && oldQueueId !== queueId && !isNil(oldUserId) && !isNil(userId)) {
-              //transferiu o atendimento para fila e atendente
+          await CreateLogTicketService({
+            userId: oldUserId,
+            queueId: oldQueueId,
+            ticketId,
+            type: "transfered"
+          });
+          //recebeu atendimento
+          await CreateLogTicketService({
+            userId,
+            queueId,
+            ticketId: newTicketTransfer.id,
+            type: "receivedTransfer"
+          });
+        } else if (
+          oldUserId !== undefined &&
+          isNil(userId) &&
+          oldQueueId !== queueId &&
+          !isNil(queueId)
+        ) {
+          await CreateLogTicketService({
+            userId: oldUserId,
+            queueId: oldQueueId,
+            ticketId,
+            type: "transfered"
+          });
+        }
 
-              await CreateLogTicketService({
-                userId: oldUserId,
-                queueId: oldQueueId,
-                ticketId,
-                type: "transfered"
-              });
-              //recebeu atendimento
-              await CreateLogTicketService({
-                userId,
-                queueId,
-                ticketId: newTicketTransfer.id,
-                type: "receivedTransfer"
-              });
-            } else
-              if (oldUserId !== undefined && isNil(userId) && oldQueueId !== queueId && !isNil(queueId)) {
-                await CreateLogTicketService({
-                  userId: oldUserId,
-                  queueId: oldQueueId,
-                  ticketId,
-                  type: "transfered"
-                });
-              }
-
-        if (newTicketTransfer.status !== oldStatus || newTicketTransfer.user?.id !== oldUserId) {
+        if (
+          newTicketTransfer.status !== oldStatus ||
+          newTicketTransfer.user?.id !== oldUserId
+        ) {
           await ticketTraking.update({
             userId: newTicketTransfer.userId
-          })
+          });
           // console.log("emitiu socket 497", ticket.id, newTicketTransfer.id)
           io.of(String(companyId))
             // .to(oldStatus)
@@ -519,24 +720,56 @@ const UpdateTicketService = async ({
           });
 
         return { ticket: newTicketTransfer, oldStatus, oldUserId };
-
       } else {
-
         if (settings.sendMsgTransfTicket === "enabled") {
           // Mensagem de transferencia da FILA
-          if (oldQueueId !== queueId || oldUserId !== userId && !isNil(oldQueueId) && !isNil(queueId) && ticket.whatsapp.status === 'CONNECTED') {
+          if (
+            oldQueueId !== queueId ||
+            (oldUserId !== userId &&
+              !isNil(oldQueueId) &&
+              !isNil(queueId) &&
+              ticket.whatsapp.status === "CONNECTED")
+          ) {
 
-            const wbot = await GetTicketWbot(ticket);
-            const msgtxt = formatBody(`\u200e ${settings.transferMessage.replace("${queue.name}", queue?.name)}`, ticket);
+            const msgtxt = formatBody(
+              `\u200e ${settings.transferMessage.replace(
+                "${queue.name}",
+                queue?.name
+              )}`,
+              ticket
+            );
             // const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
 
-            const queueChangedMessage = await wbot.sendMessage(
-              createJid(ticket.contact.number, ticket.isGroup),
-              {
-                text: msgtxt
+            if (msgtxt.length > 0) {
+
+              if (ticket.channel === "whatsapp") {
+                const wbot = await GetTicketWbot(ticket);
+                const queueChangedMessage = await wbot.sendMessage(
+                  `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
+                  }`,
+                  {
+                    text: msgtxt
+                  }
+                );
+                await verifyMessage(
+                  queueChangedMessage,
+                  ticket,
+                  ticket.contact,
+                  ticketTraking
+                );
               }
-            );
-            await verifyMessage(queueChangedMessage, ticket, ticket.contact, ticketTraking);
+
+              if (ticket.channel === "whatsapp_oficial") {
+                await SendWhatsAppOficialMessage({
+                  body: msgtxt,
+                  ticket: ticket,
+                  quotedMsg: null,
+                  type: 'text',
+                  media: null,
+                  vCard: null
+                });
+              }
+            }
           }
           // else
           //   // Mensagem de transferencia do ATENDENTE
@@ -546,7 +779,7 @@ const UpdateTicketService = async ({
           //     const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
 
           //     const queueChangedMessage = await wbot.sendMessage(
-          //       createJid(ticket.contact.number, ticket.isGroup),
+          //       `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
           //       {
           //         text: msgtxt
           //       }
@@ -561,7 +794,7 @@ const UpdateTicketService = async ({
           //       const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
 
           //       const queueChangedMessage = await wbot.sendMessage(
-          //         createJid(ticket.contact.number, ticket.isGroup),
+          //         `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
           //         {
           //           text: msgtxt
           //         }
@@ -574,7 +807,7 @@ const UpdateTicketService = async ({
           //         const msgtxt = "\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
 
           //         const queueChangedMessage = await wbot.sendMessage(
-          //           createJid(ticket.contact.number, ticket.isGroup),
+          //           `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
           //           {
           //             text: msgtxt
           //           }
@@ -585,12 +818,12 @@ const UpdateTicketService = async ({
 
         if (!isNil(msgTransfer)) {
           const messageData = {
-            wid: `PVT${ticket.updatedAt.toString().replace(' ', '')}`,
+            wid: `PVT${ticket.updatedAt.toString().replace(" ", "")}`,
             ticketId: ticket.id,
             contactId: undefined,
             body: msgTransfer,
             fromMe: true,
-            mediaType: 'extendedTextMessage',
+            mediaType: "extendedTextMessage",
             read: true,
             quotedMsgId: null,
             ack: 2,
@@ -601,10 +834,18 @@ const UpdateTicketService = async ({
             isPrivate: true
           };
 
-          await CreateMessageService({ messageData, companyId: ticket.companyId });
+          await CreateMessageService({
+            messageData,
+            companyId: ticket.companyId
+          });
         }
 
-        if (oldUserId !== userId && oldQueueId === queueId && !isNil(oldUserId) && !isNil(userId)) {
+        if (
+          oldUserId !== userId &&
+          oldQueueId === queueId &&
+          !isNil(oldUserId) &&
+          !isNil(userId)
+        ) {
           //transferiu o atendimento para fila
           await CreateLogTicketService({
             userId: oldUserId,
@@ -612,49 +853,60 @@ const UpdateTicketService = async ({
             ticketId,
             type: "transfered"
           });
+        } else if (
+          oldUserId !== userId &&
+          oldQueueId === queueId &&
+          !isNil(oldUserId) &&
+          !isNil(userId)
+        ) {
+          //transferiu o atendimento para atendente na mesma fila
+          await CreateLogTicketService({
+            userId: oldUserId,
+            queueId: oldQueueId,
+            ticketId,
+            type: "transfered"
+          });
+          //recebeu atendimento
+          await CreateLogTicketService({
+            userId,
+            queueId: oldQueueId,
+            ticketId: ticket.id,
+            type: "receivedTransfer"
+          });
+        } else if (
+          oldUserId !== userId &&
+          oldQueueId !== queueId &&
+          !isNil(oldUserId) &&
+          !isNil(userId)
+        ) {
+          //transferiu o atendimento para fila e atendente
 
-        } else
-          if (oldUserId !== userId && oldQueueId === queueId && !isNil(oldUserId) && !isNil(userId)) {
-            //transferiu o atendimento para atendente na mesma fila
-            await CreateLogTicketService({
-              userId: oldUserId,
-              queueId: oldQueueId,
-              ticketId,
-              type: "transfered"
-            });
-            //recebeu atendimento
-            await CreateLogTicketService({
-              userId,
-              queueId: oldQueueId,
-              ticketId: ticket.id,
-              type: "receivedTransfer"
-            });
-          } else
-            if (oldUserId !== userId && oldQueueId !== queueId && !isNil(oldUserId) && !isNil(userId)) {
-              //transferiu o atendimento para fila e atendente
-
-              await CreateLogTicketService({
-                userId: oldUserId,
-                queueId: oldQueueId,
-                ticketId,
-                type: "transfered"
-              });
-              //recebeu atendimento
-              await CreateLogTicketService({
-                userId,
-                queueId,
-                ticketId: ticket.id,
-                type: "receivedTransfer"
-              });
-            } else
-              if (oldUserId !== undefined && isNil(userId) && oldQueueId !== queueId && !isNil(queueId)) {
-                await CreateLogTicketService({
-                  userId: oldUserId,
-                  queueId: oldQueueId,
-                  ticketId,
-                  type: "transfered"
-                });
-              }
+          await CreateLogTicketService({
+            userId: oldUserId,
+            queueId: oldQueueId,
+            ticketId,
+            type: "transfered"
+          });
+          //recebeu atendimento
+          await CreateLogTicketService({
+            userId,
+            queueId,
+            ticketId: ticket.id,
+            type: "receivedTransfer"
+          });
+        } else if (
+          oldUserId !== undefined &&
+          isNil(userId) &&
+          oldQueueId !== queueId &&
+          !isNil(queueId)
+        ) {
+          await CreateLogTicketService({
+            userId: oldUserId,
+            queueId: oldQueueId,
+            ticketId,
+            type: "transfered"
+          });
+        }
 
         // if (ticket.status !== oldStatus || ticket.user?.id !== oldUserId) {
         //   await ticketTraking.update({
@@ -687,13 +939,22 @@ const UpdateTicketService = async ({
       userId,
       isBot,
       queueOptionId,
-      amountUsedBotQueues: status === "closed" ? 0 : amountUsedBotQueues ? amountUsedBotQueues : ticket.amountUsedBotQueues,
+      amountUsedBotQueues:
+        status === "closed"
+          ? 0
+          : amountUsedBotQueues
+            ? amountUsedBotQueues
+            : ticket.amountUsedBotQueues,
       lastMessage: lastMessage ? lastMessage : ticket.lastMessage,
       useIntegration,
       integrationId,
       typebotSessionId: !useIntegration ? null : ticket.typebotSessionId,
       typebotStatus: useIntegration,
-      unreadMessages
+      unreadMessages,
+      valorVenda,
+      motivoNaoVenda,
+      motivoFinalizacao,
+      finalizadoComVenda
     });
 
     ticketTraking.queuedAt = moment().toDate();
@@ -735,13 +996,17 @@ const UpdateTicketService = async ({
         ticketId,
         type: oldStatus === "pending" ? "open" : "reopen"
       });
-
     }
 
     await ticketTraking.save();
 
+    ticket = await ShowTicketService(ticket.id, companyId);
 
-    if (ticket.status !== oldStatus || ticket.user?.id !== oldUserId || ticket.queueId !== oldQueueId) {
+    if (
+      ticket.status !== oldStatus ||
+      ticket.user?.id !== oldUserId ||
+      ticket.queueId !== oldQueueId
+    ) {
       // console.log("emitiu socket 739", ticket.id)
 
       io.of(String(companyId))
@@ -762,11 +1027,16 @@ const UpdateTicketService = async ({
         ticket
       });
 
-
     return { ticket, oldStatus, oldUserId };
   } catch (err) {
-    console.log("erro ao atualizar o ticket", ticketId, "ticketData", ticketData)
+    console.log(
+      "erro ao atualizar o ticket",
+      ticketId,
+      "ticketData",
+      ticketData
+    );
     Sentry.captureException(err);
+    throw err;
   }
 };
 

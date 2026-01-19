@@ -8,8 +8,7 @@ import {
   AutoIncrement,
   ForeignKey,
   BelongsTo,
-  AllowNull,
-	DataType
+  AllowNull
 } from "sequelize-typescript";
 import Queue from "./Queue";
 
@@ -17,26 +16,26 @@ import Queue from "./Queue";
 class QueueOption extends Model<QueueOption> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.TEXT)
+  @Column
   title: string;
 
   @AllowNull
-  @Column(DataType.TEXT)
+  @Column
   message: string;
 
   @AllowNull
-  @Column(DataType.TEXT)
+  @Column
   option: string;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueId: number;
 
   @ForeignKey(() => QueueOption)
-  @Column(DataType.INTEGER)
+  @Column
   parentId: number;
 
   @CreatedAt

@@ -85,6 +85,9 @@ const ContactImportWpModal = ({ isOpen, handleClose, selectedTags, hideNum, user
               name: item.name,
               number: item.number.toString(),
               email: item.email,
+              birthDate: item.birthDate,
+              tags: item.tags,
+              carteira: item.carteira,
             });
 
             setCurrentContact({ name: item.name, number: item.number, error: "success" })
@@ -107,8 +110,12 @@ const ContactImportWpModal = ({ isOpen, handleClose, selectedTags, hideNum, user
         });
         console.log(data)
         data.contacts.forEach((element) => {
-          const tagsContact = element?.tags?.map(tag => tag?.name).join(', '); // Concatenando as tags com vírgula
-          const contactWithTags = { ...element, tags: tagsContact }; // Substituindo as tags pelo valor concatenado
+          const tagsContact = element?.tags?.map(tag => tag?.name).join(', '); 
+          // Extrair carteira (email do usuário responsável)
+          const carteira = element?.contactWallets && element.contactWallets.length > 0 
+            ? element.contactWallets[0].wallet?.email 
+            : "";
+          const contactWithTags = { ...element, tags: tagsContact, carteira };
           allDatas.push(contactWithTags);
         });
 
@@ -120,16 +127,25 @@ const ContactImportWpModal = ({ isOpen, handleClose, selectedTags, hideNum, user
       }
     } else {
       allDatas.push({
-        name: "João",
+        name: "Nome Contato",
         number: "5599999999999",
-        email: "",
+        email: "email-contato@email.com",
+        birthDate: "15-05-1990",
+        tags: "tag1, tag2",
+        carteira: "funcionario-empresa@email.com",
       });
     }
 
     const exportData = allDatas.map((e) => {
-      return { name: e.name, number: (hideNum && userProfile === "user" ? e.isGroup ? e.number : e.number.slice(0, -6) + "**-**" + e.number.slice(-2) : e.number), email: e.email, tags: e.tags };
+      return { 
+        name: e.name, 
+        number: (hideNum && userProfile === "user" ? e.isGroup ? e.number : e.number.slice(0, -6) + "**-**" + e.number.slice(-2) : e.number), 
+        email: e.email, 
+        birthDate: e.birthDate || "",
+        tags: e.tags,
+        carteira: e.carteira 
+      };
     });
-    //console.log({ allDatas });
     let wb = XLSX.utils.book_new();
     let ws = XLSX.utils.json_to_sheet(exportData);
     XLSX.utils.book_append_sheet(wb, ws, "Contatos");
@@ -207,34 +223,7 @@ const ContactImportWpModal = ({ isOpen, handleClose, selectedTags, hideNum, user
               {i18n.t("contactImportWpModal.buttons.import")}
             </Button>
           </div>
-          {/* <div className={classes.multFieldLine}>
-            <div style={{ minWidth: "100%" }}>
-              {contactsToImport?.length ?
-                <>
-                  <div className={classes.label}>
-                    <h4>{statusMessage}</h4>
-                    {currentContact?.name ?
-                      <Button
-                        fullWidth
-                        disabled
-                        size="small"
-                        color={currentContact?.error === "success" ? "primary" : "error"}
-                        variant="text"
-                      >
-                        {`${currentContact?.name} => ${currentContact?.number} `}
-                      </Button>
-                      : <></>}
-                  </div>
-                </> :
-                <>
-                  <label className={classes.label} htmlFor="contacts"> <AttachFileIcon /> <div> {i18n.t("contactImportWpModal.buttons.import")}</div> </label>
-                  <input className={classes.uploadInput} name='contacts' id='contacts' type="file" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    onChange={handleImportChange}
-                  />
-                </>
-              }
-            </div>
-          </div> */}
+
         </Box>
       </div>
 

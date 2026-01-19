@@ -12,7 +12,7 @@ export const createFlowDefault = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { flowIdWelcome, flowIdPhrase } = req.body;
+  const { flowIdWelcome, flowIdPhrase, flowIdInactiveTime } = req.body;
   const userId = parseInt(req.user.id);
   const { companyId } = req.user;
 
@@ -20,7 +20,8 @@ export const createFlowDefault = async (
     userId,
     companyId,
     flowIdWelcome,
-    flowIdPhrase
+    flowIdPhrase,
+    flowIdInactiveTime
   });
 
   return res.status(200).json(flow);
@@ -31,9 +32,9 @@ export const updateFlow = async (
   res: Response
 ): Promise<Response> => {
   const { companyId } = req.user;
-  const { flowIdWelcome, flowIdPhrase } = req.body;
+  const { flowIdWelcome, flowIdPhrase, flowIdInactiveTime } = req.body;
 
-  const flow = await UpdateFlowDefaultService({ companyId, flowIdWelcome, flowIdPhrase });
+  const flow = await UpdateFlowDefaultService({ companyId, flowIdWelcome, flowIdPhrase, flowIdInactiveTime });
 
   return res.status(200).json(flow);
 };
@@ -44,6 +45,7 @@ export const getFlows = async (
 ): Promise<Response> => {
   const { companyId } = req.user;
 
+  console.log("getFlows")
   const flows = await FlowsDefaultGetDataService({
     companyId
   });

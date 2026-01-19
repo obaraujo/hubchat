@@ -81,7 +81,7 @@ const FlowBuilderAddAudioModal = ({ open, onSave, onUpdate, data, close }) => {
         title: "Editar audio",
         btn: "Salvar"
       });
-      setPreview(import.meta.env.VITE_BACKEND_URL + '/public/' + data.data.url)
+      setPreview(process.env.REACT_APP_BACKEND_URL + '/public/' + data.data.url)
       setRecord(data.data.record)
       setActiveModal(true);
     } else if (open === "create") {
@@ -148,7 +148,7 @@ const FlowBuilderAddAudioModal = ({ open, onSave, onUpdate, data, close }) => {
       });
 
       setTimeout(async () => {
-        console.log(formData);
+        // console.log(formData);
         await api.post("/flowbuilder/audio", formData).then(res => {
           handleClose();
           onSave({

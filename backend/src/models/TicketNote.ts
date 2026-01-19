@@ -7,8 +7,7 @@ import {
   PrimaryKey,
   ForeignKey,
   BelongsTo,
-  AutoIncrement,
-	DataType
+  AutoIncrement
 } from "sequelize-typescript";
 
 import Contact from "./Contact";
@@ -19,28 +18,28 @@ import Ticket from "./Ticket";
 class TicketNote extends Model<TicketNote> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.TEXT)
+  @Column
   note: string;
 
   @ForeignKey(() => User)
-  @Column(DataType.INTEGER)
+  @Column
   userId: number;
 
   @BelongsTo(() => User)
   user: User;
 
   @ForeignKey(() => Contact)
-  @Column(DataType.INTEGER)
+  @Column
   contactId: number;
 
   @BelongsTo(() => Contact)
   contact: Contact;
 
   @ForeignKey(() => Ticket)
-  @Column(DataType.INTEGER)
+  @Column
   ticketId: number;
 
   @BelongsTo(() => Ticket)

@@ -27,6 +27,13 @@ interface Data {
   queueId: number | string;
   statusTicket: string;
   openTicket: string;
+  isRecurring?: boolean;
+  recurrenceType?: string;
+  recurrenceInterval?: number;
+  recurrenceDaysOfWeek?: string;
+  recurrenceDayOfMonth?: number;
+  recurrenceEndDate?: string;
+  maxExecutions?: number;
 }
 
 const UpdateService = async (data: Data): Promise<Campaign> => {
@@ -58,9 +65,9 @@ const UpdateService = async (data: Data): Promise<Campaign> => {
   await record.reload({
     include: [
       { model: ContactList },
-      { model: Whatsapp, attributes: ["id", "name"] },
+      { model: Whatsapp, attributes: ["id", "name", "color"] },
       { model: User, attributes: ["id", "name"] },
-      { model: Queue, attributes: ["id", "name"] },
+      { model: Queue, attributes: ["id", "name", "color"] },
     ]
   });
 

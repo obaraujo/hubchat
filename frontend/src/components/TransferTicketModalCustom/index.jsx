@@ -24,6 +24,7 @@ import ButtonWithSpinner from "../ButtonWithSpinner";
 import toastError from "../../errors/toastError";
 import useQueues from "../../hooks/useQueues";
 import UserStatusIcon from "../UserModal/statusIcon";
+import { isNil } from "lodash";
 
 const useStyles = makeStyles((theme) => ({
   maxWidth: {
@@ -113,11 +114,13 @@ const TransferTicketModalCustom = ({ modalOpen, onClose, ticketid, ticket }) => 
     try {
       let data = {};
 
-        data.userId = !selectedUser ? null : selectedUser.id;
-        data.status = !selectedUser ? "pending" : ticket.isGroup ? "group" : "open";
-        data.queueId = selectedQueue;
-        data.msgTransfer = msgTransfer ? msgTransfer : null;
-        data.isTransfered = true;
+      // ✅ CORRIGIDO: Em transferências manuais (isTransfered=true), SEMPRE passar o userId selecionado
+      // O backend é responsável por decidir se aplica randomização ou não
+      data.userId = !selectedUser ? null : selectedUser.id;
+      data.status = !selectedUser ? "pending" : ticket.isGroup ? "group" : "open";
+      data.queueId = selectedQueue;
+      data.msgTransfer = msgTransfer ? msgTransfer : null;
+      data.isTransfered = true;
 
       await api.put(`/tickets/${ticketid}`, data);
       setLoading(false);

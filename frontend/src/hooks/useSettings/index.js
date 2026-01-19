@@ -28,15 +28,12 @@ const useSettings = () => {
     return data;
   };
 
-  const getPublicSetting = async (key) => {
-    const params = {
-      token: "wtV"
-    }
-
+  const getPublicSetting = async (key, companyId = null) => {
+    const params = companyId ? { companyId } : {};
     const { data } = await openApi.request({
-        url: `/public-settings/${key}`,
-        method: 'GET',
-        params
+      url: `/public-settings/${key}`,
+      method: "GET",
+      params,
     });
     return data;
   };

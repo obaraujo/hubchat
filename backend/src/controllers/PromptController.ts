@@ -39,15 +39,15 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const [, token] = authHeader.split(" ");
   const decoded = verify(token, authConfig.secret);
   const { companyId } = decoded as TokenPayload;
-  const { name, apiKey, prompt, maxTokens, temperature, promptTokens, completionTokens, totalTokens, queueId, maxMessages,voice,voiceKey,voiceRegion } = req.body;
-  const promptTable = await CreatePromptService({ name, apiKey, prompt, maxTokens, temperature, promptTokens, completionTokens, totalTokens, queueId, maxMessages, companyId,voice,voiceKey,voiceRegion });
+  const { name, apiKey, prompt, maxTokens, temperature, promptTokens, completionTokens, totalTokens, queueId, maxMessages, voice, voiceKey, voiceRegion } = req.body;
+  const promptTable = await CreatePromptService({ name, apiKey, prompt, maxTokens, temperature, promptTokens, completionTokens, totalTokens, queueId, maxMessages, companyId, voice, voiceKey, voiceRegion });
 
   const io = getIO();
   io.of(String(companyId))
-  .emit(`company-${companyId}-prompt`, {
-    action: "update",
-    prompt: promptTable
-  });
+    .emit(`company-${companyId}-prompt`, {
+      action: "update",
+      prompt: promptTable
+    });
 
   return res.status(200).json(promptTable);
 };
@@ -78,10 +78,10 @@ export const update = async (
 
   const io = getIO();
   io.of(String(companyId))
-  .emit(`company-${companyId}-prompt`, {
-    action: "update",
-    prompt
-  });
+    .emit(`company-${companyId}-prompt`, {
+      action: "update",
+      prompt
+    });
 
   return res.status(200).json(prompt);
 };
@@ -104,10 +104,10 @@ export const remove = async (
 
     const io = getIO();
     io.of(String(companyId))
-  .emit(`company-${companyId}-prompt`, {
-      action: "delete",
-      intelligenceId: +promptId
-    });
+      .emit(`company-${companyId}-prompt`, {
+        action: "delete",
+        promptId: +promptId
+      });
 
     return res.status(200).json({ message: "Prompt deleted" });
   } catch (err) {

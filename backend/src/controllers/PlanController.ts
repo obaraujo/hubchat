@@ -47,6 +47,7 @@ type StorePlanData = {
   useOpenAi?: boolean;
   useIntegrations?: boolean;
   isPublic?: boolean;
+  useWhatsappOfficial?: boolean;
 };
 
 type UpdatePlanData = {
@@ -67,6 +68,7 @@ type UpdatePlanData = {
   useOpenAi?: boolean;
   useIntegrations?: boolean;
   isPublic?: boolean;
+  useWhatsappOfficial?: boolean;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {

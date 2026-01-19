@@ -22,32 +22,32 @@ import Queue from "./Queue";
 class Schedule extends Model<Schedule> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @Column(DataType.TEXT)
   body: string;
 
-  @Column(DataType.DATE)
+  @Column
   sendAt: Date;
 
-  @Column(DataType.DATE)
+  @Column
   sentAt: Date;
 
   @ForeignKey(() => Contact)
-  @Column(DataType.INTEGER)
+  @Column
   contactId: number;
 
   @ForeignKey(() => Ticket)
-  @Column(DataType.INTEGER)
+  @Column
   ticketId: number;
 
   @ForeignKey(() => User)
-  @Column(DataType.INTEGER)
+  @Column
   userId: number;
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @Column(DataType.STRING)
@@ -72,56 +72,69 @@ class Schedule extends Model<Schedule> {
   company: Company;
 
   @ForeignKey(() => User)
-  @Column(DataType.INTEGER)
+  @Column
   ticketUserId: number;
 
   @BelongsTo(() => User, "ticketUserId")
   ticketUser: User;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueId: number;
 
   @BelongsTo(() => Queue)
   queue: Queue;
 
-  @Column({ defaultValue: "closed", type:DataType.TEXT })
+  @Column({ defaultValue: "closed" })
   statusTicket: string;
 
-  @Column({ defaultValue: "disabled", type:DataType.TEXT })
+  @Column({ defaultValue: "disabled" })
   openTicket: string;
 
-  @Column(DataType.TEXT)
+  @Column
   mediaPath: string;
 
-  @Column(DataType.TEXT)
+  @Column
   mediaName: string;
 
   @ForeignKey(() => Whatsapp)
-  @Column(DataType.INTEGER)
+  @Column
   whatsappId: number;
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;
 
-  @Column(DataType.INTEGER)
+  @Column
   intervalo: number;
 
-  @Column(DataType.INTEGER)
+  @Column
   valorIntervalo: number;
 
-  @Column(DataType.INTEGER)
+  @Column
   enviarQuantasVezes: number;
 
-  @Column(DataType.INTEGER)
+  @Column
   tipoDias: number;
 
-  @Column(DataType.INTEGER)
+  @Column
   contadorEnvio: number;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   assinar: boolean;
+
+  // ✅ Campos para lembrete
+  @Column
+  reminderDate: Date;
+
+  @Column(DataType.TEXT)
+  reminderMessage: string;
+
+  @Column
+  reminderSentAt: Date;
+
+  @Column
+  reminderStatus: string;
 }
 
 export default Schedule;

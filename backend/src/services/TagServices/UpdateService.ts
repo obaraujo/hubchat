@@ -13,6 +13,7 @@ interface TagData {
   nextLaneId?: number;
   greetingMessageLane: string;
   rollbackLaneId?: number;
+  mediaFiles?: string;
 }
 
 interface Request {
@@ -34,7 +35,8 @@ const UpdateUserService = async ({
     timeLane,
     nextLaneId = null,
     greetingMessageLane,
-    rollbackLaneId = null} = tagData;
+    rollbackLaneId = null,
+    mediaFiles} = tagData;
 
   try {
     await schema.validate({ name });
@@ -42,7 +44,7 @@ const UpdateUserService = async ({
     throw new AppError(err.message);
   }
 
-  await tag.update({
+  const updateData: any = {
     name,
     color,
     kanban,
@@ -50,7 +52,14 @@ const UpdateUserService = async ({
     nextLaneId: String(nextLaneId) === "" ? null : nextLaneId,
     greetingMessageLane,
     rollbackLaneId: String(rollbackLaneId) === "" ? null : rollbackLaneId,
-  });
+  };
+
+  // Só atualizar mediaFiles se foi fornecido um valor
+  if (mediaFiles !== undefined) {
+    updateData.mediaFiles = mediaFiles;
+  }
+
+  await tag.update(updateData);
 
   await tag.reload();
   return tag;

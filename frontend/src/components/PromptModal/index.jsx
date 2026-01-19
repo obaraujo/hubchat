@@ -17,7 +17,7 @@ import { i18n } from "../../translate/i18n";
 import { MenuItem, FormControl, InputLabel, Select } from "@material-ui/core";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 import { InputAdornment, IconButton } from "@material-ui/core";
-import QueueSelectSingle from "../QueueSelectSingle";
+import QueueSelectSingle from "../../components/QueueSelectSingle";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";

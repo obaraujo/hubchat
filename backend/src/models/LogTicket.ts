@@ -20,7 +20,7 @@ import Queue from "./Queue";
 class LogTicket extends Model<LogTicket> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @Column(DataType.TEXT)
@@ -35,7 +35,7 @@ class LogTicket extends Model<LogTicket> {
   updatedAt: Date;
 
   @ForeignKey(() => Ticket)
-  @Column(DataType.INTEGER)
+  @Column
   ticketId: number;
 
   @BelongsTo(() => Ticket)
@@ -44,14 +44,14 @@ class LogTicket extends Model<LogTicket> {
   @ForeignKey(() => User)
   @Default(null)
   @AllowNull
-  @Column(DataType.INTEGER)
+  @Column
   userId: number;
 
   @BelongsTo(() => User)
   user: User;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueId: number;
 
   @BelongsTo(() => Queue)

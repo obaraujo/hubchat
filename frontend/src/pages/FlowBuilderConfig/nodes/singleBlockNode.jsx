@@ -7,9 +7,9 @@ import {
   LibraryBooks,
   Message,
   MicNone,
-  Videocam
+  Videocam,
 } from "@mui/icons-material";
-import React, { memo } from "react";
+import React, { memo, useContext } from "react";
 
 import { Handle } from "react-flow-renderer";
 import { useNodeStorage } from "../../../stores/useNodeStorage";
@@ -24,21 +24,21 @@ export default memo(({ data, isConnectable, id }) => {
         padding: "8px",
         borderRadius: "8px",
         border: "1px solid rgba(236, 88, 88, 0.25)",
-        boxShadow: "rgba(0, 0, 0, 0.05) 0px 3px 5px"
+        boxShadow: "rgba(0, 0, 0, 0.05) 0px 3px 5px",
       }}
     >
       <Handle
         type="target"
         position="left"
         style={{
-          background: "#0000FF",
+          background: "#9a00ed",
           width: "18px",
           height: "18px",
           top: "20px",
           left: "-12px",
-          cursor: 'pointer'
+          cursor: "pointer",
         }}
-        onConnect={params => console.log("handle onConnect", params)}
+        onConnect={(params) => console.log("handle onConnect", params)}
         isConnectable={isConnectable}
       >
         <ArrowForwardIos
@@ -46,9 +46,9 @@ export default memo(({ data, isConnectable, id }) => {
             color: "#ffff",
             width: "10px",
             height: "10px",
-            marginLeft: "3.5px",
+            marginLeft: "2.9px",
             marginBottom: "1px",
-            pointerEvents: "none"
+            pointerEvents: "none",
           }}
         />
       </Handle>
@@ -59,7 +59,7 @@ export default memo(({ data, isConnectable, id }) => {
           right: 5,
           top: 5,
           cursor: "pointer",
-          gap: 6
+          gap: 6,
         }}
       >
         <ContentCopy
@@ -83,7 +83,7 @@ export default memo(({ data, isConnectable, id }) => {
           color: "#ededed",
           fontSize: "16px",
           flexDirection: "row",
-          display: "flex"
+          display: "flex",
         }}
       >
         <LibraryBooks
@@ -92,18 +92,18 @@ export default memo(({ data, isConnectable, id }) => {
             height: "16px",
             marginRight: "4px",
             marginTop: "4px",
-            color: "#EC5858"
+            color: "#EC5858",
           }}
         />
         <div style={{ color: "#232323", fontSize: "16px" }}>Conteúdo</div>
       </div>
       <div style={{ color: "#232323", fontSize: "12px", width: 180 }}>
-        {data.seq.map(item => (
+        {data.seq.map((item) => (          
           <div
             style={{
               backgroundColor: "#F6EEEE",
               marginBottom: "3px",
-              borderRadius: "5px"
+              borderRadius: "5px",
             }}
           >
             {item.includes("message") && (
@@ -113,7 +113,7 @@ export default memo(({ data, isConnectable, id }) => {
                     display: "flex",
                     position: "relative",
                     flexDirection: "row",
-                    justifyContent: "center"
+                    justifyContent: "center",
                   }}
                 >
                   <Message sx={{ color: "#EC5858" }} />
@@ -124,12 +124,13 @@ export default memo(({ data, isConnectable, id }) => {
                     textOverflow: "ellipsis",
                     fontSize: "10px",
                     whiteSpace: "nowrap",
-                    overflow: "hidden"
+                    overflow: "hidden",
                   }}
                 >
                   {
-                    data.elements.filter(itemLoc => itemLoc.number === item)[0]
-                      .value
+                    data.elements.filter(
+                      (itemLoc) => itemLoc.number === item
+                    )[0].value
                   }
                 </Typography>
               </div>
@@ -141,7 +142,7 @@ export default memo(({ data, isConnectable, id }) => {
                     display: "flex",
                     position: "relative",
                     flexDirection: "row",
-                    justifyContent: "center"
+                    justifyContent: "center",
                   }}
                 >
                   <AccessTime sx={{ color: "#EC5858" }} />
@@ -152,12 +153,13 @@ export default memo(({ data, isConnectable, id }) => {
                     textOverflow: "ellipsis",
                     fontSize: "10px",
                     whiteSpace: "nowrap",
-                    overflow: "hidden"
+                    overflow: "hidden",
                   }}
                 >
                   {
-                    data.elements.filter(itemLoc => itemLoc.number === item)[0]
-                      .value
+                    data.elements.filter(
+                      (itemLoc) => itemLoc.number === item
+                    )[0].value
                   }{" "}
                   segundos
                 </Typography>
@@ -170,7 +172,7 @@ export default memo(({ data, isConnectable, id }) => {
                     display: "flex",
                     position: "relative",
                     flexDirection: "row",
-                    justifyContent: "center"
+                    justifyContent: "center",
                   }}
                 >
                   <Image sx={{ color: "#EC5858" }} />
@@ -181,12 +183,13 @@ export default memo(({ data, isConnectable, id }) => {
                     textOverflow: "ellipsis",
                     fontSize: "10px",
                     whiteSpace: "nowrap",
-                    overflow: "hidden"
+                    overflow: "hidden",
                   }}
                 >
                   {
-                    data.elements.filter(itemLoc => itemLoc.number === item)[0]
-                      .original
+                    data.elements.filter(
+                      (itemLoc) => itemLoc.number === item
+                    )[0].original
                   }
                 </Typography>
               </div>
@@ -198,7 +201,7 @@ export default memo(({ data, isConnectable, id }) => {
                     display: "flex",
                     position: "relative",
                     flexDirection: "row",
-                    justifyContent: "center"
+                    justifyContent: "center",
                   }}
                 >
                   <MicNone sx={{ color: "#EC5858" }} />
@@ -209,12 +212,13 @@ export default memo(({ data, isConnectable, id }) => {
                     textOverflow: "ellipsis",
                     fontSize: "10px",
                     whiteSpace: "nowrap",
-                    overflow: "hidden"
+                    overflow: "hidden",
                   }}
                 >
                   {
-                    data.elements.filter(itemLoc => itemLoc.number === item)[0]
-                      .original
+                    data.elements.filter(
+                      (itemLoc) => itemLoc.number === item
+                    )[0].original
                   }
                 </Typography>
               </div>
@@ -226,7 +230,7 @@ export default memo(({ data, isConnectable, id }) => {
                     display: "flex",
                     position: "relative",
                     flexDirection: "row",
-                    justifyContent: "center"
+                    justifyContent: "center",
                   }}
                 >
                   <Videocam sx={{ color: "#EC5858" }} />
@@ -237,12 +241,42 @@ export default memo(({ data, isConnectable, id }) => {
                     textOverflow: "ellipsis",
                     fontSize: "10px",
                     whiteSpace: "nowrap",
-                    overflow: "hidden"
+                    overflow: "hidden",
                   }}
                 >
                   {
-                    data.elements.filter(itemLoc => itemLoc.number === item)[0]
-                      .original
+                    data.elements.filter(
+                      (itemLoc) => itemLoc.number === item
+                    )[0].original
+                  }
+                </Typography>
+              </div>
+            )}
+            {item.includes("document") && (
+              <div style={{ gap: "5px", padding: "6px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    position: "relative",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                  }}
+                >
+                  <LibraryBooks sx={{ color: "#EC5858" }} />
+                </div>
+                <Typography
+                  textAlign={"center"}
+                  sx={{
+                    textOverflow: "ellipsis",
+                    fontSize: "10px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                  }}
+                >
+                  {
+                    data.elements.filter(
+                      (itemLoc) => itemLoc.number === item
+                    )[0].original
                   }
                 </Typography>
               </div>
@@ -255,12 +289,12 @@ export default memo(({ data, isConnectable, id }) => {
         position="right"
         id="a"
         style={{
-          background: "#0000FF",
+          background: "#9a00ed",
           width: "18px",
           height: "18px",
           top: "90%",
           right: "-11px",
-          cursor: 'pointer'
+          cursor: "pointer",
         }}
         isConnectable={isConnectable}
       >
@@ -271,7 +305,7 @@ export default memo(({ data, isConnectable, id }) => {
             height: "10px",
             marginLeft: "2.9px",
             marginBottom: "1px",
-            pointerEvents: "none"
+            pointerEvents: "none",
           }}
         />
       </Handle>

@@ -25,10 +25,9 @@ import { FlowBuilderModel } from "./FlowBuilder";
 
 @Table
 class Whatsapp extends Model<Whatsapp> {
-	[x: string]: any;
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @AllowNull
@@ -42,27 +41,27 @@ class Whatsapp extends Model<Whatsapp> {
   @Column(DataType.TEXT)
   qrcode: string;
 
-  @Column(DataType.TEXT)
+  @Column
   status: string;
 
-  @Column(DataType.TEXT)
+  @Column
   battery: string;
 
-  @Column(DataType.BOOLEAN)
+  @Column
   plugged: boolean;
 
-  @Column(DataType.INTEGER)
+  @Column
   retries: number;
 
-  @Column(DataType.TEXT)
+  @Column
   number: string;
 
   @Default("")
   @Column(DataType.TEXT)
   greetingMessage: string;
 
-  @Column(DataType.TEXT)
-  greetingMediaAttachment: string
+  @Column
+  greetingMediaAttachment: string;
 
   @Default("")
   @Column(DataType.TEXT)
@@ -76,17 +75,17 @@ class Whatsapp extends Model<Whatsapp> {
   @Column(DataType.TEXT)
   outOfHoursMessage: string;
 
-  @Column({ defaultValue: "stable", type:DataType.TEXT })
+  @Column({ defaultValue: "stable" })
   provider: string;
 
   @Default(false)
   @AllowNull
-  @Column(DataType.BOOLEAN)
+  @Column
   isDefault: boolean;
 
   @Default(false)
   @AllowNull
-  @Column(DataType.BOOLEAN)
+  @Column
   allowGroup: boolean;
 
   @CreatedAt
@@ -105,13 +104,13 @@ class Whatsapp extends Model<Whatsapp> {
   whatsappQueues: WhatsappQueue[];
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @BelongsTo(() => Company)
   company: Company;
 
-  @Column(DataType.TEXT)
+  @Column
   token: string;
 
   @Column(DataType.TEXT)
@@ -130,78 +129,85 @@ class Whatsapp extends Model<Whatsapp> {
   channel: string;
 
   @Default(3)
-  @Column(DataType.INTEGER)
+  @Column
   maxUseBotQueues: number;
 
   @Default(0)
-  @Column(DataType.TEXT)
+  @Column
   timeUseBotQueues: string;
 
   @AllowNull(true)
   @Default(0)
-  @Column(DataType.TEXT)
+  @Column
   expiresTicket: string;
 
   @Default(0)
-  @Column(DataType.INTEGER)
+  @Column
   timeSendQueue: number;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   sendIdQueue: number;
 
   @BelongsTo(() => Queue)
   queueSend: Queue;
 
-  @Column(DataType.TEXT)
+  @Column
   timeInactiveMessage: string;
 
-  @Column(DataType.TEXT)
+  @Column
   inactiveMessage: string;
 
-  @Column(DataType.TEXT)
+  @Column
   ratingMessage: string;
 
-  @Column(DataType.INTEGER)
+  @Column
   maxUseBotQueuesNPS: number;
 
-  @Column(DataType.INTEGER)
+  @Column
   expiresTicketNPS: number;
 
-  @Column(DataType.TEXT)
+  @Column
   whenExpiresTicket: string;
 
-  @Column(DataType.TEXT)
+  @Column
   expiresInactiveMessage: string;
 
   @Default("disabled")
-  @Column(DataType.TEXT)
+  @Column
   groupAsTicket: string;
-  
-  @Column(DataType.DATE)
+
+  @Column
   importOldMessages: Date;
 
-  @Column(DataType.DATE)
+  @Column
   importRecentMessages: Date;
 
-  @Column(DataType.TEXT)
+  @Column
   statusImportMessages: string;
-  
-  @Column(DataType.BOOLEAN)
-  closedTicketsPostImported:boolean;
 
-  @Column(DataType.BOOLEAN)
-  importOldMessagesGroups:boolean;
+  @Column
+  closedTicketsPostImported: boolean;
 
-  @Column(DataType.INTEGER)
+  @Column
+  importOldMessagesGroups: boolean;
+
+  @Column
   timeCreateNewTicket: number;
 
   @ForeignKey(() => QueueIntegrations)
-  @Column(DataType.INTEGER)
+  @Column
   integrationId: number;
 
   @BelongsTo(() => QueueIntegrations)
   queueIntegrations: QueueIntegrations;
+
+  @ForeignKey(() => QueueIntegrations)
+  @Column
+  integrationTypeId: number;
+
+  @BelongsTo(() => QueueIntegrations)
+  integrationType: QueueIntegrations;
 
   @Column({
     type: DataType.JSONB
@@ -209,38 +215,90 @@ class Whatsapp extends Model<Whatsapp> {
   schedules: [];
 
   @ForeignKey(() => Prompt)
-  @Column(DataType.INTEGER)
+  @Column
   promptId: number;
 
   @BelongsTo(() => Prompt)
   prompt: Prompt;
 
-  @Column(DataType.TEXT)
+  @Column
   collectiveVacationMessage: string;
 
-  @Column(DataType.TEXT)
+  @Column
   collectiveVacationStart: string;
 
-  @Column(DataType.TEXT)
+  @Column
   collectiveVacationEnd: string;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueIdImportMessages: number;
 
   @BelongsTo(() => Queue)
   queueImport: Queue;
 
+  @Column
+  phone_number_id: string;
+
+  @Column
+  waba_id: string;
+
+  @Column(DataType.TEXT)
+  send_token: string;
+
+  @Column
+  business_id: string;
+
+  @Column
+  phone_number: string;
+
+  @Column
+  waba_webhook: string;
+
+  @Column
+  waba_webhook_id: number;
+
+  @Default("")
+  @Column
+  color: string;
+
+  @Column
+  flowInactiveTime: number;
+
+  @Default(1)
+  @Column
+  maxUseInactiveTime: number;
+
   @ForeignKey(() => FlowBuilderModel)
-  @Column(DataType.INTEGER)
+  @Column
   flowIdNotPhrase: number;
 
   @ForeignKey(() => FlowBuilderModel)
-  @Column(DataType.INTEGER)
+  @Column
   flowIdWelcome: number;
 
   @BelongsTo(() => FlowBuilderModel)
-  flowBuilder: FlowBuilderModel
+  flowBuilder: FlowBuilderModel;
+
+  @ForeignKey(() => FlowBuilderModel)
+  @Column
+  flowIdInactiveTime: number;
+
+  @Column
+  timeToReturnQueue: number;
+
+  @Column
+  triggerIntegrationOnClose: boolean;
+
+  @ForeignKey(() => FlowBuilderModel)
+  @Column
+  timeAwaitActiveFlowId: number;
+
+  @Column
+  timeAwaitActiveFlow: number;
+
+  @Column
+  wavoip: string;
 }
 
 export default Whatsapp;

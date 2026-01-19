@@ -4,13 +4,24 @@ import Ticket from "../models/Ticket";
 import User from "../models/User";
 import Queue from "../models/Queue";
 
-const CheckContactOpenTickets = async (contactId, whatsappId, companyId): Promise<void> => {
+const CheckContactOpenTickets = async (contactId, whatsappId): Promise<void> => {
   const ticket = await Ticket.findOne({
-    where: { contactId, whatsappId, companyId, status: { [Op.or]: ["open", "pending"] } }
+    where: { contactId, status: { [Op.or]: ["open", "pending", "chatbot"]}, whatsappId},
+      include:  [{
+        model: Queue,
+        as: "queue",
+        attributes: ["id", "name", "color"]
+      },
+      {
+        model: User,
+        as: "user",
+        attributes: ["id", "name"]
+      }]
   });
 
   if (ticket) {
-    throw new AppError("ERR_OTHER_OPEN_TICKET");
+    // throw new AppError(`CONTATO COM TICKET ABERTO POR OUTRO USUÁRIO: ${user?.name.toUpperCase( )}`);
+    throw new AppError(JSON.stringify(ticket), 409);
   }
 };
 

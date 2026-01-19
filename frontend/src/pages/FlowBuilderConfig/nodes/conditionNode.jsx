@@ -26,7 +26,7 @@ export default memo(({ data, isConnectable }) => {
       <Handle
         type="target"
         position="left"
-        style={{ background: "#0000FF" }}
+        style={{ background: "#9a00ed" }}
         onConnect={(params) => console.log("handle onConnect", params)}
         isConnectable={isConnectable}
       />
@@ -43,14 +43,14 @@ export default memo(({ data, isConnectable }) => {
         type="source"
         position="right"
         id="a"
-        style={{ top: 10, background: "#0000FF" }}
+        style={{ top: 10, background: "#9a00ed" }}
         isConnectable={isConnectable}
       />
       <Handle
         type="source"
         position="right"
         id="b"
-        style={{ bottom: 10, top: "auto", background: "#0000FF" }}
+        style={{ bottom: 10, top: "auto", background: "#9a00ed" }}
         isConnectable={isConnectable}
       />
     </div>

@@ -6,49 +6,87 @@ import {
     DialogActions,
     Typography,
     IconButton,
-    TextField,
     Card,
     CardContent,
-} from '@mui/material';
-import { Cancel, Search, Send, SkipNext, SkipPrevious } from '@material-ui/icons';
+    Box,
+    Divider,
+    LinearProgress,
+    TextField
+} from '@material-ui/core';
+import { Cancel, NavigateBefore, NavigateNext, Send } from '@material-ui/icons';
 import AudioModal from '../AudioModal';
-import { Document, Page, pdfjs } from 'react-pdf';
 import { makeStyles } from "@material-ui/core/styles";
-import { grey } from '@material-ui/core/colors';
-import { InputAdornment, InputBase } from '@material-ui/core';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const useStyles = makeStyles((theme) => ({
-    root: {
-        display: "flex",
-        flexWrap: "wrap",
-    },
     modal: {
-        background: theme.palette.background.default,
+        backgroundColor: theme.palette.background.paper,
     },
-    messageInputWrapperPrivate: {
-        padding: 6,
-        marginRight: 7,
-        background: theme.palette.background.paper,
-        display: "flex",
-        borderRadius: 20,
-        flex: 1,
-        position: "relative",
+    dialogPaper: {
+        borderRadius: 12,
+        overflow: 'hidden',
     },
-    buttonEnable: {
-        color: theme.mode === 'light' ? "grey" : "#eee",
+    card: {
+        borderRadius: 12,
+        boxShadow: 'none',
+        backgroundColor: 'transparent',
     },
-    buttonDisable: {
-        color: grey[400]
-    }
+    mediaContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '400px',
+        backgroundColor: theme.palette.grey[100],
+        position: 'relative',
+        overflow: 'hidden',
+    },
+    mediaContent: {
+        maxWidth: '100%',
+        maxHeight: '100%',
+        objectFit: 'contain',
+    },
+    fileName: {
+        padding: theme.spacing(1, 2),
+        backgroundColor: theme.palette.background.paper,
+        textAlign: 'center',
+        fontWeight: 500,
+    },
+    captionInput: {
+        padding: theme.spacing(2),
+        '& .MuiOutlinedInput-root': {
+            borderRadius: 20,
+            backgroundColor: theme.palette.background.paper,
+        },
+        '& .MuiOutlinedInput-input': {
+            padding: theme.spacing(1.5, 2),
+        },
+    },
+    actions: {
+        padding: theme.spacing(1, 2),
+        backgroundColor: theme.palette.background.paper,
+        borderTop: `1px solid ${theme.palette.divider}`,
+    },
+    navigationButton: {
+        color: theme.palette.text.secondary,
+        '&:hover': {
+            backgroundColor: theme.palette.action.hover,
+        },
+    },
+    disabledButton: {
+        color: theme.palette.action.disabled,
+    },
+    activeButton: {
+        color: theme.palette.primary.main,
+    },
+    paginationText: {
+        margin: theme.spacing(0, 1),
+        color: theme.palette.text.secondary,
+    },
 }));
 
 const MessageUploadMedias = ({ isOpen, files, onClose, onSend, onCancelSelection }) => {
     const classes = useStyles();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [captions, setCaptions] = useState(files.map(() => ''));
-    const [numPages, setNumPages] = React.useState(null);
     const [componentMounted, setComponentMounted] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [firstTyping, setFirstTyping] = useState(false);
@@ -57,10 +95,6 @@ const MessageUploadMedias = ({ isOpen, files, onClose, onSend, onCancelSelection
         setFirstTyping(true);
         setComponentMounted(true);
     }, []);
-
-    const onDocumentLoadSuccess = ({ numPages }) => {
-        setNumPages(numPages);
-    };
 
     const handleClose = () => {
         onClose();
@@ -111,152 +145,67 @@ const MessageUploadMedias = ({ isOpen, files, onClose, onSend, onCancelSelection
         }
         if (firstTyping) {
             const currentFile = files[currentIndex];
+            
             if (currentFile.type.startsWith('image')) {
                 return (
                     <>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                height: "400px"
-                            }}
-                            className={classes.modal}
-                        >
+                        <Box className={classes.mediaContainer}>
                             <img
                                 alt={`Imagem ${currentIndex + 1}`}
                                 src={URL.createObjectURL(currentFile)}
-                                style={{
-                                    maxWidth: "600px",
-                                    maxHeight: "400px",
-                                }}
+                                className={classes.mediaContent}
                             />
-                        </div>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                            className={classes.modal}
-
-                        >
-                            <Typography variant="h6">{currentFile.name}</Typography>
-                        </div>
-                    </>
-
-                );
-            } else if (currentFile.type === 'application/pdf') {
-                return (
-                    <>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                height: '400px'
-                            }}
-                            className={classes.modal}
-
-                        >
-                            <Document file={URL.createObjectURL(currentFile)} onLoadSuccess={onDocumentLoadSuccess} >
-                                <Page pageNumber={1}
-                                    width={200}
-                                    height={300}
-                                />
-                            </Document>
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                            className={classes.modal}
-
-                        >
-                            <Typography variant="h6">{currentFile.name}</Typography>
-                        </div>
+                        </Box>
+                        <Typography variant="subtitle1" className={classes.fileName}>
+                            {currentFile.name}
+                        </Typography>
                     </>
                 );
             } else if (currentFile.type.startsWith('video')) {
                 return (
                     <>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                height: '400px',
-                            }}
-                            className={classes.modal}
-
-                        >
+                        <Box className={classes.mediaContainer}>
                             <video
                                 src={URL.createObjectURL(currentFile)}
-                                controls={true}
+                                controls
                                 volume={localStorage.getItem("volume")}
-                                style={{
-                                    maxWidth: "600px",
-                                    maxHeight: "400px",
-                                }}
+                                className={classes.mediaContent}
                             />
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                            className={classes.modal}
-
-                        >
-                            <Typography variant="h6">{currentFile.name}</Typography>
-                        </div>
+                        </Box>
+                        <Typography variant="subtitle1" className={classes.fileName}>
+                            {currentFile.name}
+                        </Typography>
                     </>
                 );
             } else if (currentFile.type.startsWith('audio')) {
                 return (
-                    <><div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            height: '400px',
-                        }}
-                        className={classes.modal}
-
-                    >
-                        <AudioModal url={URL.createObjectURL(currentFile)} />
-                    </div>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                            className={classes.modal}
-
-                        >
-                            <Typography variant="h6">{currentFile.name}</Typography>
-                        </div>
+                    <>
+                        <Box className={classes.mediaContainer}>
+                            <AudioModal url={URL.createObjectURL(currentFile)} />
+                        </Box>
+                        <Typography variant="subtitle1" className={classes.fileName}>
+                            {currentFile.name}
+                        </Typography>
                     </>
                 );
             } else {
+                // Tratamento para PDF e outros tipos de arquivo sem visualização específica
                 return (
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            height: '400px', // Altura desejada para vídeos, documentos e áudios
-                        }}
-                        className={classes.modal}
-
-                    >
-                        <CardContent className={classes.modal}
-                        >
-                            <Typography variant="h6">Visualização não disponível</Typography>
-                            <Typography variant="h6">{currentFile.name}</Typography>
-                        </CardContent>
-                    </div>
+                    <>
+                        <Box className={classes.mediaContainer}>
+                            <CardContent>
+                                <Typography variant="h6" color="textSecondary" align="center">
+                                    Visualização não disponível
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary" align="center">
+                                    {currentFile.type}
+                                </Typography>
+                            </CardContent>
+                        </Box>
+                        <Typography variant="subtitle1" className={classes.fileName}>
+                            {currentFile.name}
+                        </Typography>
+                    </>
                 );
             }
         }
@@ -265,10 +214,7 @@ const MessageUploadMedias = ({ isOpen, files, onClose, onSend, onCancelSelection
 
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && event.shiftKey) {
-            // const newCaptions = captions.slice();
-            // newCaptions[currentIndex] += '\n';
-            // setCaptions(newCaptions);
-            return
+            return;
         }
         switch (event.key) {
             case 'Escape':
@@ -287,51 +233,72 @@ const MessageUploadMedias = ({ isOpen, files, onClose, onSend, onCancelSelection
                 break;
         }
     };
+
     return (
-        <div className={classes.modal}>
-            <Dialog
-                open={isOpen}
-                fullWidth
-                maxWidth="md"
-                scroll="paper"
-            >
-                <DialogContent className={classes.modal}>
-                    <Card>
-                        {renderFileContent}
-                        <CardContent className={classes.modal}>
-                            <div className={classes.messageInputWrapperPrivate}>
-                                <InputBase
-                                    placeholder="Legenda (opcional)"
-                                    fullWidth
-                                    multiline
-                                    minRows={1}
-                                    maxRows={5}
-                                    value={captions[currentIndex]}
-                                    onChange={handleCaptionChange}
-                                    onBlur={handleTextFieldBlur}
-                                    autoFocus
-                                    onKeyDown={handleKeyDown}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </DialogContent>
-                <DialogActions className={classes.modal}>
-                    <IconButton onClick={handlePrev} disabled={currentIndex === 0}>
-                        <SkipPrevious className={currentIndex === 0 ? classes.buttonDisable : classes.buttonEnable} />
-                    </IconButton>
-                    <IconButton onClick={onCancelSelection} >
-                        <Cancel className={classes.buttonEnable} />
-                    </IconButton>
-                    <IconButton onClick={handleSend} >
-                        <Send className={classes.buttonEnable} />
-                    </IconButton>
-                    <IconButton onClick={handleNext} disabled={currentIndex === files.length - 1}>
-                        <SkipNext className={currentIndex === files.length - 1 ? classes.buttonDisable : classes.buttonEnable} />
-                    </IconButton>
-                </DialogActions>
-            </Dialog>
-        </div>
+        <Dialog
+            open={isOpen}
+            fullWidth
+            maxWidth="md"
+            onClose={handleClose}
+            classes={{ paper: classes.dialogPaper }}
+        >
+            <Card className={classes.card}>
+                {renderFileContent}
+                
+                <Divider />
+                
+                <Box className={classes.captionInput}>
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        placeholder="Adicione uma legenda (opcional)"
+                        multiline
+                        rows={2}
+                        rowsMax={4}
+                        value={captions[currentIndex]}
+                        onChange={handleCaptionChange}
+                        onBlur={handleTextFieldBlur}
+                        autoFocus
+                        onKeyDown={handleKeyDown}
+                    />
+                </Box>
+                
+                <Box className={classes.actions}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Box display="flex" alignItems="center">
+                            <IconButton 
+                                onClick={handlePrev} 
+                                disabled={currentIndex === 0}
+                                className={currentIndex === 0 ? classes.disabledButton : classes.navigationButton}
+                            >
+                                <NavigateBefore />
+                            </IconButton>
+                            
+                            <Typography variant="body2" className={classes.paginationText}>
+                                {currentIndex + 1} / {files.length}
+                            </Typography>
+                            
+                            <IconButton 
+                                onClick={handleNext} 
+                                disabled={currentIndex === files.length - 1}
+                                className={currentIndex === files.length - 1 ? classes.disabledButton : classes.navigationButton}
+                            >
+                                <NavigateNext />
+                            </IconButton>
+                        </Box>
+                        
+                        <Box display="flex">
+                            <IconButton onClick={onCancelSelection} className={classes.navigationButton}>
+                                <Cancel />
+                            </IconButton>
+                            <IconButton onClick={handleSend} className={classes.activeButton}>
+                                <Send />
+                            </IconButton>
+                        </Box>
+                    </Box>
+                </Box>
+            </Card>
+        </Dialog>
     );
 };
 

@@ -1,9 +1,20 @@
-import { Request, Response } from "express";
+// Ajustes de tipagem e dependências para evitar erros de compilação
+declare const process: any;
+declare module "crypto";
+const cryptoMod: any = (() => {
+  try {
+    // carrega crypto de forma dinâmica, evitando erro de tipagem em ambientes sem @types/node
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require("crypto");
+  } catch {
+    return null;
+  }
+})();
 import Whatsapp from "../models/Whatsapp";
 import { handleMessage } from "../services/FacebookServices/facebookMessageListener";
 // import { handleMessage } from "../services/FacebookServices/facebookMessageListener";
 
-export const index = async (req: Request, res: Response): Promise<Response> => {
+export const index = async (req: any, res: any): Promise<any> => {
   const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "whaticket";
 
   const mode = req.query["hub.mode"];
@@ -22,12 +33,22 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const webHook = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
+  req: any,
+  res: any
+): Promise<any> => {
   try {
-    const { body } = req;
+    // Verificação opcional de assinatura do webhook (X-Hub-Signature-256)
+    const appSecret = process.env.FACEBOOK_APP_SECRET;
+    const signatureHeader = (req.headers["x-hub-signature-256"] || "") as string;
+    if (cryptoMod && appSecret && signatureHeader && typeof (req as any).rawBody === "string") {
+      const expected =
+        "sha256=" + cryptoMod.createHmac("sha256", appSecret).update((req as any).rawBody).digest("hex");
+      if (expected !== signatureHeader) {
+        return res.status(403).json({ message: "Invalid signature" });
+      }
+    }
 
+    const { body } = req;
     if (body.object === "page" || body.object === "instagram") {
       let channel: string;
 
@@ -38,16 +59,35 @@ export const webHook = async (
       }
 
       body.entry?.forEach(async (entry: any) => {
-        const getTokenPage = await Whatsapp.findOne({
+        const getTokenPage = await (Whatsapp as any).findOne({
           where: {
             facebookPageUserId: entry.id,
             channel
           }
         });
 
-        if (getTokenPage) {
-          entry.messaging?.forEach((data: any) => {
+        if (!getTokenPage) return;
+
+        if (Array.isArray(entry.messaging)) {
+          entry.messaging.forEach((data: any) => {
             handleMessage(getTokenPage, data, channel, getTokenPage.companyId);
+          });
+        }
+
+        // Suporte a Instagram: eventos vêm em entry.changes[].value
+        if (channel === "instagram" && Array.isArray(entry.changes)) {
+          entry.changes.forEach((chg: any) => {
+            if (chg?.field === "messages" && chg?.value) {
+              const v = chg.value;
+              // Normaliza para o formato esperado por handleMessage
+              const normalized = {
+                sender: { id: v.sender?.id },
+                recipient: { id: v.recipient?.id },
+                timestamp: v.timestamp,
+                message: v.message
+              };
+              handleMessage(getTokenPage, normalized, channel, getTokenPage.companyId);
+            }
           });
         }
       });

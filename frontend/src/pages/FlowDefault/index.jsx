@@ -129,6 +129,7 @@ const FlowDefault = () => {
   const [flowSelectedWelcome, setFlowSelectedWelcome] = useState(null);
 
   const [flowSelectedPhrase, setFlowSelectedPhrase] = useState(null);
+  const [flowSelectedInactiveTime, setFlowSelectedInactiveTime] = useState(null);
 
   const [hasMore, setHasMore] = useState(false);
   const [reloadData, setReloadData] = useState(false);
@@ -160,8 +161,8 @@ const FlowDefault = () => {
         } else {
           setFlowSelectedWelcome()
         }
-
       }
+
       if (res.data.flow?.flowIdNotPhrase) {
         const flowName = flowData.filter(item => item.id === res.data.flow.flowIdNotPhrase)
         if (flowName.length > 0) {
@@ -169,7 +170,15 @@ const FlowDefault = () => {
         } else {
           setFlowSelectedPhrase();
         }
+      }
 
+      if (res.data.flow?.flowIdInactiveTime) {
+        const flowName = flowData.filter(item => item.id === res.data.flow.flowIdInactiveTime)
+        if (flowName.length > 0) {
+          setFlowSelectedInactiveTime(flowName[0].name);
+        } else {
+          setFlowSelectedInactiveTime();
+        }
       }
       setLoading(false)
     });
@@ -226,24 +235,33 @@ const FlowDefault = () => {
   };
 
   const handleSaveDefault = async () => {
-    console.log(configExist)
+    // console.log(configExist)
 
     let idWelcome = flowsDataObj.filter(item => item.name === flowSelectedWelcome)
     let idPhrase = flowsDataObj.filter(item => item.name === flowSelectedPhrase)
+    let idInactiveTime = flowsDataObj.filter(item => item.name === flowSelectedInactiveTime)
+    
     if (idWelcome.length === 0) {
       idWelcome = null
     } else {
       idWelcome = idWelcome[0].id
     }
+    
     if (idPhrase.length === 0) {
       idPhrase = null
     } else {
       idPhrase = idPhrase[0].id
     }
 
+    if (idInactiveTime.length === 0) {
+      idInactiveTime = null
+    } else {
+      idInactiveTime = idInactiveTime[0].id
+    }
+
     if (configExist) {
       try {
-        await api.put(`/flowdefault`, { flowIdWelcome: idWelcome, flowIdPhrase: idPhrase }).then(res => {
+        await api.put(`/flowdefault`, { flowIdWelcome: idWelcome, flowIdPhrase: idPhrase, flowIdInactiveTime: idInactiveTime }).then(res => {
           setDeletingContact(null);
           setReloadData(old => !old);
         });
@@ -253,7 +271,7 @@ const FlowDefault = () => {
       }
     } else {
       try {
-        await api.post(`/flowdefault`, { flowIdWelcome: idWelcome, flowIdPhrase: idPhrase }).then(res => {
+        await api.post(`/flowdefault`, { flowIdWelcome: idWelcome, flowIdPhrase: idPhrase, flowIdInactiveTime: idInactiveTime }).then(res => {
           setDeletingContact(null);
           setReloadData(old => !old);
         });

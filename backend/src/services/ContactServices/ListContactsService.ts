@@ -1,14 +1,14 @@
 import { Sequelize, fn, col, where, Op, Filterable } from "sequelize";
 import Contact from "../../models/Contact";
-import Ticket from "../../models/Ticket";
 import ContactTag from "../../models/ContactTag";
-
-import { intersection } from "lodash";
 import Tag from "../../models/Tag";
+import ContactCustomField from "../../models/ContactCustomField";
 import removeAccents from "remove-accents";
-import Whatsapp from "../../models/Whatsapp";
+import { intersection } from "lodash";
+import ContactWallet from "../../models/ContactWallet";
 import User from "../../models/User";
-import ShowUserService from "../UserServices/ShowUserService";
+import Queue from "../../models/Queue";
+import FindCompanySettingsService from "../CompaniesSettings/FindCompanySettingsService";
 
 interface Request {
   searchParam?: string;
@@ -25,18 +25,25 @@ interface Response {
   hasMore: boolean;
 }
 
-const ListContactsService = async ({
-  searchParam = "",
-  pageNumber = "1",
+const buildWhereCondition = async ({
+  searchParam,
   companyId,
   tagsIds,
   isGroup,
   userId
-}: Request): Promise<Response> => {
-  let whereCondition: Filterable["where"];
+}: Request): Promise<Filterable["where"]> => {
+
+  const userProfile = await User.findOne({ where: { id: userId }, attributes: ["profile"] });
+
+  const settings = await FindCompanySettingsService({
+    companyId
+  });
+
+  const DirectTicketsToWallets = settings.DirectTicketsToWallets;
+
+  let whereCondition: Filterable["where"] = { companyId };
 
   if (searchParam) {
-    // console.log("searchParam", searchParam)
     const sanitizedSearchParam = removeAccents(searchParam.toLocaleLowerCase().trim());
     whereCondition = {
       ...whereCondition,
@@ -53,35 +60,14 @@ const ListContactsService = async ({
     };
   }
 
-  whereCondition = {
-    ...whereCondition,
-    companyId
-  };
-
-  // const user = await ShowUserService(userId, companyId);
-
-  // console.log(user)
-  // if (user.whatsappId) {
-  //   whereCondition = {
-  //     ...whereCondition,
-  //     whatsappId: user.whatsappId
-  //   };
-  // }
-
   if (Array.isArray(tagsIds) && tagsIds.length > 0) {
-
-    const contactTagFilter: any[] | null = [];
-    // for (let tag of tags) {
     const contactTags = await ContactTag.findAll({
-      where: { tagId: { [Op.in]: tagsIds } }
+      where: { tagId: { [Op.in]: tagsIds } },
+      attributes: ["contactId"]
     });
-    if (contactTags) {
-      contactTagFilter.push(contactTags.map(t => t.contactId));
-    }
-    // }
 
-    const contactTagsIntersection: number[] = intersection(...contactTagFilter);
-
+    const contactTagsIntersection = intersection(contactTags.map(t => t.contactId));
+    
     whereCondition = {
       ...whereCondition,
       id: {
@@ -90,44 +76,93 @@ const ListContactsService = async ({
     };
   }
 
+  if (DirectTicketsToWallets && userProfile && userProfile.profile === "user" && userId) {
+    whereCondition = {
+      ...whereCondition,
+      [Op.and]: [
+        whereCondition,
+        {
+          id: {
+            [Op.in]: Sequelize.literal(`(SELECT "contactId" FROM "ContactWallets" WHERE "walletId" = ${userId} AND "companyId" = ${companyId})`)
+          }
+        }
+      ]
+    };
+  }
+
   if (isGroup === "false") {
-    console.log("isGroup", isGroup)
     whereCondition = {
       ...whereCondition,
       isGroup: false
-    }
+    };
   }
 
+  return whereCondition;
+};
+
+const ListContactsService = async ({
+  searchParam = "",
+  pageNumber = "1",
+  companyId,
+  tagsIds,
+  isGroup,
+  userId
+}: Request): Promise<Response> => {
+
+  const whereCondition = await buildWhereCondition({
+    searchParam,
+    companyId,
+    tagsIds,
+    isGroup,
+    userId
+  });
 
   const limit = 100;
   const offset = limit * (+pageNumber - 1);
 
   const { count, rows: contacts } = await Contact.findAndCountAll({
     where: whereCondition,
-    attributes: ["id", "name", "number", "email", "isGroup", "urlPicture", "active", "companyId", "channel"],
+    attributes: [
+      "id",
+      "name",
+      "number",
+      "email",
+      "birthDate",
+      "isGroup",
+      "urlPicture",
+      "active",
+      "companyId",
+      "channel"
+    ],
     limit,
+    offset,
     include: [
-      // {
-      //   model: Ticket,
-      //   as: "tickets",
-      //   attributes: ["id", "status", "createdAt", "updatedAt"],
-      //   limit: 1,
-      //   order: [["updatedAt", "DESC"]]
-      // },   
       {
         model: Tag,
         as: "tags",
         attributes: ["id", "name"]
-        //include: ["tags"]
       },
-      // {
-      //   model: Whatsapp,
-      //   as: "whatsapp",
-      //   attributes: ["id", "name", "expiresTicket", "groupAsTicket"]
-      // },
+      {
+        model: ContactCustomField,
+        as: "extraInfo"
+      },
+      {
+        model: ContactWallet,
+        as: "contactWallets",
+        include: [
+          {
+            model: User,
+            as: "wallet",
+            attributes: ["id", "name"]
+          },
+          {
+            model: Queue,
+            as: "queue",
+            attributes: ["id", "name"]
+          }
+        ]
+      }
     ],
-    offset,
-    // subQuery: false,
     order: [["name", "ASC"]]
   });
 

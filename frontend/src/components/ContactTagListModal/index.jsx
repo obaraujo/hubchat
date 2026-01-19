@@ -96,7 +96,7 @@ const ContactTagListModal = ({ open, onClose, tag }) => {
                 <TableRow>
                   <TableCell>ID</TableCell>
                   <TableCell>Nome</TableCell>
-                  <TableCell>Nmero</TableCell>
+                  <TableCell>Número</TableCell>
                   <TableCell>Ações</TableCell>
                 </TableRow>
               </TableHead>

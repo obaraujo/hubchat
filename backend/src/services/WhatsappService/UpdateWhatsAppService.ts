@@ -36,6 +36,7 @@ interface WhatsappData {
   closedTicketsPostImported?: boolean;
   timeCreateNewTicket?: number;
   integrationId?: number;
+  integrationTypeId?: number;
   schedules?: any[];
   promptId?: number;
   requestQR?: boolean;
@@ -43,8 +44,22 @@ interface WhatsappData {
   collectiveVacationStart?: string;
   collectiveVacationEnd?: string;
   queueIdImportMessages?: number;
+  phone_number_id?: string;
+  waba_id?: string;
+  send_token?: string;
+  business_id?: string;
+  phone_number?: string;
   flowIdNotPhrase?: number;
   flowIdWelcome?: number;
+  flowIdInactiveTime?: number;
+  flowInactiveTime?: number;
+  maxUseInactiveTime?: number;
+  color?: string;
+  timeToReturnQueue?: number;
+  timeAwaitActiveFlowId?: number;
+  timeAwaitActiveFlow?: number;
+  triggerIntegrationOnClose?: boolean;
+  wavoip?: string;
 }
 
 interface Request {
@@ -99,6 +114,7 @@ const UpdateWhatsAppService = async ({
     importOldMessagesGroups,
     timeCreateNewTicket = null,
     integrationId,
+    integrationTypeId,
     schedules,
     promptId,
     requestQR = false,
@@ -107,7 +123,21 @@ const UpdateWhatsAppService = async ({
     collectiveVacationStart,
     queueIdImportMessages,
     flowIdNotPhrase,
-    flowIdWelcome
+    flowIdWelcome,
+    flowIdInactiveTime,
+    flowInactiveTime,
+    maxUseInactiveTime,
+    color,
+    phone_number_id,
+    waba_id,
+    send_token,
+    business_id,
+    phone_number,
+    timeToReturnQueue = 0,
+    timeAwaitActiveFlowId,
+    timeAwaitActiveFlow = 0,
+    triggerIntegrationOnClose,
+    wavoip
   } = whatsappData;
 
   try {
@@ -137,6 +167,12 @@ const UpdateWhatsAppService = async ({
   // console.log("GETTING WHATSAPP SHOW WHATSAPP 1", whatsappId, companyId)
   const whatsapp = await ShowWhatsAppService(whatsappId, companyId);
 
+  // DEBUG - Log dos dados antes da atualização
+  console.log(`[WHATSAPP-SERVICE] Atualizando conexão ${whatsappId} com:`, {
+    flowIdNotPhrase: flowIdNotPhrase,
+    flowIdWelcome: flowIdWelcome,
+    flowIdInactiveTime: flowIdInactiveTime
+  });
 
   await whatsapp.update({
     name,
@@ -168,6 +204,7 @@ const UpdateWhatsAppService = async ({
     importOldMessagesGroups,
     timeCreateNewTicket,
     integrationId,
+    integrationTypeId,
     schedules,
     promptId,
     collectiveVacationEnd,
@@ -175,7 +212,21 @@ const UpdateWhatsAppService = async ({
     collectiveVacationStart,
     queueIdImportMessages,
     flowIdNotPhrase,
-    flowIdWelcome
+    flowIdWelcome,
+    flowIdInactiveTime,
+    flowInactiveTime,
+    maxUseInactiveTime,
+    color,
+    phone_number_id,
+    waba_id,
+    send_token,
+    business_id,
+    phone_number,
+    timeToReturnQueue,
+    timeAwaitActiveFlowId,
+    timeAwaitActiveFlow,
+    triggerIntegrationOnClose,
+    wavoip
   });
 
   if (!requestQR) {

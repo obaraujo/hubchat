@@ -4,7 +4,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import { green } from "@material-ui/core/colors";
 import Dialog from "@material-ui/core/Dialog";
 import DialogContent from "@material-ui/core/DialogContent";
-import CheckoutPage from "../CheckoutPage";
+import CheckoutPage from "../CheckoutPage/";
 
 const useStyles = makeStyles((theme) => ({
   root: {

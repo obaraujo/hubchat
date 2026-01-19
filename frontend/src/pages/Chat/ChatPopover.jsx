@@ -8,7 +8,7 @@ import React, {
 import { makeStyles } from "@material-ui/core/styles";
 import toastError from "../../errors/toastError";
 import Popover from "@material-ui/core/Popover";
-import ForumIcon from "@material-ui/icons/Forum";
+import { MdOutlineForum } from "react-icons/md";
 import {
   Badge,
   IconButton,
@@ -17,16 +17,24 @@ import {
   ListItemText,
   Paper,
   Typography,
+  MenuItem,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
 } from "@material-ui/core";
 import api from "../../services/api";
 import { isArray } from "lodash";
-// import { SocketContext } from "../../context/Socket/SocketContext";
 import { useDate } from "../../hooks/useDate";
 import { AuthContext } from "../../context/Auth/AuthContext";
 
 import notifySound from "../../assets/chat_notify.mp3";
 import useSound from "use-sound";
 import { i18n } from "../../translate/i18n";
+import { useHistory } from "react-router-dom";
+import { format } from "date-fns";
+import { socketConnection } from "../../services/socket";
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -95,13 +103,14 @@ const reducer = (state, action) => {
   }
 };
 
-export default function ChatPopover() {
+export default function ChatPopover(volume) {
   const classes = useStyles();
 
-//   const socketManager = useContext(SocketContext);
-  const { user, socket } = useContext(AuthContext);
+  //   const socketManager = useContext(SocketContext);
+  const { user: loggedUser, socket } = useContext(AuthContext);
+  const history = useHistory();
 
-
+  const historyRef = useRef(history);
   const [loading, setLoading] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -110,7 +119,7 @@ export default function ChatPopover() {
   const [chats, dispatch] = useReducer(reducer, []);
   const [invisible, setInvisible] = useState(true);
   const { datetimeToClient } = useDate();
-  const [play] = useSound(notifySound);
+  const [play] = useSound(notifySound, volume);
   const soundAlertRef = useRef();
 
   useEffect(() => {
@@ -138,23 +147,44 @@ export default function ChatPopover() {
   }, [searchParam, pageNumber]);
 
   useEffect(() => {
-    if (user.companyId) {
-
-      const companyId = user.companyId;
-//    const socket = socketManager.GetSocket();
+    if (loggedUser.id) {
+      const companyId = loggedUser.companyId;
+      const socket = socketConnection({ companyId, userId: loggedUser.id });
 
       const onCompanyChatPopover = (data) => {
         if (data.action === "new-message") {
           dispatch({ type: "CHANGE_CHAT", payload: data });
-          if (data.newMessage.senderId !== user.id) {
-
+          console.log(data);
+          if (
+            data.newMessage.senderId !== loggedUser.id &&
+            data.chat.users.find((user) => user.userId === loggedUser.id)
+          ) {
             soundAlertRef.current();
+
+            // Check if notifications are permitted
+            if (Notification.permission === "granted") {
+              const notification = new Notification(
+                "Chat interno nº " + data.newMessage.chatId,
+                {
+                  body: `${data.newMessage.sender.name}: ${
+                    data.newMessage.message
+                  } - ${format(new Date(), "HH:mm")}`,
+                  icon: data.newMessage.sender.profileImage,
+                }
+              );
+
+              notification.onclick = (e) => {
+                e.preventDefault();
+                window.focus();
+                historyRef.current.push(`/chats/${data.newMessage.chatId}`);
+              };
+            }
           }
         }
         if (data.action === "update") {
           dispatch({ type: "CHANGE_CHAT", payload: data });
         }
-      }
+      };
 
       socket.on(`company-${companyId}-chat`, onCompanyChatPopover);
 
@@ -163,15 +193,14 @@ export default function ChatPopover() {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
+  }, [loggedUser.id, loggedUser.companyId]);
 
   useEffect(() => {
     let unreadsCount = 0;
     if (chats.length > 0) {
       for (let chat of chats) {
         for (let chatUser of chat.users) {
-          if (chatUser.userId === user.id) {
+          if (chatUser.userId === loggedUser.id) {
             unreadsCount += chatUser.unreads;
           }
         }
@@ -182,7 +211,7 @@ export default function ChatPopover() {
     } else {
       setInvisible(true);
     }
-  }, [chats, user.id]);
+  }, [chats, loggedUser.id]);
 
   const fetchChats = async () => {
     try {
@@ -233,9 +262,10 @@ export default function ChatPopover() {
         color={invisible ? "default" : "inherit"}
         onClick={handleClick}
         style={{ color: "white" }}
+        size="large"
       >
         <Badge color="secondary" variant="dot" invisible={invisible}>
-          <ForumIcon />
+          <MdOutlineForum size={18} />
         </Badge>
       </IconButton>
       <Popover
@@ -275,14 +305,32 @@ export default function ChatPopover() {
                   button
                 >
                   <ListItemText
-                    primary={item.lastMessage}
-                    secondary={
-                      <>
-                        <Typography component="span" style={{ fontSize: 12 }}>
-                          {datetimeToClient(item.updatedAt)}
+                    primary={
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <Typography
+                          component="span"
+                          style={{ fontWeight: "bold", fontSize: 13 }}
+                        >
+                          {typeof item.lastMessage === "string"
+                            ? item.title || "Chat"
+                            : item.lastMessage?.sender?.name ||
+                              item.title ||
+                              "Chat"}
                         </Typography>
-                        <span style={{ marginTop: 5, display: "block" }}></span>
-                      </>
+                        <Typography
+                          component="span"
+                          style={{ fontSize: 12, color: "#666" }}
+                        >
+                          {typeof item.lastMessage === "string"
+                            ? item.lastMessage
+                            : item.lastMessage?.message || "Nenhuma mensagem"}
+                        </Typography>
+                      </div>
+                    }
+                    secondary={
+                      <Typography component="span" style={{ fontSize: 12 }}>
+                        {datetimeToClient(item.updatedAt)}
+                      </Typography>
                     }
                   />
                 </ListItem>

@@ -22,32 +22,37 @@ import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import {
+  Box,
   FormControl,
+  FormControlLabel,
+  Grid,
   InputLabel,
   MenuItem,
+  Radio,
+  RadioGroup,
   Select,
-  Stack
+  Stack,
 } from "@mui/material";
 import { AddCircle, Delete } from "@mui/icons-material";
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   root: {
     display: "flex",
-    flexWrap: "wrap"
+    flexWrap: "wrap",
   },
   textField: {
     marginRight: theme.spacing(1),
-    flex: 1
+    flex: 1,
   },
 
   extraAttr: {
     display: "flex",
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
 
   btnWrapper: {
-    position: "relative"
+    position: "relative",
   },
 
   buttonProgress: {
@@ -56,24 +61,23 @@ const useStyles = makeStyles(theme => ({
     top: "50%",
     left: "50%",
     marginTop: -12,
-    marginLeft: -12
-  }
+    marginLeft: -12,
+  },
 }));
 
 const selectFieldStyles = {
   ".MuiOutlinedInput-notchedOutline": {
-    borderColor: "#909090"
+    borderColor: "#909090",
   },
   "&:hover .MuiOutlinedInput-notchedOutline": {
     borderColor: "#000000",
-    borderWidth: "thin"
+    borderWidth: "thin",
   },
   "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#0000FF",
-    borderWidth: "thin"
-  }
+    borderColor: "#9a00ed",
+    borderWidth: "thin",
+  },
 };
-
 
 const ContactSchema = Yup.object().shape({
   name: Yup.string()
@@ -83,7 +87,7 @@ const ContactSchema = Yup.object().shape({
   text: Yup.string()
     .min(2, "Muito curto!")
     .max(50, "Muito longo!")
-    .required("Digite uma mensagem!")
+    .required("Digite uma mensagem!"),
 });
 
 const FlowBuilderMenuModal = ({ open, onSave, onUpdate, data, close }) => {
@@ -98,27 +102,33 @@ const FlowBuilderMenuModal = ({ open, onSave, onUpdate, data, close }) => {
 
   const [arrayOption, setArrayOption] = useState([]);
 
+  const [valueRadioButton, setValueRadionButton] = useState("number");
+
   const [labels, setLabels] = useState({
     title: "Adicionar menu ao fluxo",
-    btn: "Adicionar"
+    btn: "Adicionar",
   });
 
   useEffect(() => {
+    console.log(data);
     if (open === "edit") {
       setLabels({
         title: "Editar menu",
-        btn: "Salvar"
+        btn: "Salvar",
       });
       setTextDig(data.data.message);
       setArrayOption(data.data.arrayOption);
+      setValueRadionButton(data.data.typeMenu);
+
       setActiveModal(true);
     } else if (open === "create") {
       setLabels({
         title: "Adicionar menu ao fluxo",
-        btn: "Adicionar"
+        btn: "Adicionar",
       });
       setTextDig();
       setArrayOption([]);
+      setValueRadionButton();
       setActiveModal(true);
     } else {
       setActiveModal(false);
@@ -141,20 +151,30 @@ const FlowBuilderMenuModal = ({ open, onSave, onUpdate, data, close }) => {
       handleClose();
       onUpdate({
         ...data,
-        data: { message: textDig, arrayOption: arrayOption }
+        data: {
+          message: textDig,
+          arrayOption: arrayOption,
+          typeMenu: valueRadioButton,
+        },
       });
       return;
     } else if (open === "create") {
       handleClose();
       onSave({
         message: textDig,
-        arrayOption: arrayOption
+        arrayOption: arrayOption,
+        typeMenu: valueRadioButton,
       });
     }
   };
 
-  const removeOption = number => {
-    setArrayOption(old => old.filter(item => item.number !== number));
+  const removeOption = (number) => {
+    setArrayOption((old) => old.filter((item) => item.number !== number));
+  };
+
+  const handleChangeRadionButton = (event) => {
+    setValueRadionButton(event.target.value);
+    console.log(event.target.value);
   };
 
   return (
@@ -168,6 +188,35 @@ const FlowBuilderMenuModal = ({ open, onSave, onUpdate, data, close }) => {
         <DialogTitle id="form-dialog-title">{labels.title}</DialogTitle>
         <Stack>
           <Stack dividers style={{ gap: "8px", padding: "16px" }}>
+            <Stack sx={{ padding: "20px 20px", display: "flex" }}>
+              <RadioGroup
+                defaultValue="numero"
+                value={valueRadioButton}
+                onChange={handleChangeRadionButton}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+                row
+              >
+                <FormControlLabel
+                  value="number"
+                  control={<Radio />}
+                  label="Número"
+                />
+                <FormControlLabel
+                  value="list"
+                  control={<Radio />}
+                  label="Lista"
+                />
+                <FormControlLabel
+                  value="button"
+                  control={<Radio />}
+                  label="Botão"
+                />
+              </RadioGroup>
+            </Stack>
             <TextField
               label={"Mensagem de explicação do menu"}
               rows={4}
@@ -175,7 +224,7 @@ const FlowBuilderMenuModal = ({ open, onSave, onUpdate, data, close }) => {
               multiline
               variant="outlined"
               value={textDig}
-              onChange={e => setTextDig(e.target.value)}
+              onChange={(e) => setTextDig(e.target.value)}
               className={classes.textField}
               style={{ width: "100%" }}
             />
@@ -183,9 +232,9 @@ const FlowBuilderMenuModal = ({ open, onSave, onUpdate, data, close }) => {
               <Typography>Adicionar Opção</Typography>
               <Button
                 onClick={() =>
-                  setArrayOption(old => [
+                  setArrayOption((old) => [
                     ...old,
-                    { number: old.length + 1, value: "" }
+                    { number: old.length + 1, value: "" },
                   ])
                 }
                 color="primary"
@@ -203,8 +252,8 @@ const FlowBuilderMenuModal = ({ open, onSave, onUpdate, data, close }) => {
                     variant="outlined"
                     defaultValue={item.value}
                     style={{ width: "100%" }}
-                    onChange={event =>
-                      setArrayOption(old => {
+                    onChange={(event) =>
+                      setArrayOption((old) => {
                         let newArr = old;
                         newArr[index].value = event.target.value;
                         return newArr;

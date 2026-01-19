@@ -5,8 +5,7 @@ import {
   UpdatedAt,
   Model,
   ForeignKey,
-  BelongsTo,
-	DataType
+  BelongsTo
 } from "sequelize-typescript";
 import Queue from "./Queue";
 import Whatsapp from "./Whatsapp";
@@ -14,11 +13,11 @@ import Whatsapp from "./Whatsapp";
 @Table
 class WhatsappQueue extends Model<WhatsappQueue> {
   @ForeignKey(() => Whatsapp)
-  @Column(DataType.INTEGER)
+  @Column
   whatsappId: number;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueId: number;
 
   @CreatedAt

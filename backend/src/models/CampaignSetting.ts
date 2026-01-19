@@ -7,8 +7,7 @@ import {
   PrimaryKey,
   AutoIncrement,
   ForeignKey,
-  BelongsTo,
-	DataType
+  BelongsTo
 } from "sequelize-typescript";
 import Company from "./Company";
 
@@ -16,13 +15,13 @@ import Company from "./Company";
 class CampaignSetting extends Model<CampaignSetting> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.TEXT)
+  @Column
   key: string;
 
-  @Column(DataType.TEXT)
+  @Column
   value: string;
 
   @CreatedAt
@@ -32,7 +31,7 @@ class CampaignSetting extends Model<CampaignSetting> {
   updatedAt: Date;
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @BelongsTo(() => Company)

@@ -30,13 +30,12 @@ export const TicketsAttendance = async ({ initialDate, finalDate, companyId }: R
   const sql = `
   select
     COUNT(*) AS quantidade,
-    u.name AS nome
+    coalesce(u.name, 'Sem atendente') AS nome
   from
     "Tickets" tt
     left join "Users" u on u.id = tt."userId"
   where
     tt."companyId" = ${companyId}
-    and tt."userId" is not null
     and tt."createdAt" >= '${initialDate} 00:00:00'
     and tt."createdAt" <= '${finalDate} 23:59:59'
   group by

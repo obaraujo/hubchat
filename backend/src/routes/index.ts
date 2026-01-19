@@ -37,7 +37,9 @@ import apiCompanyRoutes from "./api/apiCompanyRoutes";
 import apiContactRoutes from "./api/apiContactRoutes";
 import apiMessageRoutes from "./api/apiMessageRoutes";
 import companySettingsRoutes from "./companySettingsRoutes";
-
+import ticketFinalizationReasonRoutes from "./ticketFinalizationReasonRoutes";
+import presetWebhookRoutes from "./presetWebhookRoutes";
+import birthdayRoutes from "./birthdayRoutes";
 import promptRoutes from "./promptRouter";
 import statisticsRoutes from "./statisticsRoutes";
 import scheduleMessageRoutes from "./ScheduledMessagesRoutes";
@@ -45,7 +47,10 @@ import flowDefaultRoutes from "./flowDefaultRoutes";
 import webHook from "./webHookRoutes";
 import flowBuilder from "./flowBuilderRoutes";
 import flowCampaignRoutes from "./flowCampaignRoutes";
+import callRoutes from "./callRoutes";
+import companyKanbanRoutes from "./companyKanbanRoutes";
 
+import ChatController from "../controllers/ChatController";
 
 const routes = Router();
 
@@ -66,6 +71,7 @@ routes.use(ticketNoteRoutes);
 routes.use(quickMessageRoutes);
 routes.use(helpRoutes);
 routes.use(dashboardRoutes);
+routes.use(birthdayRoutes);
 routes.use(scheduleRoutes);
 routes.use(tagRoutes);
 routes.use(contactListRoutes);
@@ -86,16 +92,20 @@ routes.use(ticketTagRoutes);
 routes.use("/api", apiCompanyRoutes);
 routes.use("/api", apiContactRoutes);
 routes.use("/api", apiMessageRoutes);
-
-routes.use(flowDefaultRoutes);
-routes.use(webHook)
-routes.use(flowBuilder)
-routes.use(flowCampaignRoutes)
-
-
+routes.use(presetWebhookRoutes);
 routes.use(promptRoutes);
 routes.use(statisticsRoutes);
 routes.use(companySettingsRoutes);
+routes.use(ticketFinalizationReasonRoutes);
 routes.use(scheduleMessageRoutes);
+
+routes.use(flowDefaultRoutes);
+// Evita duplicar montagem do webhook na raiz; já existe em "/webhook"
+routes.use(flowBuilder);
+routes.use(flowCampaignRoutes);
+routes.use("/call", callRoutes);
+routes.use(companyKanbanRoutes);
+
+routes.post("/chats/backfill", ChatController.backfillChats);
 
 export default routes;

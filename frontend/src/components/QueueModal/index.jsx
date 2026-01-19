@@ -126,11 +126,14 @@ const QueueModal = ({ open, onClose, queueId, onEdit }) => {
     chatbots: [],
     outOfHoursMessage: "",
     orderQueue: "",
+    tipoIntegracao: "NA",
     tempoRoteador: 0,
     ativarRoteador: false,
     integrationId: "",
     fileListId: "",
-    closeTicket: false
+    closeTicket: false,
+    typeRandomMode: "RANDOM",
+    randomizeImmediate: false
   };
 
   const [colorPickerModalOpen, setColorPickerModalOpen] = useState(false);
@@ -240,11 +243,14 @@ const QueueModal = ({ open, onClose, queueId, onEdit }) => {
         chatbots: [],
         outOfHoursMessage: "",
         orderQueue: "",
+        tipoIntegracao: "NA",
         tempoRoteador: "",
         ativarRoteador: false,
         integrationId: "",
         fileListId: "",
-        closeTicket: false
+        closeTicket: false,
+        typeRandomMode: "RANDOM",
+        randomizeImmediate: false
       });
     };
   }, [queueId, open]);
@@ -350,6 +356,23 @@ const QueueModal = ({ open, onClose, queueId, onEdit }) => {
 
   const handleSaveQueue = async (values) => {
     try {
+      // Persist tipoIntegracao inside selected integration jsonContent if applicable
+      if (values.integrationId && values.tipoIntegracao) {
+        try {
+          const { data: integrationData } = await api.get(`/queueIntegration/${values.integrationId}`);
+          let baseJson = {};
+          try {
+            baseJson = integrationData?.jsonContent ? JSON.parse(integrationData.jsonContent) : {};
+          } catch {}
+          const jsonContent = {
+            ...baseJson,
+            tipoIntegracao: values.tipoIntegracao,
+          };
+          await api.put(`/queueIntegration/${values.integrationId}`, { jsonContent: JSON.stringify(jsonContent), projectName: integrationData.name });
+        } catch (e) {
+          // silent fail: queue save continues, but tipoIntegracao may not be persisted
+        }
+      }
       if (queueId) {
         await api.put(`/queue/${queueId}`, { ...values, schedules });
       } else {
@@ -523,7 +546,7 @@ const QueueModal = ({ open, onClose, queueId, onEdit }) => {
                     }}
                     currentColor={values.color}
                   />
-                  
+
                   <Field
                     as={TextField}
                     label={i18n.t("queueModal.form.orderQueue")}
@@ -566,9 +589,13 @@ const QueueModal = ({ open, onClose, queueId, onEdit }) => {
                       variant="outlined"
                       margin="dense"
                       className={classes.selectField}
+                      disabled={!values.ativarRoteador}
                     >
                       <MenuItem value="0" selected disabled>{i18n.t("queueModal.form.timeRotate")}</MenuItem>
+                      <MenuItem value="1">1 minuto</MenuItem>
                       <MenuItem value="2">2 minutos</MenuItem>
+                      <MenuItem value="3">3 minutos</MenuItem>
+                      <MenuItem value="4">4 minutos</MenuItem>
                       <MenuItem value="5">5 minutos</MenuItem>
                       <MenuItem value="10">10 minutos</MenuItem>
                       <MenuItem value="15">15 minutos</MenuItem>
@@ -576,6 +603,38 @@ const QueueModal = ({ open, onClose, queueId, onEdit }) => {
                       <MenuItem value="45">45 minutos</MenuItem>
                       <MenuItem value="60">60 minutos</MenuItem>
                     </Field>
+                    &nbsp;
+                    <Field
+                      as={Select}
+                      label={i18n.t("queueModal.form.typeRandomMode")}
+                      name="typeRandomMode"
+                      id="typeRandomMode"
+                      variant="outlined"
+                      margin="dense"
+                      className={classes.selectField}
+                      disabled={!values.ativarRoteador}
+                    >
+                      <MenuItem value="0" selected disabled>{i18n.t("Selecione o tipo de rodízio")}</MenuItem>
+                      <MenuItem value="RANDOM">Random</MenuItem>
+                      <MenuItem value="ORDENADO">Ordenado</MenuItem>
+                    </Field>
+                    <FormControlLabel
+                      control={
+                        <Field
+                          as={Checkbox}
+                          color="primary"
+                          name="randomizeImmediate"
+                          checked={values.randomizeImmediate}
+                          disabled={!values.ativarRoteador}
+                        />
+                      }
+                      style={{ marginLeft: '5px' }}
+                      label={
+                        <span>
+                          {i18n.t("queueModal.form.randomizeImmediate")}
+                        </span>
+                      }
+                    />
                   </div>
                   <div>
                     {showIntegrations && (
@@ -605,6 +664,28 @@ const QueueModal = ({ open, onClose, queueId, onEdit }) => {
                           ))}
                         </Field>
 
+                      </FormControl>
+                    )}
+                    {values.integrationId !== "" && (
+                      <FormControl variant="outlined" margin="dense" fullWidth>
+                        <InputLabel id="tpIntegrationId-selection-label">
+                          Tipo de Integração (SGP)
+                        </InputLabel>
+                        <Field
+                          as={Select}
+                          label="Tipo de Integração"
+                          labelId="tpIntegrationId-selection-label"
+                          name="tipoIntegracao"
+                          id="tipoIntegracao"
+                          variant="outlined"
+                          margin="dense"
+                        >
+                          <MenuItem value="NA" selected disabled> Nenhuma </MenuItem>
+                          <MenuItem value="SB">2ª Via Boleto</MenuItem>
+                          <MenuItem value="AV">A Vencer</MenuItem>
+                          <MenuItem value="VE">Vencido</MenuItem>
+                          <MenuItem value="LC">Liberação por Confiança</MenuItem>
+                        </Field>
                       </FormControl>
                     )}
                     <FormControl

@@ -8,8 +8,8 @@ import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
 import QuestionAnswerIcon from '@material-ui/icons/QuestionAnswer';
 import ChatIcon from '@material-ui/icons/Chat';
 
-import TicketsManagerTabs from "../../components/TicketsManagerTabs";
-import Ticket from "../../components/Ticket";
+import TicketsManagerTabs from "../../components/TicketsManagerTabs/";
+import Ticket from "../../components/Ticket/";
 import TicketAdvancedLayout from "../../components/TicketAdvancedLayout";
 
 import { TicketsContext } from "../../context/Tickets/TicketsContext";

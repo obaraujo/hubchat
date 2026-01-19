@@ -1,3 +1,4 @@
+// src/services/UserServices/UpdateUserService.ts - ATUALIZADO COM NOVA COLUNA
 import * as Yup from "yup";
 
 import AppError from "../../errors/AppError";
@@ -27,7 +28,13 @@ interface UserData {
   defaultTicketsManagerWidth?: number;
   allowRealTime?: string;
   allowConnections?: string;
+  showContacts?: string;
+  showCampaign?: string;
+  showFlow?: string;
   profileImage?: string;
+  finalizacaoComValorVendaAtiva?: boolean;
+  birthDate?: Date | string;
+  allowSeeMessagesInPendingTickets?: string; // 🆕 NOVO CAMPO ADICIONADO
 }
 
 interface Request {
@@ -63,11 +70,12 @@ const UpdateUserService = async ({
     allHistoric: Yup.string(),
     email: Yup.string().email(),
     profile: Yup.string(),
-    password: Yup.string()
+    password: Yup.string(),
+    birthDate: Yup.date().nullable().max(new Date(), "Data de nascimento não pode ser no futuro"),
   });
 
   const oldUserEmail = user.email;
-  
+
   const {
     email,
     password,
@@ -89,13 +97,41 @@ const UpdateUserService = async ({
     allowConnections,
     defaultTicketsManagerWidth = 550,
     allowRealTime,
-    profileImage
+    showContacts,
+    showCampaign,
+    showFlow,
+    profileImage,
+    finalizacaoComValorVendaAtiva,
+    birthDate,
+    allowSeeMessagesInPendingTickets
   } = userData;
 
   try {
-    await schema.validate({ email, password, profile, name });
+    await schema.validate({ 
+      email, 
+      password, 
+      profile, 
+      name, 
+      birthDate
+    });
   } catch (err: any) {
     throw new AppError(err.message);
+  }
+
+  // Processar data de nascimento
+  let processedBirthDate: Date | null = user.birthDate;
+  if (birthDate !== undefined) {
+    if (birthDate === null || birthDate === '') {
+      processedBirthDate = null;
+    } else if (typeof birthDate === 'string') {
+      const dateOnly = birthDate.split('T')[0];
+      processedBirthDate = new Date(dateOnly + 'T12:00:00');
+    } else if (birthDate instanceof Date) {
+      const year = birthDate.getFullYear();
+      const month = birthDate.getMonth();
+      const day = birthDate.getDate();
+      processedBirthDate = new Date(year, month, day, 12, 0, 0);
+    }
   }
 
   await user.update({
@@ -118,7 +154,13 @@ const UpdateUserService = async ({
     defaultTicketsManagerWidth,
     allowRealTime,
     profileImage,
-    allowConnections
+    allowConnections,
+    showContacts,
+    showCampaign,
+    showFlow,
+    finalizacaoComValorVendaAtiva,
+    birthDate: processedBirthDate,
+    allowSeeMessagesInPendingTickets
   });
 
   await user.$set("queues", queueIds);
@@ -131,9 +173,9 @@ const UpdateUserService = async ({
     await company.update({
       email,
       password
-    })
+    });
   }
-  
+
   const serializedUser = {
     id: user.id,
     name: user.name,
@@ -155,7 +197,13 @@ const UpdateUserService = async ({
     defaultTicketsManagerWidth: user.defaultTicketsManagerWidth,
     allowRealTime: user.allowRealTime,
     allowConnections: user.allowConnections,
-    profileImage: user.profileImage
+    showContacts: user.showContacts,
+    showCampaign: user.showCampaign,
+    profileImage: user.profileImage,
+    showFlow: user.showFlow,
+    finalizacaoComValorVendaAtiva: user.finalizacaoComValorVendaAtiva,
+    birthDate: user.birthDate,
+    allowSeeMessagesInPendingTickets: user.allowSeeMessagesInPendingTickets
   };
 
   return serializedUser;

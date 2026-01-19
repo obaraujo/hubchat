@@ -53,7 +53,8 @@ const ListUsersService = async ({
       "online",
       "startWork",
       "endWork",
-      "profileImage"
+      "profileImage",
+      "allowSeeMessagesInPendingTickets"
     ],
     limit,
     offset,

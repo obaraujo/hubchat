@@ -7,8 +7,7 @@ import {
   AutoIncrement,
   CreatedAt,
   UpdatedAt,
-  BelongsTo,
-	DataType
+  BelongsTo
 } from "sequelize-typescript";
 import Files from "./Files";
 
@@ -18,20 +17,20 @@ import Files from "./Files";
 class FilesOptions extends Model<FilesOptions> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @ForeignKey(() => Files)
-  @Column(DataType.INTEGER)
+  @Column
   fileId: number;
 
-  @Column(DataType.TEXT)
+  @Column
   name: string;
 
-  @Column(DataType.TEXT)
+  @Column
   path: string;
 
-  @Column(DataType.TEXT)
+  @Column
   mediaType: string;
 
   @CreatedAt

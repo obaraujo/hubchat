@@ -4,7 +4,7 @@ import {
   Delete,
   DynamicFeed,
   ImportExport,
-  Message
+  Message,
 } from "@mui/icons-material";
 import React, { memo } from "react";
 
@@ -23,21 +23,21 @@ export default memo(({ data, isConnectable, id }) => {
         maxWidth: "155px",
         boxShadow: "0px 3px 5px rgba(0,0,0,.05)",
         border: "1px solid rgba(104, 58, 200, 0.25)",
-        width: 180
+        width: 180,
       }}
     >
       <Handle
         type="target"
         position="left"
         style={{
-          background: "#0000FF",
+          background: "#9a00ed",
           width: "18px",
           height: "18px",
           top: "20px",
           left: "-12px",
-          cursor: 'pointer'
+          cursor: "pointer",
         }}
-        onConnect={params => console.log("handle onConnect", params)}
+        onConnect={(params) => console.log("handle onConnect", params)}
         isConnectable={isConnectable}
       >
         <ArrowForwardIos
@@ -45,7 +45,7 @@ export default memo(({ data, isConnectable, id }) => {
             color: "#ffff",
             width: "10px",
             height: "10px",
-            marginLeft: "3.5px",
+            marginLeft: "2.9px",
             marginBottom: "1px",
             pointerEvents: "none"
           }}
@@ -58,7 +58,7 @@ export default memo(({ data, isConnectable, id }) => {
           right: 5,
           top: 5,
           cursor: "pointer",
-          gap: 6
+          gap: 6,
         }}
       >
         <ContentCopy
@@ -82,7 +82,7 @@ export default memo(({ data, isConnectable, id }) => {
           color: "#ededed",
           fontSize: "16px",
           flexDirection: "row",
-          display: "flex"
+          display: "flex",
         }}
       >
         <DynamicFeed
@@ -91,7 +91,7 @@ export default memo(({ data, isConnectable, id }) => {
             height: "16px",
             marginRight: "4px",
             marginTop: "4px",
-            color: "#683AC8"
+            color: "#683AC8",
           }}
         />
         <div style={{ color: "#232323", fontSize: "16px" }}>Menu</div>
@@ -103,18 +103,18 @@ export default memo(({ data, isConnectable, id }) => {
             fontSize: "12px",
             height: "50px",
             overflow: "hidden",
-            marginBottom: "8px"
+            marginBottom: "8px",
           }}
         >
           {data.message}
         </div>
       </div>
-      {data.arrayOption.map(option => (
+      {data.arrayOption.map((option) => (
         <div
           style={{
             marginBottom: "9px",
             justifyContent: "end",
-            display: "flex"
+            display: "flex",
           }}
         >
           <div
@@ -128,7 +128,7 @@ export default memo(({ data, isConnectable, id }) => {
               color: "#232323",
               justifyContent: "center",
               flexDirection: "column",
-              alignSelf: "end"
+              alignSelf: "end",
             }}
           >
             {`[${option.number}] ${option.value}`}
@@ -139,24 +139,24 @@ export default memo(({ data, isConnectable, id }) => {
             id={"a" + option.number}
             style={{
               top: 74 + 23 * option.number,
-              background: "#0000FF",
+              background: "#9a00ed",
               width: "18px",
               height: "18px",
               right: "-11px",
-              cursor: 'pointer'
+              cursor: "pointer",
             }}
             isConnectable={isConnectable}
           >
             <ArrowForwardIos
-              sx={{
-                color: "#ffff",
-                width: "10px",
-                height: "10px",
-                marginLeft: "2.9px",
-                marginBottom: "1px",
-                pointerEvents: "none"
-              }}
-            />
+          sx={{
+            color: "#ffff",
+            width: "10px",
+            height: "10px",
+            marginLeft: "2.9px",
+            marginBottom: "1px",
+            pointerEvents: "none"
+          }}
+        />
           </Handle>
         </div>
       ))}

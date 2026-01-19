@@ -22,6 +22,8 @@ interface PlanData {
   useOpenAi?: boolean;
   useIntegrations?: boolean;
   isPublic?: boolean;
+  useWhatsappOfficial?: boolean;
+  wavoip?: boolean;
 }
 
 const CreatePlanService = async (planData: PlanData): Promise<Plan> => {

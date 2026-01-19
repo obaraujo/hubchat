@@ -1,104 +1,114 @@
-import React, { useState, useEffect, useContext } from "react";
-import { makeStyles, useTheme } from "@material-ui/core/styles";
-import api from "../../services/api";
-import { AuthContext } from "../../context/Auth/AuthContext";
-import Board from 'react-trello';
-import { toast } from "react-toastify";
-import { i18n } from "../../translate/i18n";
+import React, { useState, useEffect, useContext } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
+import api from '../../services/api';
+import { AuthContext } from '../../context/Auth/AuthContext';
+import { toast } from 'react-toastify';
+import { i18n } from '../../translate/i18n';
 import { useHistory } from 'react-router-dom';
-import { Facebook, Instagram, WhatsApp } from "@material-ui/icons";
-import { Badge, Tooltip, Typography, Button, TextField, Box } from "@material-ui/core";
-import { format, isSameDay, parseISO } from "date-fns";
-import { Can } from "../../components/Can";
+import { setKanbanLaneOrder, getKanbanLaneOrder } from '../../services/companyKanbanService';
+import { Button, TextField, Paper, FormControl, InputLabel, Select } from '@material-ui/core';
+import { format } from 'date-fns';
+import { Can } from '../../components/Can';
+import MainContainer from '../../components/MainContainer';
+import MainHeader from '../../components/MainHeader';
+import MainHeaderButtonsWrapper from '../../components/MainHeaderButtonsWrapper';
+import Title from '../../components/Title';
+import KanbanBoard from './KanbanBoard';
 
 const useStyles = makeStyles(theme => ({
-  root: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+  mainPaper: {
+    flex: 1,
+    display: 'flex',
     padding: theme.spacing(1),
+    overflowX: 'auto',
+    ...theme.scrollbarStyles,
+    borderRadius: '10px',
   },
-  kanbanContainer: {
-    width: "100%",
-    maxWidth: "1200px",
-    margin: "0 auto",
-  },
-  connectionTag: {
-    background: "green",
-    color: "#FFF",
-    marginRight: 1,
-    padding: 1,
-    fontWeight: 'bold',
-    borderRadius: 3,
-    fontSize: "0.6em",
-  },
-  lastMessageTime: {
-    justifySelf: "flex-end",
-    textAlign: "right",
-    position: "relative",
-    marginLeft: "auto",
-    color: theme.palette.text.secondary,
-  },
-  lastMessageTimeUnread: {
-    justifySelf: "flex-end",
-    textAlign: "right",
-    position: "relative",
-    color: theme.palette.success.main,
-    fontWeight: "bold",
-    marginLeft: "auto"
-  },
-  cardButton: {
-    marginRight: theme.spacing(1),
-    color: theme.palette.common.white,
-    backgroundColor: theme.palette.primary.main,
-    "&:hover": {
-      backgroundColor: theme.palette.primary.dark,
-    },
+  button: {
+    borderRadius: '10px',
   },
   dateInput: {
-    marginRight: theme.spacing(2),
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+    },
+    marginRight: theme.spacing(1),
+  },
+  sortSelect: {
+    minWidth: 150,
+    marginRight: theme.spacing(1),
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+    },
   },
 }));
 
 const Kanban = () => {
   const classes = useStyles();
-  const theme = useTheme(); // Obter o tema atual
   const history = useHistory();
   const { user, socket } = useContext(AuthContext);
   const [tags, setTags] = useState([]);
   const [tickets, setTickets] = useState([]);
-  const [ticketNot, setTicketNot] = useState(0);
-  const [file, setFile] = useState({ lanes: [] });
-  const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [lanes, setLanes] = useState([]);
+  const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const queueIds = user.queues.map(queue => queue.UserQueue.queueId);
 
-  const jsonString = user.queues.map(queue => queue.UserQueue.queueId);
+  const [sortOrder, setSortOrder] = useState(() => {
+    return localStorage.getItem('sortOrder') || 'ticketNumber';
+  });
+
+  const [laneOrder, setLaneOrder] = useState(null);
+  const [loadingLaneOrder, setLoadingLaneOrder] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem('sortOrder', sortOrder);
+  }, [sortOrder]);
+
+  // Carregar ordem das lanes do banco de dados
+  useEffect(() => {
+    const loadLaneOrder = async () => {
+      try {
+        const savedOrder = await getKanbanLaneOrder();
+        setLaneOrder(savedOrder);
+      } catch (error) {
+        console.error('Erro ao carregar ordem das lanes:', error);
+      } finally {
+        setLoadingLaneOrder(false);
+      }
+    };
+
+    if (user && user.id) {
+      loadLaneOrder();
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchTags();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchTags = async () => {
     try {
-      const response = await api.get("/tag/kanban/");
+      const response = await api.get('/tag/kanban/');
       const fetchedTags = response.data.lista || [];
       setTags(fetchedTags);
-      fetchTickets();
+      fetchTickets(fetchedTags);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const fetchTickets = async () => {
+  const fetchTickets = async (fetchedTags = tags) => {
     try {
-      const { data } = await api.get("/ticket/kanban", {
+      const { data } = await api.get('/ticket/kanban', {
         params: {
-          queueIds: JSON.stringify(jsonString),
+          queueIds: JSON.stringify(queueIds),
           startDate: startDate,
           endDate: endDate,
-        }
+        },
       });
       setTickets(data.tickets);
+      organizeLanes(fetchedTags, data.tickets);
     } catch (err) {
       console.log(err);
       setTickets([]);
@@ -107,11 +117,13 @@ const Kanban = () => {
 
   useEffect(() => {
     const companyId = user.companyId;
-    const onAppMessage = (data) => {
-      if (data.action === "create" || data.action === "update" || data.action === "delete") {
+
+    const onAppMessage = data => {
+      if (['create', 'update', 'delete'].includes(data.action)) {
         fetchTickets();
       }
     };
+
     socket.on(`company-${companyId}-ticket`, onAppMessage);
     socket.on(`company-${companyId}-appMessage`, onAppMessage);
 
@@ -119,158 +131,184 @@ const Kanban = () => {
       socket.off(`company-${companyId}-ticket`, onAppMessage);
       socket.off(`company-${companyId}-appMessage`, onAppMessage);
     };
-  }, [socket, startDate, endDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, user.companyId]);
 
   const handleSearchClick = () => {
     fetchTickets();
   };
 
-  const handleStartDateChange = (event) => {
+  const handleStartDateChange = event => {
     setStartDate(event.target.value);
   };
 
-  const handleEndDateChange = (event) => {
+  const handleEndDateChange = event => {
     setEndDate(event.target.value);
   };
 
-  const IconChannel = (channel) => {
-    switch (channel) {
-      case "facebook":
-        return <Facebook style={{ color: "#3b5998", verticalAlign: "middle", fontSize: "16px" }} />;
-      case "instagram":
-        return <Instagram style={{ color: "#e1306c", verticalAlign: "middle", fontSize: "16px" }} />;
-      case "whatsapp":
-        return <WhatsApp style={{ color: "#25d366", verticalAlign: "middle", fontSize: "16px" }} />
-      default:
-        return "error";
-    }
+  const updateTicket = updatedTicket => {
+    setTickets(prevTickets =>
+      prevTickets.map(ticket =>
+        ticket.id === updatedTicket.id ? updatedTicket : ticket
+      )
+    );
   };
 
-  const popularCards = (jsonString) => {
-    const filteredTickets = tickets.filter(ticket => ticket.tags.length === 0);
+  const getOpportunityValue = (ticket) => {
+    const customFields = ticket.contact.extraInfo || [];
+    const valueField = customFields.find(field => field.name === 'valor');
+    const opportunityValue = valueField ? parseFloat(valueField.value) : 0;
+    return opportunityValue;
+  };
 
-    const lanes = [
+  const organizeLanes = (fetchedTags = tags, fetchedTickets = tickets) => {
+    const sortedTickets = [...fetchedTickets];
+
+    if (sortOrder === 'ticketNumber') {
+      sortedTickets.sort((a, b) => a.id - b.id);
+    } else if (sortOrder === 'lastMessageTime') {
+      sortedTickets.sort(
+        (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+      );
+    } else if (sortOrder === 'valorDesc') {
+      sortedTickets.sort((a, b) => {
+        const valorA = getOpportunityValue(a);
+        const valorB = getOpportunityValue(b);
+        return valorB - valorA;
+      });
+    }
+
+    const defaultTickets = sortedTickets.filter(
+      ticket => ticket.tags.length === 0
+    );
+
+    const lanesData = [
       {
-        id: "lane0",
-        title: i18n.t("tagsKanban.laneDefault"),
-        label: filteredTickets.length.toString(),
-        cards: filteredTickets.map(ticket => ({
-          id: ticket.id.toString(),
-          label: "Ticket nº " + ticket.id.toString(),
-          description: (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>{ticket.contact.number}</span>
-                <Typography
-                  className={Number(ticket.unreadMessages) > 0 ? classes.lastMessageTimeUnread : classes.lastMessageTime}
-                  component="span"
-                  variant="body2"
-                >
-                  {isSameDay(parseISO(ticket.updatedAt), new Date()) ? (
-                    <>{format(parseISO(ticket.updatedAt), "HH:mm")}</>
-                  ) : (
-                    <>{format(parseISO(ticket.updatedAt), "dd/MM/yyyy")}</>
-                  )}
-                </Typography>
-              </div>
-              <div style={{ textAlign: 'left' }}>{ticket.lastMessage || " "}</div>
-              <Button
-                className={`${classes.button} ${classes.cardButton}`}
-                onClick={() => {
-                  handleCardClick(ticket.uuid)
-                }}>
-                Ver Ticket
-              </Button>
-              <span style={{ marginRight: '8px' }} />
-              {ticket?.user && (<Badge style={{ backgroundColor: "#000000" }} className={classes.connectionTag}>{ticket.user?.name.toUpperCase()}</Badge>)}
-            </div>
-          ),
-          title: <>
-            <Tooltip title={ticket.whatsapp?.name}>
-              {IconChannel(ticket.channel)}
-            </Tooltip> {ticket.contact.name}</>,
-          draggable: true,
-          href: "/tickets/" + ticket.uuid,
-        })),
+        id: 'lane0',
+        title: i18n.t('tagsKanban.laneDefault'),
+        tickets: defaultTickets,
+        color: '#757575',
       },
-      ...tags.map(tag => {
-        const filteredTickets = tickets.filter(ticket => {
-          const tagIds = ticket.tags.map(tag => tag.id);
-          return tagIds.includes(tag.id);
-        });
-
+      ...fetchedTags.map(tag => {
+        const taggedTickets = sortedTickets.filter(ticket =>
+          ticket.tags.some(t => t.id === tag.id)
+        );
         return {
           id: tag.id.toString(),
           title: tag.name,
-          label: filteredTickets?.length.toString(),
-          cards: filteredTickets.map(ticket => ({
-            id: ticket.id.toString(),
-            label: "Ticket nº " + ticket.id.toString(),
-            description: (
-              <div>
-                <p>
-                  {ticket.contact.number}
-                  <br />
-                  {ticket.lastMessage || " "}
-                </p>
-                <Button
-                  className={`${classes.button} ${classes.cardButton}`}
-                  onClick={() => {
-                    handleCardClick(ticket.uuid)
-                  }}>
-                  Ver Ticket
-                </Button>
-                <span style={{ marginRight: '8px' }} />
-                <p>
-                  {ticket?.user && (<Badge style={{ backgroundColor: "#000000" }} className={classes.connectionTag}>{ticket.user?.name.toUpperCase()}</Badge>)}
-                </p>
-              </div>
-            ),
-            title: <>
-              <Tooltip title={ticket.whatsapp?.name}>
-                {IconChannel(ticket.channel)}
-              </Tooltip> {ticket.contact.name}
-            </>,
-            draggable: true,
-            href: "/tickets/" + ticket.uuid,
-          })),
-          style: { backgroundColor: tag.color, color: "white" }
+          tickets: taggedTickets,
+          color: tag.color || '#757575',
         };
       }),
     ];
 
-    setFile({ lanes });
-  };
-
-  const handleCardClick = (uuid) => {
-    history.push('/tickets/' + uuid);
+    // Aplicar ordem personalizada se existir
+    if (laneOrder && laneOrder.length > 0) {
+      const orderedLanes = [];
+      const laneMap = new Map(lanesData.map(lane => [lane.id, lane]));
+      
+      // Adicionar lanes na ordem salva
+      laneOrder.forEach(laneId => {
+        if (laneMap.has(laneId)) {
+          orderedLanes.push(laneMap.get(laneId));
+          laneMap.delete(laneId);
+        }
+      });
+      
+      // Adicionar lanes restantes (novas lanes que não estavam na ordem salva)
+      laneMap.forEach(lane => orderedLanes.push(lane));
+      
+      setLanes(orderedLanes);
+    } else {
+      setLanes(lanesData);
+    }
   };
 
   useEffect(() => {
-    popularCards(jsonString);
-  }, [tags, tickets]);
+    if (!loadingLaneOrder) {
+      organizeLanes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tags, tickets, sortOrder, laneOrder, loadingLaneOrder]);
 
-  const handleCardMove = async (cardId, sourceLaneId, targetLaneId) => {
+  const handleCardMove = async (ticketId, targetLaneId) => {
+    ticketId = parseInt(ticketId, 10);
     try {
-      await api.delete(`/ticket-tags/${targetLaneId}`);
-      toast.success('Ticket Tag Removido!');
-      await api.put(`/ticket-tags/${targetLaneId}/${sourceLaneId}`);
-      toast.success('Ticket Tag Adicionado com Sucesso!');
-      await fetchTickets(jsonString);
-      popularCards(jsonString);
+      await api.delete(`/ticket-tags/${ticketId}`);
+
+      if (targetLaneId !== 'lane0') {
+        await api.put(`/ticket-tags/${ticketId}/${targetLaneId}`);
+        toast.success('Ticket Tag atualizado com sucesso!');
+      } else {
+        toast.success('Ticket Tag removido!');
+      }
+
+      fetchTickets();
     } catch (err) {
       console.log(err);
     }
   };
 
-  const handleAddConnectionClick = () => {
+  const handleAddColumnClick = () => {
     history.push('/tagsKanban');
   };
 
+  const handleSortOrderChange = event => {
+    setSortOrder(event.target.value);
+  };
+
+  const handleLaneReorder = async (sourceIndex, destinationIndex) => {
+    // Verificar se o usuário é admin
+    if (user.profile !== 'admin') {
+      toast.error('Apenas administradores podem reordenar as lanes do Kanban');
+      return;
+    }
+
+    const newLanes = Array.from(lanes);
+    const [reorderedLane] = newLanes.splice(sourceIndex, 1);
+    newLanes.splice(destinationIndex, 0, reorderedLane);
+    
+    setLanes(newLanes);
+    
+    // Salvar nova ordem no banco de dados
+    const newLaneOrder = newLanes.map(lane => lane.id);
+    setLaneOrder(newLaneOrder);
+    
+    try {
+      await setKanbanLaneOrder(newLaneOrder);
+      toast.success('Ordem das lanes atualizada com sucesso');
+    } catch (error) {
+      console.error('Erro ao salvar ordem das lanes:', error);
+      toast.error('Erro ao salvar ordem das lanes');
+    }
+  };
+
   return (
-    <div className={classes.root}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', width: '100%', maxWidth: '1200px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+    <MainContainer>
+      <MainHeader>
+        <Title>{i18n.t('Kanban')}</Title>
+        <MainHeaderButtonsWrapper>
+          <FormControl
+            variant="outlined"
+            size="small"
+            className={classes.sortSelect}
+          >
+            <InputLabel htmlFor="sort-order-select">Ordenar por</InputLabel>
+            <Select
+              native
+              value={sortOrder}
+              onChange={handleSortOrderChange}
+              label="Ordenar por"
+              inputProps={{
+                name: 'sortOrder',
+                id: 'sort-order-select',
+              }}
+            >
+              <option value="ticketNumber">Número do Ticket</option>
+              <option value="lastMessageTime">Última Mensagem</option>
+              <option value="valorDesc">Valor (maior para menor)</option>
+            </Select>
+          </FormControl>
           <TextField
             label="Data de início"
             type="date"
@@ -281,8 +319,8 @@ const Kanban = () => {
             }}
             variant="outlined"
             className={classes.dateInput}
+            size="small"
           />
-          <Box mx={1} />
           <TextField
             label="Data de fim"
             type="date"
@@ -293,34 +331,42 @@ const Kanban = () => {
             }}
             variant="outlined"
             className={classes.dateInput}
+            size="small"
           />
-          <Box mx={1} />
           <Button
             variant="contained"
             color="primary"
             onClick={handleSearchClick}
+            className={classes.button}
           >
             Buscar
           </Button>
-        </div>
-        <Can role={user.profile} perform="dashboard:view" yes={() => (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleAddConnectionClick}
-          >
-            {'+ Adicionar colunas'}
-          </Button>
-        )} />
-      </div>
-      <div className={classes.kanbanContainer}>
-        <Board
-          data={file}
-          onCardMoveAcrossLanes={handleCardMove}
-          style={{ backgroundColor: 'rgba(252, 252, 252, 0.03)' }}
+          <Can
+            role={user.profile}
+            perform="dashboard:view"
+            yes={() => (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleAddColumnClick}
+                className={classes.button}
+              >
+                + Adicionar colunas
+              </Button>
+            )}
+          />
+        </MainHeaderButtonsWrapper>
+      </MainHeader>
+      <Paper variant="outlined" className={classes.mainPaper}>
+        <KanbanBoard
+          lanes={lanes}
+          onCardMove={handleCardMove}
+          onLaneReorder={handleLaneReorder}
+          updateTicket={updateTicket}
+          isAdmin={user.profile === 'admin'}
         />
-      </div>
-    </div>
+      </Paper>
+    </MainContainer>
   );
 };
 

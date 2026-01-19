@@ -2,9 +2,10 @@ import { head } from "lodash";
 import XLSX from "xlsx";
 import { has } from "lodash";
 import ContactListItem from "../../models/ContactListItem";
-import CheckContactNumber from "../WbotServices/CheckNumber";
 import logger from "../../utils/logger";
-// import CheckContactNumber from "../WbotServices/CheckNumber";
+import Whatsapp from "../../models/Whatsapp";
+import { getWbot } from "../../libs/wbot";
+import { getIO } from "../../libs/socket";
 
 export async function ImportContacts(
   contactListId: number,
@@ -27,9 +28,11 @@ export async function ImportContacts(
       has(row, "numero") ||
       has(row, "número") ||
       has(row, "Numero") ||
-      has(row, "Número")
+      has(row, "Número") ||
+      has(row, "telefone") ||
+      has(row, "Telefone")
     ) {
-      number = row["numero"] || row["número"] || row["Numero"] || row["Número"];
+      number = row["numero"] || row["número"] || row["Numero"] || row["Número"] || row["telefone"] || row["Telefone"];
       number = `${number}`.replace(/\D/g, "");
     }
 
@@ -44,9 +47,7 @@ export async function ImportContacts(
 
     return { name, number, email, contactListId, companyId };
   });
-
   const contactList: ContactListItem[] = [];
-
   for (const contact of contacts) {
     const [newContact, created] = await ContactListItem.findOrCreate({
       where: {
@@ -64,14 +65,25 @@ export async function ImportContacts(
   if (contactList) {
     for (let newContact of contactList) {
       try {
-        const response = await CheckContactNumber(newContact.number, companyId);
-        newContact.isWhatsappValid = response ? true : false;
-        const number = response;
-        newContact.number = number;
+        const whatsapp = await Whatsapp.findOne({ where: { companyId, status: 'CONNECTED', channel: 'whatsapp' }, limit: 1 });
+        const wbot = await getWbot(whatsapp.id);
+        const response = await wbot.onWhatsApp(`${newContact.number}@s.whatsapp.net`);
+       
+        newContact.isWhatsappValid = response[0]?.exists ? true : false;
+        newContact.number = response[0]?.exists ? response[0]?.jid.split("@")[0] : newContact.number;
+
         await newContact.save();
       } catch (e) {
-        logger.error(`Número de contato inválido: ${newContact.number}`);
+        console.log(e)
+        logger.error(`Número de contato inválido1: ${newContact.number}`);
       }
+      const io = getIO();
+
+      io.of(String(companyId))
+        .emit(`company-${companyId}-ContactListItem-${+contactListId}`, {
+          action: "reload",
+          records: [newContact]
+        });
     }
   }
 

@@ -288,7 +288,7 @@ const FilesModal = ({ open, onClose, fileListId, reload }) => {
                                                                 </IconButton>
                                                             </Grid>
                                                             <Grid xs={12} md={12} item>
-                                                                {info.path ? info.path : selectedFileNames[index]}
+                                                                {info.path ? info.path.split('/').pop() : selectedFileNames[index]}
                                                             </Grid>
                                                         </Grid>
                                                     </div>

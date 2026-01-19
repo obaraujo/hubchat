@@ -1,0 +1,18 @@
+=======================================================
+API OFICIAL DO WHATSAPP - INFORMAÇÕES DE ACESSO
+=======================================================
+
+URL:            https://novocodigo.atendechat.com
+Porta:          6005
+Banco:          atendechatop_apioficial
+PM2 Process:    atendechatop-apioficial
+Swagger:        https://novocodigo.atendechat.com/swagger
+
+TOKEN ADMIN:    e96f75e2b5a39b613b5eef2a8e57e8717fedf29032d3a804e8f6fd5acb41e501
+
+Webhook Meta:
+https://novocodigo.atendechat.com/v1/webhook/{companyId}/{conexaoId}
+
+=======================================================
+GUARDE ESTAS INFORMAÇÕES EM LOCAL SEGURO!
+=======================================================

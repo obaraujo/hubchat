@@ -29,7 +29,7 @@ const CreateTicketServiceWebhook = async ({
 }: Request): Promise<Ticket> => {
   const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
 
-  await CheckContactOpenTickets(contactId, 0, companyId);
+  // await CheckContactOpenTickets(contactId, 0, companyId);
 
   const isGroup = false;
 

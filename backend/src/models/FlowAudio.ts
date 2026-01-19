@@ -15,16 +15,16 @@ import {
 export class FlowAudioModel extends Model<FlowAudioModel> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
-  @Column(DataType.INTEGER)
+  @Column
   userId: number;
 
-  @Column(DataType.TEXT)
+  @Column
   name: string;
 
   @CreatedAt

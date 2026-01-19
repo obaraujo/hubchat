@@ -41,10 +41,12 @@ type UpdateInvoiceData = {
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { searchParam, pageNumber } = req.query as IndexQuery;
+  const { companyId } = req.user || {};
 
   const { invoices, count, hasMore } = await ListInvoicesServices({
     searchParam,
-    pageNumber
+    pageNumber,
+    companyId
   });
 
   return res.json({ invoices, count, hasMore });
@@ -68,10 +70,21 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const list = async (req: Request, res: Response): Promise<Response> => {
-  const { companyId } = req.params;
-  const invoice: Invoices[] = await FindAllInvoiceService(+companyId);
+  const { searchParam, pageNumber } = req.query as IndexQuery;
+  const { companyId } = req.user || {};
 
-  return res.status(200).json(invoice);
+  console.log("List invoices - req.user:", req.user);
+  console.log("List invoices - companyId:", companyId, "searchParam:", searchParam, "pageNumber:", pageNumber);
+
+  const { invoices, count, hasMore } = await ListInvoicesServices({
+    searchParam,
+    pageNumber,
+    companyId
+  });
+
+  console.log("Invoices found:", invoices.length, "count:", count, "hasMore:", hasMore);
+
+  return res.json({ invoices, count, hasMore });
 };
 
 export const update = async (

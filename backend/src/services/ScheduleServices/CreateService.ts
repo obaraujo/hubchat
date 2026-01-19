@@ -20,6 +20,8 @@ interface Request {
   tipoDias?: number;
   contadorEnvio?: number;
   assinar?: boolean;
+  // ✅ Campos de lembrete
+  reminderDate?: string;
 }
 
 const CreateService = async ({
@@ -38,7 +40,9 @@ const CreateService = async ({
   enviarQuantasVezes,
   tipoDias,
   assinar,
-  contadorEnvio
+  contadorEnvio,
+  // ✅ Campos de lembrete
+  reminderDate
 }: Request): Promise<Schedule> => {
   const schema = Yup.object().shape({
     body: Yup.string().required().min(5),
@@ -58,7 +62,8 @@ const CreateService = async ({
       contactId,
       companyId,
       userId,
-      status: 'PENDENTE',
+      // ✅ Se tem lembrete, não marcar como PENDENTE para não ser processado no horário original
+      status: reminderDate ? 'AGUARDANDO_LEMBRETE' : 'PENDENTE',
       ticketUserId,
       queueId,
       openTicket,
@@ -69,7 +74,11 @@ const CreateService = async ({
       enviarQuantasVezes,
       tipoDias,
       assinar,
-      contadorEnvio
+      contadorEnvio,
+      // ✅ Incluir campos de lembrete
+      reminderDate: reminderDate || null,
+      reminderMessage: null, // Não usar mais o campo reminderMessage
+      reminderStatus: reminderDate ? 'PENDENTE' : null
     }
   );
 

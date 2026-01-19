@@ -82,7 +82,7 @@ export const uploadMedias = async (req: Request, res: Response): Promise<Respons
         });
 
         await fileOpt.update({
-          path: file.filename.replace('/', '-'),
+          path: `/company${req.user.companyId}/fileList/${fileId}/${file.filename.replace('/', '-')}`,
           mediaType: Array.isArray(mediaType) ? mediaType[index] : mediaType
         });
       }

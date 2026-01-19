@@ -7,8 +7,7 @@ import {
   PrimaryKey,
   ForeignKey,
   BelongsTo,
-  AutoIncrement,
-	DataType
+  AutoIncrement
 } from "sequelize-typescript";
 
 import Company from "./Company";
@@ -19,25 +18,25 @@ import Ticket from "./Ticket";
 class UserRating extends Model<UserRating> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @ForeignKey(() => Ticket)
-  @Column(DataType.INTEGER)
+  @Column
   ticketId: number;
 
   @BelongsTo(() => Ticket)
   ticket: Ticket;
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @BelongsTo(() => Company)
   company: Company;
 
   @ForeignKey(() => User)
-  @Column(DataType.INTEGER)
+  @Column
   userId: number;
 
   @BelongsTo(() => User)
@@ -49,7 +48,7 @@ class UserRating extends Model<UserRating> {
   @UpdatedAt
   updatedAt: Date;
 
-  @Column(DataType.INTEGER)
+  @Column
   rate: number;
 }
 

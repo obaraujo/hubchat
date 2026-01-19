@@ -1,10 +1,10 @@
 import Whatsapp from "../models/Whatsapp";
 import GetWhatsappWbot from "./GetWhatsappWbot";
 import fs from "fs";
-import formatBody from "./Mustache";
+import formatBody from "../helpers/Mustache";
 
 import { getMessageOptions } from "../services/WbotServices/SendWhatsAppMedia";
-import { createJid } from "../functionts";
+import { getJidOf } from "../services/WbotServices/getJidOf";
 
 export type MessageData = {
   number: number | string;
@@ -21,8 +21,9 @@ export const SendMessage = async (
 
 ): Promise<any> => {
   try {
+    console.error(`Chegou SendMessage - whatsappId: ${whatsapp.id} - number: ${messageData.number}`);
     const wbot = await GetWhatsappWbot(whatsapp);
-    const chatId = createJid(String(messageData.number),isGroup );
+    const chatId = `${messageData.number}@${!!isGroup ? 'g.us' : 's.whatsapp.net'}`;
     const companyId = messageData?.companyId ? messageData.companyId.toString(): null;
 
     let message;
@@ -36,13 +37,13 @@ export const SendMessage = async (
       );
       if (options) {
         const body = fs.readFileSync(messageData.mediaPath);
-        message = await wbot.sendMessage(chatId, {
+        message = await wbot.sendMessage(getJidOf(chatId), {
           ...options
         });
       }
     } else {
       const body = formatBody(`${messageData.body}`);
-      message = await wbot.sendMessage(chatId, { text: body });
+      message = await wbot.sendMessage(getJidOf(chatId), { text: body });
     }
 
     return message;

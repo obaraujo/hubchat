@@ -73,16 +73,16 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
           .get(`/whatsapp`, { params: { companyId, session: 0 } })
           .then(({ data }) => setWhatsapps(data));
 
-          // .then(({ data }) => {
-          //   const mappedWhatsapps = data.map((whatsapp) => ({
-          //     ...whatsapp,
-          //     selected: false,
-          //   }));
-          //   setWhatsapps(mappedWhatsapps);
-          //   if (channelFilter && mappedWhatsapps.length && mappedWhatsapps?.length === 1 && (user.whatsappId === null || user?.whatsapp?.channel !== channelFilter)) {
-          //     setSelectedWhatsapp(mappedWhatsapps[0].id)
-          //   }
-          // });
+        // .then(({ data }) => {
+        //   const mappedWhatsapps = data.map((whatsapp) => ({
+        //     ...whatsapp,
+        //     selected: false,
+        //   }));
+        //   setWhatsapps(mappedWhatsapps);
+        //   if (channelFilter && mappedWhatsapps.length && mappedWhatsapps?.length === 1 && (user.whatsappId === null || user?.whatsapp?.channel !== channelFilter)) {
+        //     setSelectedWhatsapp(mappedWhatsapps[0].id)
+        //   }
+        // });
       };
 
       if (whatsappId !== null && whatsappId !== undefined) {
@@ -130,6 +130,8 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
         return <Instagram style={{ color: "#e1306c", verticalAlign: "middle" }} />;
       case "whatsapp":
         return <WhatsApp style={{ color: "#25d366", verticalAlign: "middle" }} />
+      case "whatsapp_oficial":
+        return <WhatsApp style={{ color: "#25d366", verticalAlign: "middle" }} />
       default:
         return "error";
     }
@@ -174,19 +176,35 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
 
       onClose(ticket);
     } catch (err) {
-
-      const ticket = JSON.parse(err.response.data.error);
-
-      if (ticket.userId !== user?.id) {
+      setLoading(false);
+      
+      // Se for erro 403 (Forbidden), o backend já retornou que outro usuário atende
+      if (err.response?.status === 403) {
+        const errorData = err.response.data;
         setOpenAlert(true);
-        setUserTicketOpen(ticket?.user?.name);
-        setQueueTicketOpen(ticket?.queue?.name);
+        setUserTicketOpen(errorData.ticket?.user?.name || "Outro usuário");
+        setQueueTicketOpen(errorData.ticket?.queue?.name || "Sem fila");
+        return;
+      }
+
+      // Para erro 409, tentar parsear o ticket existente
+      if (err.response?.status === 409) {
+        const ticket = JSON.parse(err.response.data.error);
+
+        if (ticket.userId !== user?.id) {
+          setOpenAlert(true);
+          setUserTicketOpen(ticket?.user?.name);
+          setQueueTicketOpen(ticket?.queue?.name);
+        } else {
+          setOpenAlert(false);
+          setUserTicketOpen("");
+          setQueueTicketOpen("");
+          setLoading(false);
+          onClose(ticket);
+        }
       } else {
-        setOpenAlert(false);
-        setUserTicketOpen("");
-        setQueueTicketOpen("");
-        setLoading(false);
-        onClose(ticket);
+        // Outros erros
+        toastError(err);
       }
     }
     setLoading(false);
@@ -255,7 +273,7 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
             getOptionLabel={renderOptionLabel}
             renderOption={renderOption}
             filterOptions={createAddContactOption}
-            onChange={(e, newValue) => {                     
+            onChange={(e, newValue) => {
               setChannelFilter(newValue ? newValue.channel : "whatsapp");
               handleSelectOption(e, newValue)
             }}

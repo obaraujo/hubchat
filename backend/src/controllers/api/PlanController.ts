@@ -185,7 +185,10 @@ export const update = async (
     useExternalApi,
     useKanban,
     useIntegrations,
-    useOpenAi
+    useOpenAi,
+    trial,
+    trialDays,
+    recurrence
   });
   return res.status(200).json(plan);
 };

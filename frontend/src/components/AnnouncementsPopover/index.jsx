@@ -168,7 +168,7 @@ export default function AnnouncementsPopover() {
   }, [searchParam, pageNumber]);
 
   useEffect(() => {
-    if (user.companyId) {
+    if (user.companyId && socket) {
       const companyId = user.companyId;
 //    const socket = socketManager.GetSocket();
 
@@ -187,11 +187,13 @@ export default function AnnouncementsPopover() {
         socket.off(`company-announcement`, onCompanyAnnouncement);
       };
     }
+    return undefined;
   }, [user]);
 
   const fetchAnnouncements = async () => {
     try {
-      const { data } = await api.get("/announcements/", {
+      // Usar nova rota que filtra por empresa
+      const { data } = await api.get("/announcements/for-company", {
         params: { searchParam, pageNumber },
       });
       dispatch({ type: "LOAD_ANNOUNCEMENTS", payload: data.records });

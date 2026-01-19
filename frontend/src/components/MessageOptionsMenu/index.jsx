@@ -16,7 +16,7 @@ import { TicketsContext } from "../../context/Tickets/TicketsContext";
 import toastError from "../../errors/toastError";
 import { useHistory } from "react-router-dom";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import ForwardModal from "../ForwardMessageModal";
+import ForwardModal from "../../components/ForwardMessageModal";
 import ShowTicketOpen from "../ShowTicketOpenModal";
 import AcceptTicketWithoutQueue from "../AcceptTicketWithoutQueueModal";
 

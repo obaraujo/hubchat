@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 import AppError from "../errors/AppError";
 
@@ -13,15 +16,60 @@ import SyncTagService from "../services/TagServices/SyncTagsService";
 import KanbanListService from "../services/TagServices/KanbanListService";
 import ContactTag from "../models/ContactTag";
 
+// Configuração do multer para upload de mídia
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const companyId = req.user?.companyId;
+    if (!companyId) {
+      return cb(new Error('Company ID não encontrado'), '');
+    }
+    
+    const uploadPath = path.join(__dirname, `../../public/company${companyId}/lanes`);
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `lane-${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf',
+      'audio/mpeg', 'audio/wav', 'audio/ogg',
+      'video/mp4', 'video/avi', 'video/mov', 'video/webm',
+      'application/x-ret'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+    }
+  }
+});
+
+export const uploadMiddleware = upload.array('mediaFiles', 5); // Máximo 5 arquivos
+
 type IndexQuery = {
   searchParam?: string;
   pageNumber?: string | number;
   kanban?: number;
   tagId?: number;
+  limit?: string | number;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { pageNumber, searchParam, kanban, tagId } = req.query as IndexQuery;
+  const { pageNumber, searchParam, kanban, tagId, limit } = req.query as IndexQuery;
   const { companyId } = req.user;
 
   const { tags, count, hasMore } = await ListService({
@@ -29,7 +77,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     pageNumber,
     companyId,
     kanban,
-    tagId
+    tagId,
+    limit
   });
 
   return res.json({ tags, count, hasMore });
@@ -43,6 +92,19 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     rollbackLaneId } = req.body;
   const { companyId } = req.user;
 
+  // Processar arquivos de mídia
+  let mediaFilesData = null;
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    const files = req.files as any[];
+    mediaFilesData = JSON.stringify(files.map(file => ({
+      filename: file.filename,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      path: `/company${companyId}/lanes/${file.filename}`
+    })));
+  }
+
   const tag = await CreateService({
     name,
     color,
@@ -51,7 +113,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     timeLane,
     nextLaneId,
     greetingMessageLane,
-    rollbackLaneId
+    rollbackLaneId,
+    mediaFiles: mediaFilesData
   });
 
   const io = getIO();
@@ -84,8 +147,30 @@ export const update = async (
   }
 
   const { tagId } = req.params;
-  const tagData = req.body;
   const { companyId } = req.user;
+
+  // Buscar tag existente para preservar mediaFiles se não houver novos uploads
+  const existingTag = await ShowService(tagId);
+  
+  // Processar arquivos de mídia
+  let mediaFilesData = existingTag.mediaFiles; // Preservar arquivos existentes por padrão
+  
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    const files = req.files as any[];
+    const companyId = req.user?.companyId;
+    mediaFilesData = JSON.stringify(files.map(file => ({
+      filename: file.filename,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      path: `/company${companyId}/lanes/${file.filename}`
+    })));
+  }
+
+  const tagData = {
+    ...req.body,
+    mediaFiles: mediaFilesData
+  };
 
   const tag = await UpdateService({ tagData, id: tagId });
 
@@ -158,8 +243,8 @@ export const removeContactTag = async (
 
   await ContactTag.destroy({
     where: {
-      tagId,
-      contactId
+      tagId: parseInt(tagId),
+      contactId: parseInt(contactId)
     }
   });
 

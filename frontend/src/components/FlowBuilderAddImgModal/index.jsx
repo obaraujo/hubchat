@@ -81,7 +81,7 @@ const FlowBuilderAddImgModal = ({ open, onSave, onUpdate, data, close }) => {
         btn: "Salvar"
       });
       setOldImage(data.data.url)
-      setPreview(import.meta.env.VITE_BACKEND_URL + '/public/' + data.data.url)
+      setPreview(process.env.REACT_APP_BACKEND_URL + '/public/' + data.data.url)
       setActiveModal(true);
     } else if (open === "create") {
       setLabels({

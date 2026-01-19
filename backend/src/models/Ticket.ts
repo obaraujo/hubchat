@@ -15,7 +15,7 @@ import {
   AllowNull,
   DataType
 } from "sequelize-typescript";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 
 import Contact from "./Contact";
 import Message from "./Message";
@@ -26,80 +26,64 @@ import Company from "./Company";
 import Tag from "./Tag";
 import TicketTag from "./TicketTag";
 import QueueIntegrations from "./QueueIntegrations";
-import { format } from "date-fns";
-
+// Removido import de date-fns (não utilizado)
 
 @Table
 class Ticket extends Model<Ticket> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column({ defaultValue: "pending", type:DataType.STRING })
+  @Column({ defaultValue: "pending" })
   status: string;
 
-  @Column(DataType.INTEGER)
+  @Column
   unreadMessages: number;
 
-  @Column(DataType.BOOLEAN)
-  flowWebhook: boolean;
-
-  @Column(DataType.TEXT)
-  lastFlowId: string;
-
-  @Column(DataType.TEXT)
-  hashFlowId: string;
-
-  @Column(DataType.TEXT)
-  flowStopped: string;
-
-  @Column(DataType.JSON)
-  dataWebhook: {} | null;;
-
-  @Column(DataType.TEXT)
+  @Column
   lastMessage: string;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   isGroup: boolean;
 
-  @Column(DataType.DATE)
+  @Column
   createdAt: Date;
 
   @UpdatedAt
   updatedAt: Date;
 
   @ForeignKey(() => User)
-  @Column(DataType.INTEGER)
+  @Column
   userId: number;
 
   @BelongsTo(() => User)
   user: User;
 
   @ForeignKey(() => Contact)
-  @Column(DataType.INTEGER)
+  @Column
   contactId: number;
 
   @BelongsTo(() => Contact)
   contact: Contact;
 
   @ForeignKey(() => Whatsapp)
-  @Column(DataType.INTEGER)
+  @Column
   whatsappId: number;
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueId: number;
 
   @BelongsTo(() => Queue)
   queue: Queue;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   isBot: boolean;
 
   @HasMany(() => Message)
@@ -112,79 +96,121 @@ class Ticket extends Model<Ticket> {
   tags: Tag[];
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @BelongsTo(() => Company)
   company: Company;
 
-  @Default(uuidv4())
-  @Column(DataType.TEXT)
+  @Column
   uuid: string;
 
   @Default("whatsapp")
-  @Column(DataType.TEXT)
+  @Column
   channel: string;
 
   @AllowNull(false)
   @Default(0)
-  @Column(DataType.INTEGER)
+  @Column
   amountUsedBotQueues: number;
 
   @AllowNull(false)
   @Default(0)
-  @Column(DataType.INTEGER)
+  @Column
   amountUsedBotQueuesNPS: number;
 
   @BeforeCreate
   static setUUID(ticket: Ticket) {
-    ticket.uuid = uuidv4();
+    ticket.uuid = randomUUID();
   }
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   fromMe: boolean;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   sendInactiveMessage: boolean;
 
-  @Column(DataType.DATE)
+  @Column
   lgpdSendMessageAt: Date;
 
-  @Column(DataType.DATE)
+  @Column
   lgpdAcceptedAt: Date;
 
-  @Column(DataType.DATE)
+  @Column
   imported: Date;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   isOutOfHour: boolean;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   useIntegration: boolean;
 
   @ForeignKey(() => QueueIntegrations)
-  @Column(DataType.INTEGER)
+  @Column
   integrationId: number;
 
   @BelongsTo(() => QueueIntegrations)
   queueIntegration: QueueIntegrations;
 
-  @Column(DataType.BOOLEAN)
+  @Column
   isActiveDemand: boolean;
 
-  @Column(DataType.TEXT)
+  @Column
   typebotSessionId: string;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
-  typebotStatus: boolean
+  @Column
+  typebotStatus: boolean;
 
-  @Column(DataType.DATE)
-  typebotSessionTime: Date
+  @Column
+  typebotSessionTime: Date;
+
+  @Column
+  flowWebhook: boolean;
+
+  @Column
+  lastFlowId: string;
+
+  @Column
+  hashFlowId: string;
+
+  @Column
+  flowStopped: string;
+
+  @Column(DataType.JSON)
+  dataWebhook: {
+    variables?: Record<string, string>;
+    pendingQuestion?: string;
+    sgp?: {
+      cpfUsuario?: string;
+      senhaUsuario?: string;
+      aguardandoSenha?: boolean;
+      aguardandoContrato?: boolean;
+      contratoSelecionado?: string;
+    };
+  } | null;
+
+  @AllowNull(false)
+  @Default(0)
+  @Column
+  maxUseInactiveTime: number;
+
+  @Column({ type: DataType.FLOAT, allowNull: true })
+  valorVenda: number | null;
+
+  @Column({ type: DataType.STRING, allowNull: true })
+  motivoNaoVenda: string | null;
+
+  @Column({ type: DataType.STRING, allowNull: true })
+  motivoFinalizacao: string | null;
+
+  @Default(false)
+  @Column
+  finalizadoComVenda: boolean;
 }
 
 export default Ticket;

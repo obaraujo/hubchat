@@ -54,26 +54,23 @@ if (String(process.env.BULL_BOARD).toLocaleLowerCase() === 'true' && process.env
 }
 
 // Middlewares
-// app.use(helmet({
-//   contentSecurityPolicy: {
-//     directives: {
-//       defaultSrc: ["'self'", "http://localhost:8080"],
-//       imgSrc: ["'self'", "data:", "http://localhost:8080"],
-//       scriptSrc: ["'self'", "http://localhost:8080"],
-//       styleSrc: ["'self'", "'unsafe-inline'", "http://localhost:8080"],
-//       connectSrc: ["'self'", "http://localhost:8080"]
-//     }
-//   },
-//   crossOriginResourcePolicy: false, // Permite recursos de diferentes origens
-//   crossOriginEmbedderPolicy: false, // Permite incorporação de diferentes origens
-//   crossOriginOpenerPolicy: false, // Permite abertura de diferentes origens
-//   // crossOriginResourcePolicy: {
-//   //   policy: "cross-origin" // Permite carregamento de recursos de diferentes origens
-//   // }
-// }));
+// Helmet desativado por CSP customizada; reativar quando necessário
 
 app.use(compression()); // Compressão HTTP
-app.use(bodyParser.json({ limit: '5mb' })); // Aumentar o limite de carga para 5 MB
+// Captura o corpo bruto para validação de assinatura de webhooks (Meta)
+app.use(
+  bodyParser.json({
+    limit: '5mb',
+    verify: (req: any, _res, buf) => {
+      try {
+        req.rawBody = buf?.toString?.('utf8');
+      } catch {
+        // ignora caso não consiga converter
+        req.rawBody = undefined;
+      }
+    }
+  })
+); // Aumentar o limite de carga para 5 MB
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
 app.use(
   cors({

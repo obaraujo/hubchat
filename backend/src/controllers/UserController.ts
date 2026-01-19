@@ -21,14 +21,17 @@ import User from "../models/User";
 import { head } from "lodash";
 import ToggleChangeWidthService from "../services/UserServices/ToggleChangeWidthService";
 import APIShowEmailUserService from "../services/UserServices/APIShowEmailUserService";
-import { createJid } from "../functionts";
-
+import UpdateUserOnlineStatusService from "../services/UserServices/UpdateUserOnlineStatusService";
+import GetOnlineUsersService from "../services/UserServices/GetOnlineUsersService";
+import Chat from "../models/Chat";
+import ChatUser from "../models/ChatUser";
+import Plan from "../models/Plan";
+import axios from "axios";
 
 type IndexQuery = {
   searchParam: string;
   pageNumber: string;
 };
-
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { searchParam, pageNumber } = req.query as IndexQuery;
@@ -68,7 +71,14 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     showDashboard,
     defaultTicketsManagerWidth = 550,
     allowRealTime,
-    allowConnections
+    allowConnections,
+    showContacts,
+    showCampaign,
+    showFlow,
+    birthDate,
+    allowSeeMessagesInPendingTickets = "enabled",
+    document // CNPJ da empresa
+
   } = req.body;
   let userCompanyId: number | null = null;
 
@@ -92,14 +102,33 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
+  // Validar se CNPJ foi fornecido no signup
+  if (req.url === "/signup" && (!document || document.trim() === "")) {
+    throw new AppError("CNPJ é obrigatório para o cadastro", 400);
+  }
+
   const companyUser = bodyCompanyId || userCompanyId;
 
+  let plan = null;
+  if (planId) {
+    plan = await Plan.findByPk(planId, {
+      attributes: ["id", "name", "trial", "trialDays"]
+    });
+  }
+
   if (!companyUser) {
+    let date = "";
+    if (plan.trial === true) {
+      const dataNowMoreTwoDays = new Date();
+      dataNowMoreTwoDays.setDate(dataNowMoreTwoDays.getDate() + Number(plan?.trialDays || 3));
 
-    const dataNowMoreTwoDays = new Date();
-    dataNowMoreTwoDays.setDate(dataNowMoreTwoDays.getDate() + 3);
+      date = dataNowMoreTwoDays.toISOString().split("T")[0];
+    } else {
+      const dataNowMoreTwoDays = new Date();
+      dataNowMoreTwoDays.setDate(dataNowMoreTwoDays.getDate() + 3);
 
-    const date = dataNowMoreTwoDays.toISOString().split("T")[0];
+      date = dataNowMoreTwoDays.toISOString().split("T")[0];
+    }
 
     const companyData = {
       name: companyName,
@@ -109,21 +138,22 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       status: true,
       dueDate: date,
       recurrence: "",
-      document: "",
+      document: document ? document.replace(/\D/g, '') : "",
       paymentMethod: "",
       password: password,
       companyUserName: name,
       startWork: startWork,
       endWork: endWork,
-      defaultTheme: 'light',
-      defaultMenu: 'closed',
+      defaultTheme: "light",
+      defaultMenu: "closed",
       allowGroup: false,
       allHistoric: false,
-      userClosePendingTicket: 'enabled',
-      showDashboard: 'disabled',
+      userClosePendingTicket: "enabled",
+      allowSeeMessagesInPendingTickets: "enabled",
+      showDashboard: "disabled",
       defaultTicketsManagerWidth: 550,
-      allowRealTime: 'disabled',
-      allowConnections: 'disabled'
+      allowRealTime: "disabled",
+      allowConnections: "disabled"
     };
 
     const user = await CreateCompanyService(companyData);
@@ -133,28 +163,35 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
         to: email,
         subject: `Login e senha da Empresa ${companyName}`,
         text: `Olá ${name}, este é um email sobre o cadastro da ${companyName}!<br><br>
-        Segue os dados da sua empresa:<br><br>Nome: ${companyName}<br>Email: ${email}<br>Senha: ${password}<br>Data Vencimento Trial: ${dateToClient(date)}`
-      }
+        Segue os dados da sua empresa:<br><br>Nome: ${companyName}<br>Email: ${email}<br>Senha: ${password}<br>Data Vencimento Trial: ${dateToClient(
+          date
+        )}`
+      };
 
-      await SendMail(_email)
+      await SendMail(_email);
     } catch (error) {
-      console.log('Não consegui enviar o email')
+      console.log("Não consegui enviar o email");
     }
 
     try {
       const company = await ShowCompanyService(1);
-      const whatsappCompany = await FindCompaniesWhatsappService(company.id)
+      const whatsappCompany = await FindCompaniesWhatsappService(company.id);
 
-      if (whatsappCompany.whatsapps[0].status === "CONNECTED" && (phone !== undefined || !isNil(phone) || !isEmpty(phone))) {
-        const whatsappId = whatsappCompany.whatsapps[0].id
-        const wbot = getWbot(whatsappId);
+      if (
+        whatsappCompany.whatsapps[0].status === "CONNECTED" &&
+        (phone !== undefined || !isNil(phone) || !isEmpty(phone))
+      ) {
+        const whatsappId = whatsappCompany.whatsapps[0].id;
+        const wbot = await getWbot(whatsappId);
 
-        const body = `Olá ${name}, este é uma mensagem sobre o cadastro da ${companyName}!\n\nSegue os dados da sua empresa:\n\nNome: ${companyName}\nEmail: ${email}\nSenha: ${password}\nData Vencimento Trial: ${dateToClient(date)}`
+        const body = `Olá ${name}, este é uma mensagem sobre o cadastro da ${companyName}!\n\nSegue os dados da sua empresa:\n\nNome: ${companyName}\nEmail: ${email}\nSenha: ${password}\nData Vencimento Trial: ${dateToClient(
+          date
+        )}`;
 
-        await wbot.sendMessage(`${createJid(phone)}`, { text: body });
+        await wbot.sendMessage(`55${phone}@s.whatsapp.net`, { text: body });
       }
     } catch (error) {
-      console.log('Não consegui enviar a mensagem')
+      console.log("Não consegui enviar a mensagem");
     }
 
     return res.status(200).json(user);
@@ -181,63 +218,36 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       showDashboard,
       defaultTicketsManagerWidth,
       allowRealTime,
-      allowConnections
+      allowConnections,
+      showContacts,
+      showCampaign,
+      showFlow,
+      birthDate,
+      allowSeeMessagesInPendingTickets
+    });
+
+    const userData = await User.findByPk(user.id);
+
+    await User.createInitialChat(userData);
+
+    const chats = await Chat.findAll({
+      include: [
+        {
+          model: ChatUser,
+          where: { userId: user.id }
+        }
+      ]
     });
 
     const io = getIO();
-    io.of(userCompanyId.toString())
-      .emit(`company-${userCompanyId}-user`, {
-        action: "create",
-        user
-      });
+    io.of(userCompanyId.toString()).emit(`company-${userCompanyId}-user`, {
+      action: "create",
+      user
+    });
 
-    return res.status(200).json(user);
+    return res.status(200).json({ user, chats });
   }
 };
-
-// export const store = async (req: Request, res: Response): Promise<Response> => {
-//   const {
-//     email,
-//     password,
-//     name,
-//     profile,
-//     companyId: bodyCompanyId,
-//     queueIds
-//   } = req.body;
-//   let userCompanyId: number | null = null;
-
-//   if (req.user !== undefined) {
-//     const { companyId: cId } = req.user;
-//     userCompanyId = cId;
-//   }
-
-//   if (
-//     req.url === "/signup" &&
-//     (await CheckSettingsHelper("userCreation")) === "disabled"
-//   ) {
-//     throw new AppError("ERR_USER_CREATION_DISABLED", 403);
-//   } else if (req.url !== "/signup" && req.user.profile !== "admin") {
-//     throw new AppError("ERR_NO_PERMISSION", 403);
-//   }
-
-//   const user = await CreateUserService({
-//     email,
-//     password,
-//     name,
-//     profile,
-//     companyId: bodyCompanyId || userCompanyId,
-//     queueIds
-//   });
-
-//   const io = getIO();
-//   io.of(String(companyId))
-//  .emit(`company-${userCompanyId}-user`, {
-//     action: "create",
-//     user
-//   });
-
-//   return res.status(200).json(user);
-// };
 
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { userId } = req.params;
@@ -248,7 +258,10 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(user);
 };
 
-export const showEmail = async (req: Request, res: Response): Promise<Response> => {
+export const showEmail = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const { email } = req.params;
 
   const user = await APIShowEmailUserService(email);
@@ -260,7 +273,6 @@ export const update = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-
   // if (req.user.profile !== "admin") {
   //   throw new AppError("ERR_NO_PERMISSION", 403);
   // }
@@ -280,13 +292,11 @@ export const update = async (
     requestUserId: +requestUserId
   });
 
-
   const io = getIO();
-  io.of(String(companyId))
-    .emit(`company-${companyId}-user`, {
-      action: "update",
-      user
-    });
+  io.of(String(companyId)).emit(`company-${companyId}-user`, {
+    action: "update",
+    user
+  });
 
   return res.status(200).json(user);
 };
@@ -311,20 +321,20 @@ export const remove = async (
   });
 
   if (companyId !== user.companyId) {
-    return res.status(400).json({ error: "Você não possui permissão para acessar este recurso!" });
+    return res
+      .status(400)
+      .json({ error: "Você não possui permissão para acessar este recurso!" });
   } else {
     await DeleteUserService(userId, companyId);
 
     const io = getIO();
-    io.of(String(companyId))
-      .emit(`company-${companyId}-user`, {
-        action: "delete",
-        userId
-      });
+    io.of(String(companyId)).emit(`company-${companyId}-user`, {
+      action: "delete",
+      userId
+    });
 
     return res.status(200).json({ message: "User deleted" });
   }
-
 };
 
 export const list = async (req: Request, res: Response): Promise<Response> => {
@@ -347,41 +357,205 @@ export const mediaUpload = async (
   const files = req.files as Express.Multer.File[];
   const file = head(files);
 
+  if (!file) {
+    throw new AppError("Nenhum arquivo foi enviado", 400);
+  }
+
   try {
     let user = await User.findByPk(userId);
-    user.profileImage = file.filename.replace('/', '-');
 
+    if (!user) {
+      throw new AppError("Usuário não encontrado", 404);
+    }
+
+    if (user.companyId !== companyId) {
+      throw new AppError("Usuário não pertence a esta empresa", 403);
+    }
+
+    // Salvar apenas o nome do arquivo (sem caminho)
+    user.profileImage = file.filename;
     await user.save();
 
+    // Buscar usuário atualizado com todas as relações
     user = await ShowUserService(userId, companyId);
-    
+
+    // Emitir evento socket para atualizar em tempo real
     const io = getIO();
-    io.of(String(companyId))
-      .emit(`company-${companyId}-user`, {
-        action: "update",
-        user
-      });
-
-
-    return res.status(200).json({ user, message: "Imagem atualizada" });
-  } catch (err: any) {
-    throw new AppError(err.message);
-  }
-};
-
-export const toggleChangeWidht = async (req: Request, res: Response): Promise<Response> => {
-  var { userId } = req.params;
-  const { defaultTicketsManagerWidth } = req.body;
-
-  const { companyId } = req.user;
-  const user = await ToggleChangeWidthService({ userId, defaultTicketsManagerWidth });
-
-  const io = getIO();
-  io.of(String(companyId))
-    .emit(`company-${companyId}-user`, {
+    io.of(String(companyId)).emit(`company-${companyId}-user`, {
       action: "update",
       user
     });
 
+    return res.status(200).json({
+      user,
+      message: "Imagem atualizada com sucesso"
+    });
+  } catch (err: any) {
+    console.error("Erro no upload da imagem:", err);
+    throw new AppError(err.message || "Erro interno do servidor");
+  }
+};
+
+export const toggleChangeWidht = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  var { userId } = req.params;
+  const { defaultTicketsManagerWidth } = req.body;
+
+  const { companyId } = req.user;
+  const user = await ToggleChangeWidthService({
+    userId,
+    defaultTicketsManagerWidth
+  });
+
+  const io = getIO();
+  io.of(String(companyId)).emit(`company-${companyId}-user`, {
+    action: "update",
+    user
+  });
+
   return res.status(200).json(user);
+};
+
+export const updateOnlineStatus = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { userId } = req.params;
+  const { online } = req.body;
+
+  await UpdateUserOnlineStatusService({
+    userId: +userId,
+    online
+  });
+
+  return res.status(200).json({ message: "Status updated" });
+};
+
+export const getOnlineUsers = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId } = req.user;
+
+  const users = await GetOnlineUsersService({
+    companyId
+  });
+
+  return res.status(200).json(users);
+};
+
+export const validateCnpj = async (req: Request, res: Response): Promise<Response> => {
+  const { cnpj } = req.body;
+
+  if (!cnpj) {
+    throw new AppError("CPF ou CNPJ é obrigatório", 400);
+  }
+
+  // Limpar o documento (remover formatação)
+  const cleanDocument = cnpj.replace(/\D/g, '');
+
+  // Detectar se é CPF ou CNPJ
+  const isCpf = cleanDocument.length === 11;
+  const isCnpj = cleanDocument.length === 14;
+
+  if (!isCpf && !isCnpj) {
+    throw new AppError("CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos", 400);
+  }
+
+  if (isCpf) {
+    // Validação local do CPF
+    if (!validateCpf(cleanDocument)) {
+      throw new AppError("CPF inválido", 400);
+    }
+
+    return res.status(200).json({
+      valid: true,
+      data: {
+        nome: "Pessoa Física",
+        cpf: cleanDocument,
+        tipo: "cpf"
+      }
+    });
+  }
+
+  // Validação do CNPJ na Receita Federal
+  try {
+    const response = await axios.get(`https://receitaws.com.br/v1/cnpj/${cleanDocument}`);
+    const data = response.data;
+
+    if (data.status === "ERROR") {
+      throw new AppError("CNPJ inválido ou não encontrado na Receita Federal", 400);
+    }
+
+    return res.status(200).json({
+      valid: true,
+      data: {
+        nome: data.nome,
+        cnpj: cleanDocument,
+        email: data.email,
+        telefone: data.telefone,
+        logradouro: data.logradouro,
+        numero: data.numero,
+        complemento: data.complemento,
+        bairro: data.bairro,
+        municipio: data.municipio,
+        uf: data.uf,
+        cep: data.cep,
+        situacao: data.situacao,
+        tipo: "cnpj"
+      }
+    });
+
+  } catch (error: any) {
+    console.error("Erro ao validar CNPJ:", error);
+
+    if (error.response?.status === 404) {
+      throw new AppError("CNPJ não encontrado na Receita Federal", 404);
+    }
+
+    throw new AppError("Erro ao validar CNPJ. Tente novamente.", 500);
+  }
+};
+
+// Função para validar CPF
+const validateCpf = (cpf: string): boolean => {
+  // Verifica se todos os dígitos são iguais
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  // Validação do primeiro dígito verificador
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf.charAt(i)) * (10 - i);
+  }
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cpf.charAt(9))) return false;
+
+  // Validação do segundo dígito verificador
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf.charAt(i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cpf.charAt(10))) return false;
+
+  return true;
+};
+
+export default {
+  index,
+  store,
+  show,
+  showEmail,
+  update,
+  remove,
+  list,
+  mediaUpload,
+  toggleChangeWidht,
+  updateOnlineStatus,
+  getOnlineUsers,
+  validateCnpj
 };

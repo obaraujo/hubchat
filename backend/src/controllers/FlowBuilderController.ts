@@ -192,9 +192,9 @@ export const FlowDuplicate = async (req: Request, res: Response) => {
   return res.status(200).json(newFlow);
 };
 
-
 export const FlowUploadAll = async (req: Request, res: Response) => {
   const medias = req.files as Express.Multer.File[];
+
   const { companyId } = req.user;
   const userId = parseInt(req.user.id);
 

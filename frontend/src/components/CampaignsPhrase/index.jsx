@@ -8,42 +8,32 @@ import { useHistory } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
-import Table from "@material-ui/core/Table";
-import TableBody from "@material-ui/core/TableBody";
-import TableCell from "@material-ui/core/TableCell";
-import TableHead from "@material-ui/core/TableHead";
-import TableRow from "@material-ui/core/TableRow";
 import IconButton from "@material-ui/core/IconButton";
-import SearchIcon from "@material-ui/icons/Search";
-import TextField from "@material-ui/core/TextField";
-import InputAdornment from "@material-ui/core/InputAdornment";
+import Typography from "@material-ui/core/Typography";
 
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditIcon from "@material-ui/icons/Edit";
-import DescriptionIcon from "@material-ui/icons/Description";
-import TimerOffIcon from "@material-ui/icons/TimerOff";
-import PlayCircleOutlineIcon from "@material-ui/icons/PlayCircleOutline";
-import PauseCircleOutlineIcon from "@material-ui/icons/PauseCircleOutline";
 
-import MainContainer from "../MainContainer";
-import MainHeader from "../MainHeader";
-import Title from "../Title";
+import MainContainer from "../../components/MainContainer";
+import MainHeader from "../../components/MainHeader";
+import Title from "../../components/Title";
 
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
-import TableRowSkeleton from "../TableRowSkeleton";
-import CampaignModal from "../CampaignModal";
-import ConfirmationModal from "../ConfirmationModal";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
 import { isArray } from "lodash";
-import { useDate } from "../../hooks/useDate";
-import { SocketContext } from "../../context/Socket/SocketContext";
-import { AddCircle, Build, DevicesFold, TextFields } from "@mui/icons-material";
-import { CircularProgress, Grid, Stack } from "@mui/material";
-import { Can } from "../Can";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import CampaignModalPhrase from "../CampaignModalPhrase";
-import { colorBackgroundTable, colorLineTable, colorLineTableHover, colorTopTable } from "../../styles/styles";
+import CampaignModalPhrase from "../../components/CampaignModalPhrase";
+import { AddCircle, TextFields, Link as LinkIcon } from "@mui/icons-material";
+import { CircularProgress, Grid, Stack, Chip, Box, Tooltip } from "@mui/material";
+import { Can } from "../../components/Can";
+import {
+  colorBackgroundTable,
+  colorLineTable,
+  colorLineTableHover,
+  colorTopTable,
+} from "../../styles/styles";
 
 const reducer = (state, action) => {
   if (action.type === "LOAD_CAMPAIGNS") {
@@ -51,8 +41,8 @@ const reducer = (state, action) => {
     const newCampaigns = [];
 
     if (isArray(campaigns)) {
-      campaigns.forEach(campaign => {
-        const campaignIndex = state.findIndex(u => u.id === campaign.id);
+      campaigns.forEach((campaign) => {
+        const campaignIndex = state.findIndex((u) => u.id === campaign.id);
         if (campaignIndex !== -1) {
           state[campaignIndex] = campaign;
         } else {
@@ -66,7 +56,7 @@ const reducer = (state, action) => {
 
   if (action.type === "UPDATE_CAMPAIGNS") {
     const campaign = action.payload;
-    const campaignIndex = state.findIndex(u => u.id === campaign.id);
+    const campaignIndex = state.findIndex((u) => u.id === campaign.id);
 
     if (campaignIndex !== -1) {
       state[campaignIndex] = campaign;
@@ -79,7 +69,7 @@ const reducer = (state, action) => {
   if (action.type === "DELETE_CAMPAIGN") {
     const campaignId = action.payload;
 
-    const campaignIndex = state.findIndex(u => u.id === campaignId);
+    const campaignIndex = state.findIndex((u) => u.id === campaignId);
     if (campaignIndex !== -1) {
       state.splice(campaignIndex, 1);
     }
@@ -91,84 +81,194 @@ const reducer = (state, action) => {
   }
 };
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   mainPaper: {
     flex: 1,
     backgroundColor: colorBackgroundTable(),
     borderRadius: 12,
     padding: theme.spacing(1),
     overflowY: "scroll",
-    ...theme.scrollbarStyles
+    ...theme.scrollbarStyles,
+  },
+  whatsappChip: {
+    margin: "2px",
+    fontSize: "0.75rem",
+    height: "20px"
+  },
+  connectionContainer: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "4px",
+    alignItems: "center"
   }
 }));
 
 const CampaignsPhrase = () => {
   const classes = useStyles();
-
   const history = useHistory();
-
   const { user } = useContext(AuthContext);
 
   const [loading, setLoading] = useState(true);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState(null);
-  const [deletingCampaign, setDeletingCampaign] = useState(null);
-  const [campaignModalOpen, setCampaignModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [searchParam, setSearchParam] = useState("");
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingContact, setDeletingContact] = useState(null);
 
+  // Estados das campanhas
   const [campaignflows, setCampaignFlows] = useState([]);
   const [ModalOpenPhrase, setModalOpenPhrase] = useState(false);
   const [campaignflowSelected, setCampaignFlowSelected] = useState();
 
-  const handleDeleteCampaign = async campaignId => {
+  // Estado para lista de WhatsApps (para exibir nomes)
+  const [whatsApps, setWhatsApps] = useState([]);
+
+  const handleDeleteCampaign = async (campaignId) => {
     try {
       await api.delete(`/flowcampaign/${campaignId}`);
-      toast.success("Frase deletada");
-      getCampaigns()
+      toast.success("Campanha deletada com sucesso");
+      getCampaigns();
     } catch (err) {
       toastError(err);
     }
-    
+    setConfirmModalOpen(false);
+    setDeletingContact(null);
   };
 
-  const getCampaigns =  async() => {
-    setLoading(true);
-    await api.get("/flowcampaign").then(res => {
-      setCampaignFlows(res.data.flow);
+  // Buscar lista de WhatsApps para mostrar nomes
+  const getWhatsApps = async () => {
+    try {
+      const response = await api.get("/whatsapp");
+      setWhatsApps(response.data || []);
+    } catch (error) {
+      console.error('Erro ao buscar WhatsApps:', error);
+    }
+  };
+
+  const getCampaigns = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/flowcampaign");
+      
+      console.log('Resposta completa da API:', response.data);
+      
+      // Verificar diferentes estruturas de resposta possíveis
+      let flowData = [];
+      
+      if (response.data) {
+        if (Array.isArray(response.data.flow)) {
+          flowData = response.data.flow;
+        }
+        else if (response.data.data && Array.isArray(response.data.data.flow)) {
+          flowData = response.data.data.flow;
+        }
+        else if (Array.isArray(response.data.data)) {
+          flowData = response.data.data;
+        }
+        else if (Array.isArray(response.data)) {
+          flowData = response.data;
+        }
+        else {
+          const dataKeys = Object.keys(response.data);
+          for (const key of dataKeys) {
+            if (Array.isArray(response.data[key])) {
+              flowData = response.data[key];
+              break;
+            }
+          }
+        }
+      }
+      
+      console.log('Dados das campanhas extraídos:', flowData);
+      setCampaignFlows(flowData);
+      
+    } catch (error) {
+      console.error('Erro ao buscar campanhas:', error);
+      toastError(error);
+      setCampaignFlows([]);
+    } finally {
       setLoading(false);
-    });
+    }
   };
 
   const onSaveModal = () => {
-    getCampaigns()
-  }
+    getCampaigns();
+  };
 
-  const handleScroll = e => {
-    if (!hasMore || loading) return;
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - (scrollTop + 100) < clientHeight) {
+  // NOVA FUNÇÃO: Renderizar chips das conexões
+  const renderWhatsAppConnections = (whatsappIds) => {
+    if (!whatsappIds || !Array.isArray(whatsappIds) || whatsappIds.length === 0) {
+      return <Typography variant="body2" color="textSecondary">Nenhuma conexão</Typography>;
     }
+
+    // Se há muitas conexões, mostrar resumo
+    if (whatsappIds.length > 3) {
+      const firstTwo = whatsappIds.slice(0, 2);
+      const remaining = whatsappIds.length - 2;
+
+      return (
+        <Box className={classes.connectionContainer}>
+          {firstTwo.map((whatsappId) => {
+            const whatsapp = whatsApps.find(w => w.id === whatsappId);
+            return (
+              <Tooltip key={whatsappId} title={whatsapp ? `${whatsapp.name} (${whatsapp.status})` : `ID: ${whatsappId}`}>
+                <Chip 
+                  label={whatsapp ? whatsapp.name : `ID: ${whatsappId}`}
+                  className={classes.whatsappChip}
+                  size="small"
+                  color={whatsapp?.status === "CONNECTED" ? "success" : "default"}
+                  variant="outlined"
+                />
+              </Tooltip>
+            );
+          })}
+          <Tooltip title={`Mais ${remaining} conexão(ões)`}>
+            <Chip 
+              label={`+${remaining}`}
+              className={classes.whatsappChip}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+          </Tooltip>
+        </Box>
+      );
+    }
+
+    // Mostrar todas as conexões se forem poucas
+    return (
+      <Box className={classes.connectionContainer}>
+        {whatsappIds.map((whatsappId) => {
+          const whatsapp = whatsApps.find(w => w.id === whatsappId);
+          return (
+            <Tooltip key={whatsappId} title={whatsapp ? `${whatsapp.name} (${whatsapp.status})` : `ID: ${whatsappId}`}>
+              <Chip 
+                label={whatsapp ? whatsapp.name : `ID: ${whatsappId}`}
+                className={classes.whatsappChip}
+                size="small"
+                color={whatsapp?.status === "CONNECTED" ? "success" : "default"}
+                variant="outlined"
+              />
+            </Tooltip>
+          );
+        })}
+      </Box>
+    );
   };
 
   useEffect(() => {
     getCampaigns();
+    getWhatsApps(); // Carregar lista de WhatsApps
   }, []);
 
   return (
     <MainContainer>
       <ConfirmationModal
         title={
-          deletingCampaign &&
+          deletingContact &&
           `${i18n.t("campaigns.confirmationModal.deleteTitle")} ${
-            deletingCampaign.name
+            deletingContact.name
           }?`
         }
         open={confirmModalOpen}
-        onClose={setConfirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
         onConfirm={() => handleDeleteCampaign(deletingContact.id)}
       >
         {i18n.t("campaigns.confirmationModal.deleteMessage")}
@@ -182,32 +282,19 @@ const CampaignsPhrase = () => {
       <MainHeader>
         <Grid style={{ width: "99.6%" }} container>
           <Grid xs={12} sm={8} item>
-            <Title>Campanhas</Title>
+            <Title>Campanhas de Fluxo</Title>
           </Grid>
           <Grid xs={12} sm={4} item>
             <Grid spacing={2} container>
               <Grid xs={6} sm={6} item>
-                {/* <TextField
-                  fullWidth
-                  placeholder={i18n.t("campaigns.searchPlaceholder")}
-                  type="search"
-                  value={searchParam}
-                  onChange={handleSearch}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon style={{ color: "gray" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                /> */}
+                {/* Campo de busca comentado */}
               </Grid>
               <Grid xs={6} sm={6} item>
                 <Button
                   fullWidth
                   variant="contained"
                   onClick={() => {
-                    setCampaignFlowSelected();
+                    setCampaignFlowSelected(undefined);
                     setModalOpenPhrase(true);
                   }}
                   color="primary"
@@ -215,7 +302,7 @@ const CampaignsPhrase = () => {
                 >
                   <Stack direction={"row"} gap={1}>
                     <AddCircle />
-                    {"Campanha"}
+                    {"Nova Campanha"}
                   </Stack>
                 </Button>
               </Grid>
@@ -226,93 +313,142 @@ const CampaignsPhrase = () => {
       <Paper
         className={classes.mainPaper}
         variant="outlined"
-        onScroll={handleScroll}
       >
         <Stack>
+          {/* ALTERAÇÃO: Header da tabela com nova coluna de conexões */}
           <Grid container style={{ padding: "8px" }}>
-            <Grid item xs={4} style={{ color: colorTopTable() }}>
+            <Grid item xs={3} style={{ color: colorTopTable() }}>
               Nome
             </Grid>
-            <Grid item xs={4} style={{ color: colorTopTable() }} align="center">
+            <Grid item xs={3} style={{ color: colorTopTable() }} align="center">
+              Conexões
+            </Grid>
+            <Grid item xs={3} style={{ color: colorTopTable() }} align="center">
               Status
             </Grid>
-            <Grid item xs={4} align="end" style={{ color: colorTopTable() }}>
+            <Grid item xs={3} align="end" style={{ color: colorTopTable() }}>
               {i18n.t("contacts.table.actions")}
             </Grid>
           </Grid>
-          <>
-            {!loading &&
-              campaignflows.map(flow => (
-                <Grid
-                  container
-                  key={flow.id}
-                  sx={{
-                    padding: "8px",
-                    backgroundColor: colorLineTable(),
-                    borderRadius: 4,
-                    marginTop: 0.5,
-                    "&:hover": {
-                      backgroundColor: colorLineTableHover()
-                    }
-                  }}
-                >
-                  <Grid item xs={4}>
-                    <Stack
-                      justifyContent={"center"}
-                      height={"100%"}
-                      style={{ color: "#ededed" }}
-                    >
-                      <Stack direction={"row"}>
-                        <TextFields />
-                        <Stack justifyContent={"center"} marginLeft={1}>
-                          {flow.name}
+          
+          {loading ? (
+            <Stack
+              justifyContent={"center"}
+              alignItems={"center"}
+              minHeight={"50vh"}
+            >
+              <CircularProgress />
+            </Stack>
+          ) : (
+            <>
+              {campaignflows && Array.isArray(campaignflows) && campaignflows.length > 0 ? (
+                campaignflows.map((flow) => (
+                  <Grid
+                    container
+                    key={flow.id}
+                    sx={{
+                      padding: "8px",
+                      backgroundColor: colorLineTable(),
+                      borderRadius: 4,
+                      marginTop: 0.5,
+                      "&:hover": {
+                        backgroundColor: colorLineTableHover(),
+                      },
+                    }}
+                  >
+                    {/* Coluna do Nome */}
+                    <Grid item xs={3}>
+                      <Stack
+                        justifyContent={"center"}
+                        height={"100%"}
+                        style={{ color: "#ededed" }}
+                      >
+                        <Stack direction={"row"} alignItems="center">
+                          <TextFields />
+                          <Stack justifyContent={"center"} marginLeft={1}>
+                            <Typography variant="body2" style={{ fontWeight: 500 }}>
+                              {flow.name || 'Nome não definido'}
+                            </Typography>
+                            {/* Exibir número de frases como informação adicional */}
+                            {flow.phrase && Array.isArray(flow.phrase) && (
+                              <Typography variant="caption" style={{ color: "#bbb" }}>
+                                {flow.phrase.length} frase(s) configurada(s)
+                              </Typography>
+                            )}
+                          </Stack>
                         </Stack>
                       </Stack>
-                    </Stack>
-                  </Grid>
-                  <Grid item xs={4} align="center" style={{ color: "#ededed" }}>
-                    <Stack justifyContent={"center"} height={"100%"}>
-                      {flow.status ? "Ativo" : "Desativado"}
-                    </Stack>
-                  </Grid>
-                  <Grid item xs={4} align="end">
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setCampaignFlowSelected(flow.id);
-                        setModalOpenPhrase(true);
-                      }}
-                    >
-                      <EditIcon style={{ color: "#ededed" }} />
-                    </IconButton>
-                    <Can
-                      role={user.profile}
-                      perform="contacts-page:deleteContact"
-                      yes={() => (
+                    </Grid>
+
+                    {/* NOVA COLUNA: Conexões WhatsApp */}
+                    <Grid item xs={3} align="center">
+                      <Stack justifyContent={"center"} height={"100%"}>
+                        {renderWhatsAppConnections(flow.whatsappIds)}
+                      </Stack>
+                    </Grid>
+
+                    {/* Coluna do Status */}
+                    <Grid item xs={3} align="center" style={{ color: "#ededed" }}>
+                      <Stack justifyContent={"center"} height={"100%"}>
+                        <Chip 
+                          label={flow.status ? "Ativo" : "Desativado"}
+                          size="small"
+                          color={flow.status ? "success" : "default"}
+                          variant={flow.status ? "filled" : "outlined"}
+                        />
+                      </Stack>
+                    </Grid>
+
+                    {/* Coluna das Ações */}
+                    <Grid item xs={3} align="end">
+                      <Stack direction="row" justifyContent="flex-end" alignItems="center">
                         <IconButton
                           size="small"
-                          onClick={e => {
-                            setConfirmModalOpen(true);
-                            setDeletingContact(flow);
+                          onClick={() => {
+                            setCampaignFlowSelected(flow.id);
+                            setModalOpenPhrase(true);
                           }}
+                          title="Editar campanha"
                         >
-                          <DeleteOutlineIcon style={{ color: "#ededed" }} />
+                          <EditIcon style={{ color: "#ededed" }} />
                         </IconButton>
-                      )}
-                    />
+                        <Can
+                          role={user.profile}
+                          perform="contacts-page:deleteContact"
+                          yes={() => (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                setConfirmModalOpen(true);
+                                setDeletingContact(flow);
+                              }}
+                              title="Excluir campanha"
+                            >
+                              <DeleteOutlineIcon style={{ color: "#ededed" }} />
+                            </IconButton>
+                          )}
+                        />
+                      </Stack>
+                    </Grid>
                   </Grid>
-                </Grid>
-              ))}
-            {loading && (
-              <Stack
-                justifyContent={"center"}
-                alignItems={"center"}
-                minHeight={"50vh"}
-              >
-                <CircularProgress />
-              </Stack>
-            )}
-          </>
+                ))
+              ) : (
+                <Stack
+                  justifyContent={"center"}
+                  alignItems={"center"}
+                  minHeight={"20vh"}
+                  style={{ color: "#ededed" }}
+                >
+                  <Typography variant="body1">
+                    Nenhuma campanha encontrada
+                  </Typography>
+                  <Typography variant="body2" style={{ marginTop: "8px", color: "#bbb" }}>
+                    Clique em "Nova Campanha" para criar sua primeira campanha de fluxo
+                  </Typography>
+                </Stack>
+              )}
+            </>
+          )}
         </Stack>
       </Paper>
     </MainContainer>

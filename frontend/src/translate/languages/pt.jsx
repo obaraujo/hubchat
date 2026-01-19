@@ -5,6 +5,8 @@ const messages = {
         title: "Cadastre-se",
         toasts: {
           success: "Usuário criado com sucesso! Faça seu login!!!.",
+          disabled:
+            "Cadastro de usuários está desabilitado no momento. Por favor, tente novamente mais tarde.",
           fail: "Erro ao criar usuário. Verifique os dados informados.",
         },
         form: {
@@ -19,8 +21,17 @@ const messages = {
           login: "Já tem uma conta? Entre!",
         },
       },
+      ticketInfo: {
+        copyPhone: "Copiar telefone",
+        quickMessages: "Respostas rápidas",
+        phonecopied: "Telefone copiado para área de transferência!",
+        noPhone: "Nenhum telefone disponível para copiar",
+        copyError: "Erro ao copiar telefone",
+      },
       login: {
         title: "Login",
+        welcome: "Bem-vindo de volta",
+        loginInstruction: "Entre com seus dados para acessar sua conta",
         form: {
           email: "Email",
           password: "Senha",
@@ -54,6 +65,8 @@ const messages = {
         token: "Token",
       },
       dashboard: {
+        filters: "Filtros",
+        filter: "FILTRAR ",
         tabs: {
           indicators: "Indicadores",
           assessments: "NPS",
@@ -80,8 +93,6 @@ const messages = {
           groups: "Grupos",
         },
         users: {
-
-
           name: "Nome",
           numberAppointments: "Quantidade de Atendimentos",
           statusNow: "Atual",
@@ -109,6 +120,7 @@ const messages = {
       },
       reports: {
         title: "Relatório de Pesquisas Realizadas",
+
         operator: "Operador",
         period: "Período",
         until: "Até",
@@ -165,6 +177,27 @@ const messages = {
           msgToast: "Gerando relatório compactado, por favor aguarde.",
           title: "Relatório de Atendimento",
         },
+        exportExcel: {
+          title: "Relatórios de Atendimentos",
+          startDate: "Data inicial",
+          endDate: "Data final",
+          notInformed: "Não informado",
+          columns: {
+            id: "ID",
+            connection: "Conexão",
+            contact: "Contato",
+            user: "Usuário",
+            queue: "Fila",
+            status: "Status",
+            lastMessage: "Última Mensagem",
+            openDate: "Data Abertura",
+            openTime: "Hora Abertura",
+            closeDate: "Data Fechamento",
+            closeTime: "Hora Fechamento",
+            supportTime: "Tempo de Atendimento",
+            nps: "NPS",
+          },
+        },
         pdf: {
           title: "Relação de Atendimentos Realizados",
           exportTitle: "Relação de Atendimentos em Grupos Realizados",
@@ -190,6 +223,15 @@ const messages = {
         restartConnections: "Reiniciar Conexões",
         callSupport: "Chamar Suporte",
         newConnection: "Nova Conexão",
+        connectYourServiceChannelsToReceiveMessagesAndStartConversationsWithYourCustomers:
+          " Conecte seus canais de atendimento para receber mensagens e iniciar conversas com seus clientes.",
+        client: "Cliente",
+        connectedConnections: " Conexões conectadas ",
+        disconnectedConnections: "Conexões desconectadas ",
+        totalConnections: " Total de Conexões",
+        total: "Total",
+        connections: "Conexões de:",
+
         toasts: {
           deleted: "Conexão excluída com sucesso!",
           closedimported:
@@ -252,6 +294,7 @@ const messages = {
           actions: "Ações",
           session: "Sessão",
           number: "Número do Whatsapp",
+          color: "Cor",
         },
       },
       showTicketOpenModal: {
@@ -281,7 +324,8 @@ const messages = {
           pending: "devolveu a fila.",
           closed: "fechou o ticket",
           reopen: "reabriu o ticket",
-          redirect: "- redirecionado"
+          redirect: "- redirecionado",
+          clientClosed: "Cliente fechou o ticket",
         },
       },
       whatsappModal: {
@@ -314,7 +358,10 @@ const messages = {
           groupAsTicket: "Tratar grupos como ticket",
           timeCreateNewTicket: "Criar novo ticket em x minutos",
           maxUseBotQueues: "Enviar bot x vezes",
+          maxUseInactiveTime: "Enviar flow de inatividade x vezes",
           timeUseBotQueues: "Enviar bot em x minutos",
+          timeToReturnQueue: "Tempo para retornar a fila em minutos",
+          timeAwaitActiveFlow: "Tempo para aguardar ativação do fluxo",
           expiresTicket: "Encerrar chats abertos após x minutos",
           expiresTicketNPS:
             "Encerrar chats aguardando avaliação após x minutos",
@@ -335,6 +382,8 @@ const messages = {
           inactiveMessage: "Mensagem de inatividade",
           timeInactiveMessage:
             "Tempo em minutos para envio do aviso de inatividade",
+          flowInactiveTime:
+            "Tempo em minutos para envio do flow de inatividade",
           whenExpiresTicket:
             "Encerrar chats abertos quando última mensagem for",
           expiresInactiveMessage: "Mensagem de encerramento por inatividade",
@@ -342,7 +391,15 @@ const messages = {
           collectiveVacationEnd: "Data final",
           collectiveVacationStart: "Data inicial",
           collectiveVacationMessage: "Mensagem de férias coletivas",
-          queueIdImportMessages: "Fila para importar as mensagens"
+          queueIdImportMessages: "Fila para importar as mensagens",
+          isOficial: "Oficial",
+          phone_number_id: "ID Número de telefone",
+          waba_id: "Waba ID",
+          send_token: "Token de envio",
+          business_id: "ID do negócio",
+          phone_number: "Número de telefone",
+          triggerIntegrationOnClose: "Disparar Integração ao Encerrar Ticket",
+          enableIntegration: "Habilitar Integração",
         },
         buttons: {
           okAdd: "Adicionar",
@@ -371,6 +428,9 @@ const messages = {
           deleted: "Contato excluído com sucesso!",
         },
         searchPlaceholder: "Pesquisar...",
+        conversationFlows: " Fluxos de Conversa",
+        addFlow: "Adicionar Fluxo",
+        editFlow: "Editar Fluxo ",
         confirmationModal: {
           deleteTitle: "Deletar ",
           importTitlte: "Importar contatos",
@@ -388,16 +448,20 @@ const messages = {
           add: "Adicionar Contato",
           export: "Exportar Contato",
         },
+        loading: "Carregando...",
+        loadMore: "Carregar Mais",
         table: {
           name: "Nome",
           whatsapp: "Conexão",
           email: "Email",
           actions: "Ações",
           lastMessage: "Última Mensagem",
+          wallet: "Carteira",
         },
         menu: {
           importYourPhone: "Importar do aparelho padrão",
           importToExcel: "Importar / Exportar do Excel",
+          importexport: "IMPORTAR / EXPORTAR",
         },
       },
       forwardMessage: {
@@ -463,7 +527,8 @@ const messages = {
           extraValue: "Valor",
           chatBotContact: "Desabilitar chatbot",
           termsLGDP: "Termos LGPD aceito em:",
-          whatsapp: "Conexão Origem: "
+          whatsapp: "Conexão Origem: ",
+          assignWallet: "Carteira de Cliente",
         },
         buttons: {
           addExtraInfo: "Adicionar informação",
@@ -472,9 +537,33 @@ const messages = {
           cancel: "Cancelar",
         },
         success: "Contato salvo com sucesso.",
+        walletLinked: "Contato vinculado à sua carteira com sucesso!",
+        walletError: "Usuário não possui filas associadas",
+        saveFirst: "Contato deve ser salvo primeiro",
       },
-      flowbuilderModal: {
-        flowNotIdPhrase: "Fluxo padrão",
+      wallets: {
+        title: "Carteiras de Contatos",
+        searchPlaceholder: "Buscar contatos...",
+        filterByUser: "Filtrar por Usuário",
+        allUsers: "Todos os usuários",
+        contact: "Contato",
+        user: "Usuário",
+        queue: "Fila",
+        phone: "Telefone",
+        email: "Email",
+        actions: "Ações",
+        editWallet: "Editar Carteira",
+        selectUser: "Selecionar Usuário",
+        selectQueue: "Selecionar Fila",
+        selectUserAndQueue: "Selecione um usuário e uma fila",
+        cancel: "Cancelar",
+        save: "Salvar",
+        confirmDeleteTitle: "Confirmar Exclusão",
+        confirmDeleteMessage:
+          "Tem certeza que deseja remover este contato da carteira?",
+        deleteSuccess: "Contato removido da carteira com sucesso!",
+        updateSuccess: "Carteira atualizada com sucesso!",
+        wallet: "Carteira",
       },
       queueModal: {
         title: {
@@ -491,6 +580,7 @@ const messages = {
           orderQueue: "Ordem da fila (Bot)",
           rotate: "Rodízio",
           timeRotate: "Tempo de Rodízio",
+          typeRandomMode: "Tipo de rodízio",
           greetingMessage: "Mensagem de saudação",
           complationMessage: "Mensagem de conclusão",
           outOfHoursMessage: "Mensagem de fora de expediente",
@@ -498,6 +588,7 @@ const messages = {
           integrationId: "Integração",
           fileListId: "Lista de arquivos",
           closeTicket: "Fechar ticket",
+          randomizeImmediate: "Randomizar Automaticamente (Imediato)",
           queueType: "Tipo de menu",
           message: "Mensagem de retorno",
           queue: "Fila para transferência",
@@ -610,9 +701,13 @@ const messages = {
           allHistoricDisabled: "Desabilitado",
           allUserChat: "Ver conversas de outros usuários",
           userClosePendingTicket: "Permitir fechar tickets pendentes",
+          allowSeeMessagesInPendingTickets: "Permitir ver tickets pendentes",
           showDashboard: "Ver Dashboard",
           allowRealTime: "Ver Painel de Atendimentos",
           allowConnections: "Permitir ações nas conexões",
+          showContacts: "Ver contatos",
+          showCampaign: "Ver campanhas",
+          showFlow: "Ver fluxos",
         },
         tabs: {
           general: "Geral",
@@ -650,19 +745,20 @@ const messages = {
         title: {
           add: "Novo Agendamento",
           edit: "Editar Agendamento",
+          message: "Mensagem",
         },
         form: {
           body: "Mensagem",
           contact: "Contato",
           sendAt: "Data de Agendamento",
           sentAt: "Data de Envio",
-          assinar: "Enviar Assinatura"
+          assinar: "Enviar Assinatura",
         },
         buttons: {
           okAdd: "Adicionar",
           okEdit: "Salvar",
           cancel: "Cancelar",
-          addSchedule: "Adicionar agendamento"
+          addSchedule: "Adicionar agendamento",
         },
         success: "Agendamento salvo com sucesso.",
       },
@@ -676,10 +772,11 @@ const messages = {
         form: {
           name: "Nome",
           color: "Cor",
-          timeLane: "Tempo em horas para redirecionar para lane",
+          timeLane: "Tempo em minutos para redirecionar para lane",
           nextLaneId: "Lane",
           greetingMessageLane: "Mensagem de saudação da lane",
-          rollbackLaneId: "Voltar para Lane após retomar atendimento"
+          mediaFiles: "Mídia",
+          rollbackLaneId: "Voltar para Lane após retomar atendimento",
         },
         buttons: {
           okAdd: "Adicionar",
@@ -720,11 +817,11 @@ const messages = {
         },
       },
       chatInternal: {
-        new: "Nova",
+        new: "Criar grupo",
         modal: {
           conversation: "Conversa",
-          title: "Título",
-          filterUsers: "Filtro por Usuários",
+          title: "Nome",
+          filterUsers: "Selecione integrantes",
           cancel: "Fechar",
           save: "Salvar",
         },
@@ -748,6 +845,7 @@ const messages = {
         placeholder: "Filas",
       },
       tickets: {
+        messageHidden: "Mensagem oculta",
         inbox: {
           closedAllTickets: "Fechar todos os tickets?",
           closedAll: "Fechar Todos",
@@ -762,6 +860,7 @@ const messages = {
         },
         notification: {
           message: "Mensagem de",
+          messageHidden: "Mensagem oculta",
         },
         tabs: {
           open: { title: "Abertas" },
@@ -805,11 +904,11 @@ const messages = {
         },
       },
       chatInternal: {
-        new: "Nova",
+        new: "Criar grupo",
         modal: {
           conversation: "Conversa",
-          title: "Título",
-          filterUsers: "Filtro por Usuários",
+          title: "Nome",
+          filterUsers: "Selecione integrantes",
           cancel: "Fechar",
           save: "Salvar",
         },
@@ -838,7 +937,7 @@ const messages = {
           transfer: "Transferir",
           ignore: "Ignorar",
           exportAsPDF: "Exportar para PDF",
-          kanbanActions: "Opções de Kanban"
+          kanbanActions: "Opções de Kanban",
         },
         acceptModal: {
           title: "Aceitar Chat",
@@ -871,11 +970,13 @@ const messages = {
           tickets: "Atendimentos",
           quickMessages: "Respostas rápidas",
           contacts: "Contatos",
+          wallets: "Carteiras",
           queues: "Filas & Chatbot",
           tags: "Tags",
           administration: "Administração",
           companies: "Empresas",
           users: "Usuários",
+          birthdaySettings: "Config. Aniversário",
           settings: "Configurações",
           files: "Lista de arquivos",
           helps: "Ajuda",
@@ -891,7 +992,8 @@ const messages = {
           prompts: "Talk.Ai",
           allConnections: "Gerenciar conexões",
           reports: "Relatórios",
-          management: "Gerência"
+          management: "Gerência",
+          callHistorical: "Histórico de Chamadas",
         },
         appBar: {
           user: {
@@ -924,6 +1026,7 @@ const messages = {
       },
       messagesAPI: {
         title: "API",
+        toSend: "ENVIAR",
         textMessage: {
           number: "Número",
           body: "Mensagem",
@@ -969,6 +1072,22 @@ const messages = {
       },
       notifications: {
         noTickets: "Nenhuma notificação.",
+        messageHidden: "Mensagem oculta",
+        newMessage: "Nova mensagem de",
+      },
+      triggerFlowModal: {
+        title: "Disparar Fluxo",
+        description:
+          "Selecione um fluxo para executar neste ticket. O ticket será alterado para status 'chatbot' durante a execução.",
+        selectFlow: "Escolha um fluxo",
+        selectedFlow: "Fluxo selecionado",
+        flowId: "ID do fluxo",
+        noFlows: "Nenhum fluxo ativo encontrado",
+        cancel: "Cancelar",
+        trigger: "Disparar Fluxo",
+        triggering: "Disparando...",
+        success: "Fluxo disparado com sucesso!",
+        error: "Erro ao disparar fluxo",
       },
       quickMessages: {
         title: "Respostas Rápidas",
@@ -978,6 +1097,11 @@ const messages = {
           deleteTitle: "Exclusão",
           deleteMessage: "Esta ação é irreversível! Deseja prosseguir?",
         },
+        selectMessage: "Selecionar Resposta Rápida",
+        hasMedia: "Com mídia",
+        global: "Global",
+        noResultsFound: "Nenhuma resposta rápida encontrada para sua busca",
+        noQuickMessages: "Nenhuma resposta rápida disponível",
         buttons: {
           add: "Adicionar",
           attach: "Anexar Arquivo",
@@ -997,6 +1121,7 @@ const messages = {
           geral: "Permitir editar",
           add: "Adicionar",
           edit: "Editar",
+          general: "Geral",
           visao: "Permitir visão",
         },
         table: {
@@ -1172,23 +1297,25 @@ const messages = {
           deleted: "Registro excluído",
         },
       },
-      campaignReport: {
-        title: "Relatório de",
-        inactive: "Inativa",
-        scheduled: "Programada",
-        process: "Em Andamento",
-        cancelled: "Cancelada",
-        finished: "Finalizada",
-        campaign: "Campanha",
-        validContacts: "Contatos Válidos",
-        confirmationsRequested: "Confirmações Solicitadas",
-        confirmations: "Confirmações",
-        deliver: "Entregues",
-        connection: "Conexão",
-        contactLists: "Lista de Contatos",
-        schedule: "Agendamento",
-        conclusion: "Conclusão",
-      },
+              campaignReport: {
+          title: "Relatório de",
+          inactive: "Inativa",
+          scheduled: "Programada",
+          process: "Em Andamento",
+          cancelled: "Cancelada",
+          finished: "Finalizada",
+          campaign: "Campanha",
+          validContacts: "Contatos Válidos",
+          confirmationsRequested: "Confirmações Solicitadas",
+          confirmations: "Confirmações",
+          deliver: "Entregues",
+          connection: "Conexão",
+          contactLists: "Lista de Contatos",
+          schedule: "Agendamento",
+          conclusion: "Conclusão",
+          fetchError: "Erro ao buscar dados do relatório",
+          backButton: "Voltar",
+        },
       announcements: {
         title: "Informativos",
         searchPlaceholder: "Pesquisa",
@@ -1277,6 +1404,8 @@ const messages = {
       },
       reports: {
         title: "Relatórios de Atendimentos",
+        startDate: "Data Inicial",
+        endDate: "Data final",
         table: {
           id: "Ticket",
           user: "Usuário",
@@ -1292,12 +1421,10 @@ const messages = {
           supportTime: "Tempo de Atendimento",
         },
         buttons: {
-
           filter: "Aplicar Filtro",
           onlyRated: "Apenas Avaliados",
         },
         searchPlaceholder: "Pesquisar...",
-
       },
       queueIntegration: {
         title: "Integrações",
@@ -1370,6 +1497,9 @@ const messages = {
           createdAt: "Criada Em",
           dueDate: "Vencimento",
           lastLogin: "Ult. Login",
+          folderSize: "Tamanho da pasta ",
+          totalFiles: " Total de arquivos",
+          lastUpdate: "Ultimo update",
           actions: "Ações",
           money: "R$",
           yes: "Sim",
@@ -1385,6 +1515,7 @@ const messages = {
           delete: "Excluir",
           user: "Usuário",
           save: "Salvar",
+          generateInvoice: "Gerar Fatura",
         },
         buttons: {
           add: "Adicionar empresa",
@@ -1413,7 +1544,9 @@ const messages = {
           yes: "Sim",
           no: "Não",
           money: "R$",
-          public: "Público"
+          public: "Público",
+          trial: "Trial",
+          trialDays: "Dias Trial",
         },
       },
       helps: {
@@ -1428,6 +1561,21 @@ const messages = {
       },
       schedules: {
         title: "Agendamentos",
+        date: "Data",
+        time: "Hora",
+        event: "Evento",
+        allDay: "Dia Todo",
+        week: "Semana",
+        work_week: "Agendamentos",
+        day: "Dia",
+        month: "Mês",
+        previous: "Anterior",
+        next: "Próximo",
+        yesterday: "Ontem",
+        tomorrow: "Amanhã",
+        today: "Hoje",
+        agenda: "Agenda",
+        noEventsInRange: "Não há agendamentos no período.",
         confirmationModal: {
           deleteTitle: "Você tem certeza que quer excluir este Agendamento?",
           deleteMessage: "Esta ação não pode ser revertida.",
@@ -1449,6 +1597,9 @@ const messages = {
       },
       tags: {
         title: "Tags",
+        addColumns: "+ ADICIONAR COLUNAS",
+        search: "BUSCAR",
+        seeTicket: "VER TICKET",
         confirmationModal: {
           deleteTitle: "Você tem certeza que quer excluir esta Tag?",
           deleteMessage: "Esta ação não pode ser revertida.",
@@ -1473,6 +1624,8 @@ const messages = {
       tagsKanban: {
         title: "Lanes",
         laneDefault: "Em aberto",
+        backToKanban: "VOLTAR PARA O KANBAN",
+
         confirmationModal: {
           deleteTitle: "Você tem certeza que quer excluir esta Lane?",
           deleteMessage: "Esta ação não pode ser revertida.",
@@ -1520,6 +1673,7 @@ const messages = {
           options: "Opções",
           plans: "Planos",
           helps: "Ajuda",
+          companies: "Empresas",
         },
         settings: {
           userCreation: {
@@ -1563,15 +1717,22 @@ const messages = {
               "Aceita receber audio de todos contatos?",
             enableLGPD: "Habilitar tratamento LGPD",
             requiredTag: "Tag obrigatoria para fechar ticket",
-            closeTicketOnTransfer: "Fechar ticket ao transferir para outra fila",
-            DirectTicketsToWallets: "Mover automaticamente cliente para carteira",
-            showNotificationPending: "Mostrar notificação para tickets pendentes"
+            closeTicketOnTransfer:
+              "Fechar ticket ao transferir para outra fila",
+            DirectTicketsToWallets:
+              "Mover automaticamente cliente para carteira",
+            showNotificationPending:
+              "Mostrar notificação para tickets pendentes",
+            copyContactPrefix: "Sigla para Cópia de Contatos",
+            copyContactPrefixPlaceholder: "Ex: COPIA_"
           },
           customMessages: {
             sendQueuePositionMessage: "Mensagem de posição na fila",
-            AcceptCallWhatsappMessage: "Mensagem para informar que não aceita ligações",
+            AcceptCallWhatsappMessage:
+              "Mensagem para informar que não aceita ligações",
             greetingAcceptedMessage: "Mensagem de Saudação ao aceitar ticket",
-            transferMessage: "Mensagem de transferência - ${queue.name} = fila destino",
+            transferMessage:
+              "Mensagem de transferência - ${queue.name} = fila destino",
           },
           LGPD: {
             title: "LGPD",
@@ -1607,6 +1768,8 @@ const messages = {
             disableIntegration: "Desabilitar integração",
             logTicket: "Logs do Ticket",
             requiredTag: "Você deve atribuir uma tag antes de fechar o ticket.",
+            greetingAcceptedMessage:
+              "Você deve configurar uma mensagem de saudação ao aceitar o ticket.",
           },
         },
       },
@@ -1642,6 +1805,7 @@ const messages = {
           ticket_id: "Nº do Chamado",
           queue: "Setor",
           connection: "Conexão",
+          scheduledDate: "Data do Agendamento",
         },
       },
       ticketOptionsMenu: {
@@ -1678,12 +1842,14 @@ const messages = {
           signature: "Habilitar/Desabilitar Assinatura",
           privateMessage: "Habilitar/Desabilitar Mensagem Privada",
           meet: "Enviar link para videoconferencia",
+          triggerFlow: "Disparar Fluxo",
         },
         type: {
           imageVideo: "Fotos e vídeos",
           cam: "Câmera",
           contact: "Contato",
           meet: "Vídeo chamada",
+          template: "Template Meta",
         },
       },
       messageOptionsMenu: {
@@ -1746,6 +1912,224 @@ const messages = {
         ERR_WAPP_GREETING_REQUIRED:
           "A mensagem de saudação é obrigatório quando há mais de uma fila.",
         ERR_OUT_OF_HOURS: "Fora do Horário de Expediente!",
+      },
+      messagesAPIInstructions: {
+        endpoint: "Endpoint:",
+        method: "Método:",
+        post: "POST",
+        headers: "Headers:",
+        headerAuthorization:
+          "Authorization Bearer (token registrado) e Content-Type (application/json)",
+        body: "Body:",
+        fieldNumber: '"number": "558599999999"',
+        fieldBody: '"body": "Mensagem"',
+        fieldUserId: '"userId": ID do usuário ou ""',
+        fieldQueueId: '"queueId": ID da Fila ou ""',
+        fieldSendSignature: '"sendSignature": Assinar mensagem - true/false',
+        fieldCloseTicket: '"closeTicket": Encerrar o ticket - true/false',
+        singMessage: "Assinar mensagem - true/false",
+        closeTicket: "Encerrar o ticket - true/false",
+        testSend: "Teste de envio",
+      },
+      recurrenceSection: {
+        title: "Recorrência",
+        description:
+          "Você pode escolher enviar a mensagem de forma recorrente e escolher o intervalo. Caso seja uma mensagem a ser enviada uma única vez, não altere nada nesta seção.",
+        labelInterval: "Intervalo",
+        intervalFilterValue: "Valor do Intervalo",
+        sendAsManyTimes: " Enviar quantas vezes",
+        shipNormallyOnNonbusinessDays: " Enviar normalmente em dias não úteis",
+        sendOneBusinessDayBefore: "Enviar um dia útil antes",
+        sendOneBusinessDayLater: "Enviar um dia útil depois",
+        options: {
+          days: "Dias",
+          weeks: "Semanas",
+          months: "Meses",
+          minutes: "Minutos",
+        },
+      },
+      servicePanel: {
+        allowRealTime: "Painel de Atendimentos",
+      },
+      financial: {
+        invoices: "Faturas",
+        details: "Detalhes",
+        users: "Usuários",
+        connections: "Conexões",
+        queues: "Filas",
+        value: "Valor",
+        expirationDate: "Data Venc.",
+        status: "Status",
+        action: "Ação",
+      },
+      statusFilter: {
+        statusFilter: "Filtro por Status",
+      },
+      momentsUser: {
+        services: "Atendimentos:",
+        pending: "Pendentes",
+        noqueue: "SEM FILA",
+      },
+      campaignsPhrase: {
+        campaignsFlow: "Fluxo de Campanhas",
+        campaigns: "Campanhas",
+        name: "Nome",
+        status: "Status",
+        newCampaignWithFlowByPhrase: "Nova campanha com fluxo por frase",
+        editCampaignWithFlowByPhrase: "Editar campanha com fluxo por frase",
+        phraseTriggerName: "Nome do disparo por frase",
+        chooseAStream: "Escolha um fluxo",
+        whichPhraseTriggersTheFlow: " Qual frase dispara o fluxo?",
+        selectAConnection: " Selecione uma Conexão",
+        chooseAStream: " Escolha um fluxo",
+        status: " Status",
+        cancel: "CANCELAR",
+        createCampaign: "CRIAR CAMPANHA ",
+        saveCampaign: "Salvar Campanha",
+      },
+      whatsappModalRel: {
+        form: {
+          isOficial: "Relatório do Atendimento",
+          ticketId: "ID do Ticket",
+          client: "Cliente",
+          number: "Número",
+          agent: "Atendente",
+          date: "Data",
+          lastMessage: "Última Mensagem",
+          fullReport: "O relatório completo foi anexado acima",
+          resolveAndTriggerIntegration: "Resolver e Disparar Integração",
+          elementNotFoundForExport: "Elemento não encontrado para exportar.",
+          reportFilename: "relatório_atendimento",
+        },
+      },
+      chatList: {
+        noMessages: "Nenhuma mensagem",
+        admin: "Administrador",
+        member: "Membro",
+        searchChat: "Procurar chat...",
+        createNewChat: "Criar novo chat",
+        searchUser: "Procurar usuário...",
+        noUserFound: "Nenhum usuário encontrado",
+        noUserAvailable: "Nenhum usuário disponível",
+        cancel: "Cancelar",
+        details: "Detalhes",
+        deleteChat: "Excluir Conversa",
+        deleteChatConfirm: "Esta ação não pode ser revertida, confirmar?",
+        detailsTitle: "Detalhes",
+        edit: "Editar",
+        delete: "Excluir",
+        now: "agora",
+        minutesAgo: "{{count}}m atrás",
+        hoursAgo: "{{count}}h atrás",
+      },
+      chatMessages: {
+        deleted: "Esta mensagem foi apagada",
+        deletedAdmin: "Mensagem apagada - visível apenas para administradores",
+        reply: "Responder",
+        edit: "Editar",
+        delete: "Excluir",
+        forward: "Encaminhar",
+        editMessage: "Editar Mensagem",
+        save: "Salvar",
+        cancel: "Cancelar",
+        deleteMessage: "Deletar Mensagem",
+        deleteMessageConfirm: "Tem certeza que deseja deletar esta mensagem?",
+        forwardMessage: "Encaminhar Mensagem",
+        selectChat: "Selecione o chat",
+        doubleClickToReply: "Clique duas vezes para responder",
+        edited: "(editada)",
+        forwarded: "(encaminhada)",
+        typeMessage: "Digite uma mensagem...",
+        send: "Enviar",
+        noMessages: "Nenhuma mensagem",
+        loading: "Carregando...",
+        replyingTo: "Respondendo a",
+        clickToGoToOriginal: "Clique para ir até a mensagem original",
+      },
+      chatPopover: {
+        reply: "Responder",
+        edit: "Editar",
+        delete: "Excluir",
+        forward: "Encaminhar",
+        cancel: "Cancelar",
+        confirmDelete: "Confirmar Exclusão",
+        confirm: "Confirmar",
+        deleteMessage: "Tem certeza que deseja excluir esta mensagem?",
+        editMessage: "Editar Mensagem",
+        save: "Salvar",
+        forwardMessage: "Encaminhar Mensagem",
+        selectChat: "Selecione o chat",
+        forward: "Encaminhar",
+        noChats: "Nenhum chat disponível",
+      },
+      chatIndex: {
+        chats: "Chats",
+        groups: "Grupos",
+        new: "Novo",
+        messages: "Mensagens",
+        search: "Buscar...",
+        noChats: "Nenhum chat encontrado",
+        noGroups: "Nenhum grupo encontrado",
+        noMessages: "Nenhuma mensagem",
+        loading: "Carregando...",
+        error: "Erro ao carregar dados",
+        addGroupPhoto: "Adicionar Foto do Grupo",
+        changeGroupPhoto: "Alterar Foto do Grupo",
+        groupName: "Nome do Grupo",
+        groupDescription: "Descrição do Grupo",
+        save: "Salvar",
+        cancel: "Cancelar",
+        createGroup: "Criar Grupo",
+        editGroup: "Editar Grupo",
+        deleteGroup: "Deletar Grupo",
+        deleteGroupConfirm: "Tem certeza que deseja deletar este grupo?",
+        edit: "Editar",
+        delete: "Excluir",
+        details: "Detalhes",
+        groupDetails: "Detalhes do Grupo",
+        title: "Título",
+        description: "Descrição",
+        modal: {
+          title: "Criar grupo",
+          name: "Nome do grupo",
+          description: "Descrição do grupo",
+          create: "Criar",
+          cancel: "Cancelar",
+          save: "Salvar",
+          edit: "Editar",
+        },
+        modal: {
+          title: "Criar Grupo",
+          editTitle: "Editar Grupo",
+          save: "Salvar",
+          cancel: "Cancelar",
+        },
+      },
+whitelabel: {
+        primaryColorLight: "Cor Primária (Tema Claro)",
+        primaryColorDark: "Cor Primária (Tema Escuro)",
+        appName: "Nome da Aplicação",
+        logoLight: "Logo (Tema Claro)",
+        logoDark: "Logo (Tema Escuro)",
+        favicon: "Favicon",
+        backgroundLight: "Imagem de Fundo (Tema Claro)",
+        backgroundDark: "Imagem de Fundo (Tema Escuro)",
+        preview: "Visualizar",
+        delete: "Excluir",
+        upload: "Enviar",
+        availableLanguages: "Idiomas Disponíveis",
+        atLeastOneLanguage: "Pelo menos um idioma deve estar habilitado",
+
+        sections: {
+          general: "Configurações Gerais",
+          generalDescription: "Configure o nome e informações básicas da aplicação",
+          colors: "Cores e Temas",
+          colorsDescription: "Personalize as cores primárias para temas claro e escuro",
+          logos: "Logos e Imagens",
+          logosDescription: "Carregue os logos e imagens de fundo da aplicação",
+          languages: "Idiomas Disponíveis",
+          languagesDescription: "Selecione quais idiomas estarão disponíveis no sistema"
+        }
       },
     },
   },

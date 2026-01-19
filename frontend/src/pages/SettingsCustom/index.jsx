@@ -12,8 +12,9 @@ import PlansManager from "../../components/PlansManager";
 import HelpsManager from "../../components/HelpsManager";
 import Options from "../../components/Settings/Options";
 import Whitelabel from "../../components/Settings/Whitelabel";
+import FinalizacaoAtendimento from "../../components/Settings/FinalizacaoAtendimento";
 
-import { i18n } from "../../translate/i18n";
+import { i18n } from "../../translate/i18n.js";
 import { toast } from "react-toastify";
 
 import useCompanies from "../../hooks/useCompanies";
@@ -22,7 +23,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import OnlyForSuperUser from "../../components/OnlyForSuperUser";
 import useCompanySettings from "../../hooks/useSettings/companySettings";
 import useSettings from "../../hooks/useSettings";
-import ForbiddenPage from "../../components/ForbiddenPage";
+import ForbiddenPage from "../../components/ForbiddenPage/index.js";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -36,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
   },
   tab: {
     // background: "#f2f5f3",
-    backgroundColor: theme.mode === 'light' ? "#f2f2f2" : "#7f7f7f",
+    backgroundColor: theme.mode === "light" ? "#f2f2f2" : "#7f7f7f",
     borderRadius: 4,
   },
   paper: {
@@ -79,9 +80,14 @@ const SettingsCustom = () => {
 
   useEffect(() => {
     async function findData() {
+      if (!user || !user.companyId) {
+        return;
+      }
+
       setLoading(true);
       try {
         const companyId = user.companyId;
+
         const company = await find(companyId);
 
         const settingList = await getAllSettings(companyId);
@@ -93,14 +99,6 @@ const SettingsCustom = () => {
         setSettings(settingList);
         setOldSettings(settingListOld);
 
-        /*  if (Array.isArray(settingList)) {
-           const scheduleType = settingList.find(
-             (d) => d.key === "scheduleType"
-           );
-           if (scheduleType) {
-             setSchedulesEnabled(scheduleType.value === "company");
-           }
-         } */
         setSchedulesEnabled(settingList.scheduleType === "company");
         setCurrentUser(user);
       } catch (e) {
@@ -111,6 +109,17 @@ const SettingsCustom = () => {
     findData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!socket || !user || !user.companyId) return;
+    const onSettingsEvent = () => {
+      getAllSettingsOld().then(setOldSettings);
+    };
+    socket.on(`company-${user.companyId}-settings`, onSettingsEvent);
+    return () => {
+      socket.off(`company-${user.companyId}-settings`, onSettingsEvent);
+    };
+  }, [socket, user]);
 
   const handleTabChange = (event, newValue) => {
     setTab(newValue);
@@ -129,14 +138,14 @@ const SettingsCustom = () => {
   };
 
   const isSuper = () => {
-    return currentUser.super;
+    return currentUser && currentUser.super;
   };
 
   return (
     <MainContainer className={classes.root}>
-      {user.profile === "user" ?
+      {user.profile === "user" ? (
         <ForbiddenPage />
-        :
+      ) : (
         <>
           <MainHeader>
             <Title>{i18n.t("settings.title")}</Title>
@@ -153,10 +162,28 @@ const SettingsCustom = () => {
             >
               <Tab label={i18n.t("settings.tabs.options")} value={"options"} />
               {schedulesEnabled && <Tab label="Horários" value={"schedules"} />}
-              {isSuper() ? <Tab label="Empresas" value={"companies"} /> : null}
-              {isSuper() ? <Tab label={i18n.t("settings.tabs.plans")} value={"plans"} /> : null}
-              {isSuper() ? <Tab label={i18n.t("settings.tabs.helps")} value={"helps"} /> : null}
-              {isSuper() ? <Tab label="Whitelabel" value={"whitelabel"} /> : null}
+              {user.profile === "admin" &&
+                user.finalizacaoComValorVendaAtiva && (
+                  <Tab
+                    label="Finalização do Atendimento"
+                    value={"finalizacao"}
+                  />
+                )}
+              {isSuper() ? (
+                <Tab
+                  label={i18n.t("settings.tabs.companies")}
+                  value={"companies"}
+                />
+              ) : null}
+              {isSuper() ? (
+                <Tab label={i18n.t("settings.tabs.plans")} value={"plans"} />
+              ) : null}
+              {isSuper() ? (
+                <Tab label={i18n.t("settings.tabs.helps")} value={"helps"} />
+              ) : null}
+              {isSuper() ? (
+                <Tab label="Whitelabel" value={"whitelabel"} />
+              ) : null}
             </Tabs>
             <Paper className={classes.paper} elevation={0}>
               <TabPanel
@@ -202,14 +229,26 @@ const SettingsCustom = () => {
                       value={tab}
                       name={"whitelabel"}
                     >
-                      <Whitelabel
-                        settings={oldSettings}
-                      />
+                      <Whitelabel settings={oldSettings} />
                     </TabPanel>
                   </>
                 )}
               />
-              <TabPanel className={classes.container} value={tab} name={"options"}>
+              <TabPanel
+                className={classes.container}
+                value={tab}
+                name={"finalizacao"}
+              >
+                <FinalizacaoAtendimento
+                  settings={settings}
+                  onSettingsChange={(newSettings) => setSettings(newSettings)}
+                />
+              </TabPanel>
+              <TabPanel
+                className={classes.container}
+                value={tab}
+                name={"options"}
+              >
                 <Options
                   settings={settings}
                   oldSettings={oldSettings}
@@ -221,7 +260,8 @@ const SettingsCustom = () => {
               </TabPanel>
             </Paper>
           </Paper>
-        </>}
+        </>
+      )}
     </MainContainer>
   );
 };

@@ -33,151 +33,265 @@ body{
 	width: 100%;
 }
 
-.login-content{
-	display: flex;
-	justify-content: flex-start;
-	align-items: center;
-	text-align: center;
+
+/* ==========================================
+   CSS PARA LARGURA TOTAL APENAS EM PÁGINAS AUTENTICADAS
+   VERSÃO CORRIGIDA - PROTEÇÃO ROBUSTA PARA MENUS
+   Substitua TODO o conteúdo do style.css por este
+   ========================================== */
+
+/* APLICAR LARGURA TOTAL EM TODAS AS PÁGINAS AUTENTICADAS */
+.logged-in-layout .MuiContainer-root:not(.login-container):not(.signup-container) {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  max-width: none !important;
+  width: 100% !important;
 }
 
-.img img{
-	width: 800px;
+.logged-in-layout main {
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
-.login-content img{
-    height: 100px;
+.logged-in-layout .MuiPaper-root:not(.MuiMenu-paper):not(.MuiPopover-paper):not(.MuiDialog-paper) {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
-.login-content h2{
-	margin: 15px 0;
-	color: #333;
-	text-transform: uppercase;
-	font-size: 2.9rem;
+/* Garantir que tabelas ocupem toda a largura */
+.logged-in-layout .MuiTableContainer-root {
+  margin: 0 !important;
+  width: 100% !important;
 }
 
-.login-content .input-div{
-	position: relative;
-    display: grid;
-    grid-template-columns: 7% 93%;
-    margin: 25px 0;
-    padding: 5px 0;
-    border-bottom: 2px solid #065183;
+/* Garantir que elementos com container não tenham padding lateral */
+.logged-in-layout div[class*="container"]:not(.login-container):not(.signup-container) {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
-.login-content .input-div.one{
-	margin-top: 0;
+/* ==========================================
+ PROTEÇÃO ROBUSTA PARA MENUS E COMPONENTES
+ ========================================== */
+
+/* PROTEGER TODOS OS MENUS - REGRAS MAIS ESPECÍFICAS */
+.logged-in-layout .MuiMenu-paper,
+.logged-in-layout .MuiPopover-paper,
+.logged-in-layout .MuiSelect-menu,
+.logged-in-layout .MuiPopper-root .MuiPaper-root,
+html body .logged-in-layout .MuiMenu-paper,
+html body .logged-in-layout .MuiPopover-paper {
+  width: auto !important;
+  max-width: 320px !important;
+  min-width: 160px !important;
+  padding: 8px !important;
+  position: fixed !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  margin: 0 !important;
 }
 
-.i{
-	color: #065183;
-	display: flex;
-	justify-content: center;
-	align-items: center;
+/* PROTEGER MENUS ESPECÍFICOS DO MessageInput */
+#simple-menu .MuiPaper-root,
+#menu-appbar .MuiPaper-root,
+[aria-labelledby="simple-menu"] .MuiPaper-root {
+  width: auto !important;
+  max-width: 280px !important;
+  min-width: 200px !important;
 }
 
-.i i{
-	transition: .3s;
+/* PROTEGER MENU DE IDIOMAS */
+.language-dropdown > div,
+.language-dropdown .MuiList-root {
+  width: auto !important;
+  max-width: 200px !important;
+  min-width: 120px !important;
+  position: absolute !important;
 }
 
-.input-div > div{
-    position: relative;
-	height: 45px;
+/* PROTEGER MENU DO USUÁRIO */
+.user-menu-wrapper .MuiMenu-paper,
+.user-menu-wrapper .MuiPaper-root {
+  width: auto !important;
+  max-width: 200px !important;
+  min-width: 150px !important;
 }
 
-.input-div > div > h5{
-	position: absolute;
-	left: 10px;
-	top: 50%;
-	transform: translateY(-50%);
-	color: #999;
-	font-size: 18px;
-	transition: .3s;
+/* PROTEGER TODOS OS MODAIS */
+.logged-in-layout .MuiDialog-paper,
+.logged-in-layout .MuiModal-root .MuiPaper-root {
+  width: auto !important;
+  max-width: 600px !important;
+  margin: 16px !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
 }
 
-.input-div:before, .input-div:after{
-	content: '';
-	position: absolute;
-	bottom: -2px;
-	width: 0%;
-	height: 2px;
-	background-color: #065183;
-	transition: .4s;
+/* PROTEGER TOOLTIPS */
+.logged-in-layout .MuiTooltip-tooltip,
+.MuiTooltip-popper .MuiTooltip-tooltip {
+  max-width: 300px !important;
+  width: auto !important;
+  position: fixed !important;
 }
 
-.input-div:before{
-	right: 50%;
+/* PROTEGER AUTOCOMPLETE */
+.logged-in-layout .MuiAutocomplete-paper,
+.logged-in-layout .MuiAutocomplete-popper .MuiPaper-root {
+  width: auto !important;
+  max-width: 400px !important;
+  position: fixed !important;
 }
 
-.input-div:after{
-	left: 50%;
+/* PROTEGER SNACKBARS/TOAST */
+.logged-in-layout .MuiSnackbar-root,
+.MuiSnackbar-root {
+  width: auto !important;
+  max-width: 400px !important;
+  position: fixed !important;
+  left: auto !important;
+  right: auto !important;
 }
 
-.input-div.focus:before, .input-div.focus:after{
-	width: 50%;
+/* PROTEGER DRAWER */
+.logged-in-layout .MuiDrawer-paper,
+.MuiDrawer-root .MuiPaper-root {
+  width: 240px !important;
+  max-width: 240px !important;
+  position: fixed !important;
 }
 
-.input-div.focus > div > h5{
-	top: -5px;
-	font-size: 15px;
+/* PROTEGER DATE PICKERS */
+.logged-in-layout .MuiPickersPopper-paper,
+.MuiPickersPopper-root .MuiPaper-root {
+  width: auto !important;
+  max-width: 320px !important;
+  position: fixed !important;
 }
 
-.input-div.focus > .i > i{
-	color: #065183;
+/* PROTEGER BREADCRUMBS */
+.logged-in-layout .MuiBreadcrumbs-root {
+  width: auto !important;
+  max-width: none !important;
 }
 
-.input-div > div > input{
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	border: none;
-	outline: none;
-	background: none;
-	padding: 0.5rem 0.7rem;
-	font-size: 1.2rem;
-	color: #555;
-	font-family: 'poppins', sans-serif;
+/* PROTEGER CHIPS */
+.logged-in-layout .MuiChip-root {
+  width: auto !important;
+  max-width: 200px !important;
 }
 
-.input-div.pass{
-	margin-bottom: 4px;
+/* PROTEGER FAB MENUS */
+.logged-in-layout .MuiFab-root {
+  width: auto !important;
+  max-width: 56px !important;
+  position: relative !important;
 }
 
-/* a{
-	display: block;
-	text-align: right;
-	text-decoration: none;
-	color: #999;
-	font-size: 0.9rem;
-	transition: .3s;
-} */
-
-a:hover{
-	color: #065183;
+/* PROTEGER SELECTS ESPECÍFICOS */
+.logged-in-layout .MuiSelect-root,
+.logged-in-layout .MuiFormControl-root {
+  width: auto !important;
+  max-width: none !important;
 }
 
-.btn{
-	display: block;
-	width: 100%;
-	height: 50px;
-	border-radius: 25px;
-	outline: none;
-	border: none;
-	background-image: linear-gradient(to right, #065183, #065183, #065183);
-	background-size: 200%;
-	font-size: 1.2rem;
-	color: #F7F7F7;
-	font-family: 'Poppins', sans-serif;
-	text-transform: uppercase;
-	margin: 1rem 0;
-	cursor: pointer;
-	transition: .5s;
-}
-.btn:hover{
-	background-position: right;
+/* ==========================================
+ PROTEÇÕES ESPECÍFICAS POR COMPONENTE
+ ========================================== */
+
+/* MessageInput - Proteger todos os menus e componentes */
+[class*="messageInput"] .MuiMenu-paper,
+[class*="messageInput"] .MuiPopover-paper,
+[class*="messageInput"] .MuiFab-root,
+div[class*="mainWrapper"] .MuiMenu-paper {
+  width: auto !important;
+  max-width: 280px !important;
+  min-width: 200px !important;
 }
 
+/* TicketOptionsMenu - Proteger menu */
+[class*="ticketOptions"] .MuiMenu-paper,
+div[id*="menu-appbar"] .MuiPaper-root {
+  width: auto !important;
+  max-width: 250px !important;
+  min-width: 180px !important;
+}
+
+/* TicketActionButtons - Proteger botões e menus */
+[class*="actionButtons"] .MuiMenu-paper,
+[class*="actionButtons"] .MuiIconButton-root,
+[class*="bottomButton"] .MuiIconButton-root {
+  width: auto !important;
+  max-width: 300px !important;
+}
+
+/* ==========================================
+ PROTEÇÕES EXTRAS PARA CASOS ESPECÍFICOS
+ ========================================== */
+
+/* Proteger qualquer elemento posicionado de forma fixa ou absoluta */
+.logged-in-layout [style*="position: fixed"],
+.logged-in-layout [style*="position: absolute"] {
+  width: auto !important;
+  max-width: none !important;
+}
+
+/* Proteger elementos com z-index alto (geralmente overlays) */
+.logged-in-layout [style*="z-index"]:not(.MuiContainer-root) {
+  width: auto !important;
+  max-width: none !important;
+}
+
+/* Forçar reset para componentes problemáticos */
+.MuiPopper-root,
+.MuiPopover-root,
+.MuiModal-root,
+.MuiDialog-root {
+  & .MuiPaper-root {
+      width: auto !important;
+      max-width: fit-content !important;
+      min-width: auto !important;
+      position: relative !important;
+      left: auto !important;
+      right: auto !important;
+      transform: none !important;
+      margin: 0 !important;
+  }
+}
+
+/* Para páginas específicas que podem precisar de padding */
+.logged-in-layout .page-with-padding {
+  padding: 0 16px !important;
+}
+
+/* Manter apenas padding vertical se necessário em algumas páginas */
+.logged-in-layout .content-wrapper {
+  padding: 16px 0 !important;
+}
+
+/* ==========================================
+ FALLBACK - REGRAS DE EMERGÊNCIA
+ ========================================== */
+
+/* Se nada mais funcionar, força reset em todos os menus */
+html body .logged-in-layout .MuiMenu-root .MuiPaper-root,
+html body .logged-in-layout .MuiPopover-root .MuiPaper-root,
+html body .logged-in-layout [role="menu"],
+html body .logged-in-layout [role="listbox"],
+html body .logged-in-layout [aria-haspopup="true"] + div {
+  width: auto !important;
+  max-width: 320px !important;
+  min-width: auto !important;
+  position: fixed !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  flex: none !important;
+}
 
 @media screen and (max-width: 1050px){
 	.container{

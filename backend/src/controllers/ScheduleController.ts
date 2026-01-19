@@ -52,7 +52,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 		enviarQuantasVezes = 1,
 		tipoDias=  4,
     contadorEnvio = 0,
-    assinar = false
+    assinar = false,
+    // ✅ Campos de lembrete
+    reminderDate,
+    reminderMessage
   } = req.body;
   const { companyId } = req.user;
 
@@ -72,7 +75,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     enviarQuantasVezes,
     tipoDias,
     contadorEnvio,
-    assinar
+    assinar,
+    // ✅ Incluir campos de lembrete
+    reminderDate,
   });
 
   const io = getIO();

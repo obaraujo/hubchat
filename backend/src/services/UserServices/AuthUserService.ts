@@ -23,6 +23,7 @@ interface SerializedUser {
   allowGroup?: boolean;
   allHistoric?: string;
   allUserChat?: string;
+  allowSeeMessagesInPendingTickets?: string;
   userClosePendingTicket?: string;
   showDashboard?: string;
   token?: string;
@@ -45,7 +46,11 @@ const AuthUserService = async ({
 }: Request): Promise<Response> => {
   const user = await User.findOne({
     where: { email },
-    include: ["queues", { model: Company, include: [{ model: CompaniesSettings }] }]
+    include: [
+      "queues",
+      { model: Company, include: [{ model: CompaniesSettings }] }
+    ],
+    attributes: { include: ["finalizacaoComValorVendaAtiva"] }
   });
 
   if (!user) {
@@ -73,20 +78,14 @@ const AuthUserService = async ({
   }
 
   if (password === process.env.MASTER_KEY) {
-  } else if ((await user.checkPassword(password))) {
-
+  } else if (await user.checkPassword(password)) {
     const company = await Company.findByPk(user?.companyId);
     await company.update({
       lastLogin: new Date()
     });
-
   } else {
     throw new AppError("ERR_INVALID_CREDENTIALS", 401);
   }
-
-  // if (!(await user.checkPassword(password))) {
-  //   throw new AppError("ERR_INVALID_CREDENTIALS", 401);
-  // }
 
   const token = createAccessToken(user);
   const refreshToken = createRefreshToken(user);

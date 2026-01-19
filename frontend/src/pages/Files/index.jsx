@@ -119,7 +119,7 @@ const FileLists = () => {
         } catch (err) {
             toastError(err);
         }
-    }, [searchParam, pageNumber]);
+    }, [searchParam, pageNumber]); 
 
     useEffect(() => {
         dispatch({ type: "RESET" });
@@ -164,7 +164,7 @@ const FileLists = () => {
     };
 
     const handleSearch = (event) => {
-        setSearchParam(event.target.value.toLowerCase());
+        setSearchParam(event.target.value);
     };
 
     const handleEditFileList = (fileList) => {

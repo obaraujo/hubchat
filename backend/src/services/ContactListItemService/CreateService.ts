@@ -37,9 +37,9 @@ const CreateService = async (data: Data): Promise<ContactListItem> => {
   });
 
   try {
-    const response = await CheckContactNumber(record.number, record.companyId);
+    const response: any = await CheckContactNumber(record.number, record.companyId);
     record.isWhatsappValid = response ? true : false;
-    const number = response;
+    const number = response.jid.split("@")[0];
     record.number = number;
     await record.save();
   } catch (e) {

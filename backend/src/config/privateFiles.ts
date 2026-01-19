@@ -8,7 +8,7 @@ export default {
   storage: multer.diskStorage({
     destination: privateFolder,
     filename(req, file, cb) {
-      const fileName = new Date().getTime() + path.extname(file.originalname);
+      const fileName = file.originalname.replace(/\s/g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
       return cb(null, fileName);
     }

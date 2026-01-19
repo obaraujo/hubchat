@@ -22,7 +22,8 @@ const ShowTicketLogModal = ({ isOpen, handleClose, ticketId }) => {
     pending: i18n.t("showTicketLogModal.options.pending"),
     closed: i18n.t("showTicketLogModal.options.closed"),
     reopen: i18n.t("showTicketLogModal.options.reopen"),
-    redirect: i18n.t("showTicketLogModal.options.redirect")
+    redirect: i18n.t("showTicketLogModal.options.redirect"),
+    clientClosed: i18n.t("showTicketLogModal.options.clientClosed")
     // Adicione outros mapeamentos conforme necessário
   };
 

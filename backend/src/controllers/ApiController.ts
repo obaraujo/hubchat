@@ -6,6 +6,7 @@ import GetDefaultWhatsApp from "../helpers/GetDefaultWhatsApp";
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
 import Message from "../models/Message";
 import Whatsapp from "../models/Whatsapp";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import CreateOrUpdateContactService from "../services/ContactServices/CreateOrUpdateContactService";
 import FindOrCreateTicketService from "../services/TicketServices/FindOrCreateTicketService";
 import CheckIsValidContact from "../services/WbotServices/CheckIsValidContact";
@@ -28,7 +29,8 @@ import path from "path";
 import Contact from "../models/Contact";
 import FindOrCreateATicketTrakingService from "../services/TicketServices/FindOrCreateATicketTrakingService";
 import { Mutex } from "async-mutex";
-import { createJid } from "../functionts";
+import SendWhatsAppOficialMessage from "../services/WhatsAppOficial/SendWhatsAppOficialMessage";
+import MessageApi from "../models/MessageApi";
 
 type WhatsappData = {
   whatsappId: number;
@@ -57,36 +59,41 @@ interface ContactData {
   isGroup: boolean;
 }
 
-const createContact = async (whatsappId: number | undefined, companyId: number | undefined, newContact: string, userId?: number | 0, wbot?: any) => {
+const createContact = async (
+  whatsappId: number | undefined,
+  companyId: number | undefined,
+  newContact: string,
+  userId?: number | 0,
+  queueId?: number | 0,
+  wbot?: any
+) => {
   try {
-
-
     // await CheckIsValidContact(newContact, companyId);
+
     const validNumber: any = await CheckContactNumber(newContact, companyId, newContact.length > 17);
 
     const contactData = {
-      name: `${validNumber}`,
-      number: validNumber,
+      name: `${validNumber.jid.replace(/\D/g, "")}`,
+      number: validNumber.jid.split("@")[0],
       profilePicUrl: "",
       isGroup: false,
       companyId,
       whatsappId,
-      remoteJid: createJid(validNumber),
+      remoteJid: validNumber.jid,
       wbot
     };
 
     const contact = await CreateOrUpdateContactService(contactData);
 
-
     const settings = await CompaniesSettings.findOne({
-      where: { companyId }
-    }
+        where: { companyId }
+      }
     )    // return contact;
 
     let whatsapp: Whatsapp | null;
 
     if (whatsappId === undefined) {
-      whatsapp = await GetDefaultWhatsApp(whatsappId, companyId);
+      whatsapp = await GetDefaultWhatsApp(companyId);
     } else {
       whatsapp = await Whatsapp.findByPk(whatsappId);
 
@@ -103,7 +110,7 @@ const createContact = async (whatsappId: number | undefined, companyId: number |
         whatsapp,
         0,
         companyId,
-        null,
+        queueId,
         userId,
         null,
         whatsapp.channel,
@@ -146,75 +153,14 @@ function formatBRNumber(jid: string) {
   }
 }
 
-// export const indexLink = async (req: Request, res: Response): Promise<Response> => {
-//   const newContact: ContactData = req.body;
-//   const { whatsappId }: WhatsappData = req.body;
-//   const { msdelay }: any = req.body;
-//   const url = req.body.url;
-//   const caption = req.body.caption;
-
-//   const authHeader = req.headers.authorization;
-//   const [, token] = authHeader.split(" ");
-//   const whatsapp = await Whatsapp.findOne({ where: { token } });
-//   const companyId = whatsapp.companyId;
-
-//   newContact.number = newContact.number.replace("-", "").replace(" ", "");
-
-//   const schema = Yup.object().shape({
-//     number: Yup.string()
-//       .required()
-//       .matches(/^\d+$/, "Invalid number format. Only numbers is allowed.")
-//   });
-
-//   try {
-//     await schema.validate(newContact);
-//   } catch (err: any) {
-//     throw new AppError(err.message);
-//   }
-
-//   const contactAndTicket = await createContact(whatsappId, companyId, newContact.number);
-
-//   if (!contactAndTicket) {
-//     throw new AppError("Cliente em outro atendimento")
-//   }
-//   await SendWhatsAppMessageLink({ whatsappId, contact: contactAndTicket.contact, url, caption, msdelay });
-
-//   setTimeout(async () => {
-//     const { dateToClient } = useDate();
-
-//     const hoje: string = dateToClient(new Date())
-//     const timestamp = moment().format();
-
-//     const exist = await ApiUsages.findOne({
-//       where: {
-//         dateUsed: hoje,
-//         companyId: companyId
-//       }
-//     });
-
-//     if (exist) {
-//       await exist.update({
-//         usedPDF: exist.dataValues["usedPDF"] + 1,
-//         UsedOnDay: exist.dataValues["UsedOnDay"] + 1,
-//         updatedAt: timestamp
-//       });
-//     } else {
-//       const usage = await ApiUsages.create({
-//         companyId: companyId,
-//         dateUsed: hoje,
-//       });
-
-//       await usage.update({
-//         usedPDF: usage.dataValues["usedPDF"] + 1,
-//         UsedOnDay: usage.dataValues["UsedOnDay"] + 1,
-//         updatedAt: timestamp
-//       });
-//     }
-
-//   }, 100);
-
-//   return res.send({ status: "SUCCESS" });
-// };
+function createJid(number: string) {
+  if (number.includes('@g.us') || number.includes('@s.whatsapp.net')) {
+    return formatBRNumber(number) as string;
+  }
+  return number.includes('-')
+    ? `${number}@g.us`
+    : `${formatBRNumber(number)}@s.whatsapp.net`;
+}
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const newContact: ContactData = req.body;
@@ -238,8 +184,6 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   const whatsapp = await Whatsapp.findOne({ where: { token } });
   const companyId = whatsapp.companyId;
 
-
-
   newContact.number = newContact.number.replace(" ", "");
 
   const schema = Yup.object().shape({
@@ -247,7 +191,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
       .required()
       .matches(/^\d+$/, "Invalid number format. Only numbers is allowed.")
   });
-
+  let messageCreated = null;
   try {
     await schema.validate(newContact);
   } catch (err: any) {
@@ -256,18 +200,15 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
   const wbot = await getWbot(whatsapp.id);
 
-
   let user
   if (userId?.toString() !== "" && !isNaN(userId)) {
     user = await ShowUserService(userId, companyId);
   }
 
-
   let queue
   if (queueId?.toString() !== "" && !isNaN(queueId)) {
     queue = await ShowQueueService(queueId, companyId);
   }
-
 
   let bodyMessage;
 
@@ -278,9 +219,24 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     bodyMessage = body.trim();
   }
 
+  const dtschedule = req.body.schedule
+    ? new Date(req.body.schedule)
+    : await getNextAvailableSchedule(companyId);
+
+  const contactData = {
+    name: `${number}`,
+    number: number,
+    profilePicUrl: "",
+    isGroup: false,
+    companyId,
+    whatsappId,
+    remoteJid: number.length > 17 ? `${number}@g.us` : `${number}@s.whatsapp.net`,
+    wbot
+  };
+
+  const contact = await CreateOrUpdateContactService(contactData);
 
   if (noRegister) {
-
     if (medias) {
       try {
         // console.log(medias)
@@ -291,7 +247,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
             const options = await getMessageOptions(media.filename, filePath, companyId.toString(), `\u200e ${bodyMessage}`);
             await wbot.sendMessage(
-              createJid(newContact.number),
+              `${newContact.number}@${newContact.number.length > 17 ? "g.us" : "s.whatsapp.net"}`,
               options);
 
             const fileExists = fs.existsSync(filePath);
@@ -307,22 +263,35 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
       }
     } else {
       await wbot.sendMessage(
-        createJid(newContact.number),
+        `${newContact.number}@${newContact.number.length > 17 ? "g.us" : "s.whatsapp.net"}`,
         {
           text: `\u200e ${bodyMessage}`
         })
     }
   } else {
-
-    const contactAndTicket = await createContact(whatsapp.id, companyId, newContact.number, userId, wbot);
+    const contactAndTicket = await createContact(whatsapp.id, companyId, newContact.number, userId, queueId, wbot);
 
     let sentMessage
+
+    // Se estiver configurado para API Oficial, envie por ela
+    const isOfficial = contactAndTicket?.channel === "whatsapp_oficial";
 
     if (medias) {
       try {
         await Promise.all(
           medias.map(async (media: Express.Multer.File) => {
-            sentMessage = await SendWhatsAppMedia({ body: `\u200e ${bodyMessage}`, media, ticket: contactAndTicket, isForwarded: false });
+            if (isOfficial) {
+              await SendWhatsAppOficialMessage({
+                body: `\u200e ${bodyMessage}`,
+                ticket: contactAndTicket,
+                quotedMsg: null,
+                type: undefined,
+                media,
+                vCard: null
+              });
+            } else {
+              sentMessage = await SendWhatsAppMedia({ body: `\u200e ${bodyMessage}`, media, ticket: contactAndTicket, isForwarded: false });
+            }
 
             const publicFolder = path.resolve(__dirname, "..", "..", "public");
             const filePath = path.join(publicFolder, `company${companyId}`, media.filename);
@@ -333,14 +302,70 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
             }
           })
         );
-        await verifyMediaMessage(sentMessage, contactAndTicket, contactAndTicket.contact, null, false, false, wbot);
+        if (!isOfficial && sentMessage) {
+          await verifyMediaMessage(sentMessage, contactAndTicket, contactAndTicket.contact, null, false, false, wbot);
+        }
       } catch (error) {
         throw new AppError("Error sending API media: " + error.message);
       }
     } else {
-      sentMessage = await SendWhatsAppMessageAPI({ body: `\u200e ${bodyMessage}`, whatsappId: whatsapp.id, contact: contactAndTicket.contact, quotedMsg, msdelay });
+      if (isOfficial) {
 
-      await verifyMessage(sentMessage, contactAndTicket, contactAndTicket.contact)
+        messageCreated = await MessageApi.create({
+          companyId,
+          contactId: contact.id,
+          number: newContact.number,
+          body: bodyMessage,
+          bodyBase64: bodyMessage,
+          userId: userId ? Number(userId) : null,
+          queueId: queueId ? Number(queueId) : null,
+          sendSignature,
+          closeTicket,
+          base64: false,
+          schedule: dtschedule,
+          isSending: false,
+          mediaType: null,
+          mediaUrl: null,
+          whatsappId: whatsapp.id
+        });
+
+        /*await SendWhatsAppOficialMessage({
+          body: `\u200e${bodyMessage}`,
+          ticket: contactAndTicket,
+          quotedMsg,
+          type: 'text',
+          media: null,
+          vCard: null
+        }); */
+      } else {
+        messageCreated = await MessageApi.create({
+          companyId,
+          contactId: contact.id,
+          number: newContact.number,
+          body: bodyMessage,
+          bodyBase64: bodyMessage,
+          userId: userId ? Number(userId) : null,
+          queueId: queueId ? Number(queueId) : null,
+          sendSignature,
+          closeTicket,
+          base64: false,
+          schedule: dtschedule,
+          isSending: false,
+          mediaType: null,
+          mediaUrl: null,
+          whatsappId: whatsapp.id
+        });
+        /*
+        sentMessage = await SendWhatsAppMessageAPI({ body: `\u200e${bodyMessage}`, whatsappId: whatsapp.id, contact: contactAndTicket.contact, quotedMsg, msdelay });
+        await verifyMessage(sentMessage, contactAndTicket, contactAndTicket.contact)*/
+      }
+
+      return res.status(200).json({
+        message: "Mensagem enviada a fila de transmissão com sucesso",
+        companyId,
+        schedule: dtschedule,
+        filaId: messageCreated.id
+      });
     }
     // @ts-ignore: Unreachable code error
     if (closeTicket) {
@@ -497,8 +522,52 @@ export const indexImage = async (req: Request, res: Response): Promise<Response>
 
   const contactAndTicket = await createContact(whatsappId, companyId, newContact.number);
 
+  const isOfficial = contactAndTicket?.channel === "whatsapp_oficial";
+
   if (url) {
-    await SendWhatsAppMediaImage({ ticket: contactAndTicket, url, caption, msdelay });
+    if (isOfficial) {
+      try {
+        // Baixa a imagem por URL e envia via API Oficial
+        const axios = (await import("axios")).default;
+        const response = await axios.get(url, { responseType: "arraybuffer" });
+        const contentType = response.headers["content-type"] || "image/jpeg";
+        const extension = contentType.includes("png") ? ".png" : contentType.includes("jpeg") ? ".jpg" : contentType.includes("jpg") ? ".jpg" : contentType.includes("gif") ? ".gif" : ".jpg";
+
+        const publicFolder = path.resolve(__dirname, "..", "..", "public");
+        const fileName = `api-img-${Date.now()}${extension}`;
+        const filePath = path.join(publicFolder, `company${companyId}`, fileName);
+
+        // Garante diretório e grava arquivo
+        fs.mkdirSync(path.join(publicFolder, `company${companyId}`), { recursive: true });
+        fs.writeFileSync(filePath, Buffer.from(response.data));
+
+        const media: any = {
+          path: filePath,
+          originalname: fileName,
+          mimetype: contentType,
+          filename: fileName
+        };
+
+        await SendWhatsAppOficialMessage({
+          body: caption,
+          ticket: contactAndTicket,
+          quotedMsg: null,
+          type: "image",
+          media,
+          vCard: null
+        });
+
+        // Remove arquivo temporário
+        const fileExists = fs.existsSync(filePath);
+        if (fileExists) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (error) {
+        throw new AppError("Error sending API image by URL (Oficial): " + error.message);
+      }
+    } else {
+      await SendWhatsAppMediaImage({ ticket: contactAndTicket, url, caption, msdelay });
+    }
   }
 
   setTimeout(async () => {
@@ -556,8 +625,8 @@ export const checkNumber = async (req: Request, res: Response): Promise<Response
 
   const number = newContact.number.replace("-", "").replace(" ", "");
 
-  const whatsappDefault = await GetDefaultWhatsApp(whatsapp.id, companyId);
-  const wbot = getWbot(whatsappDefault.id);
+  const whatsappDefault = await GetDefaultWhatsApp(companyId);
+  const wbot = await getWbot(whatsappDefault.id);
   const jid = createJid(number);
 
   try {
@@ -614,28 +683,27 @@ export const checkNumber = async (req: Request, res: Response): Promise<Response
 export const indexWhatsappsId = async (req: Request, res: Response): Promise<Response> => {
 
   return res.status(200).json('oi');
-
-  // const { companyId } = req.user;
-  // const whatsapps = await ListWhatsAppsService({ companyId });
-
-  // let wpp = [];
-
-  // if (whatsapps.length > 0) {
-  //     whatsapps.forEach(whatsapp => {
-
-  //         let wppString;
-  //         wppString = {
-  //             id: whatsapp.id,
-  //             name: whatsapp.name,
-  //             status: whatsapp.status,
-  //             isDefault: whatsapp.isDefault,
-  //             number: whatsapp.number
-  //         }
-
-  //         wpp.push(wppString)
-
-  //     });
-  // }
-
-  // return res.status(200).json(wpp);
 };
+
+async function getNextAvailableSchedule(companyId: number): Promise<Date> {
+  // Busca a última mensagem agendada para esta empresa
+  const lastScheduledMessage = await MessageApi.findOne({
+    where: {
+      companyId,
+      isSending: false,
+      schedule: { [Op.not]: null }
+    },
+    order: [['schedule', 'DESC']],
+    limit: 1
+  });
+
+  const now = new Date();
+
+  // Se não há mensagens agendadas ou a última já passou, usa agora + 30 segundos
+  if (!lastScheduledMessage || new Date(lastScheduledMessage.schedule) < now) {
+    return new Date(now.getTime() + 60 * 1000);
+  }
+
+  // Caso contrário, adiciona 30 segundos à última mensagem agendada
+  return new Date(new Date(lastScheduledMessage.schedule).getTime() + 60 * 1000);
+}

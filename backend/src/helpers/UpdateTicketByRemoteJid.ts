@@ -52,7 +52,7 @@ export const updateTicketByRemoteJid = async (remoteJid: string, queue: number, 
         {
           model: Whatsapp,
           as: "whatsapp",
-          attributes: ["name"]
+          attributes: ["name", "color"]
         },
         {
           model: Tag,

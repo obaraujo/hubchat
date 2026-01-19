@@ -12,7 +12,7 @@ export default {
                 console.log("message, wbot, companyId", message, wbot, companyId)
             }
 
-            const w = getWbot(wbot);
+            const w = await getWbot(wbot);
 
             if (!w) {
                 console.log("wbot not found", wbot)
@@ -28,3 +28,4 @@ export default {
         }
     },
 };
+

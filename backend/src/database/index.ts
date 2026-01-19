@@ -26,6 +26,7 @@ import CampaignSetting from "../models/CampaignSetting";
 import Baileys from "../models/Baileys";
 import CampaignShipping from "../models/CampaignShipping";
 import Announcement from "../models/Announcement";
+import AnnouncementAck from "../models/AnnouncementAck";
 import Chat from "../models/Chat";
 import ChatUser from "../models/ChatUser";
 import ChatMessage from "../models/ChatMessage";
@@ -46,12 +47,22 @@ import ContactWallet from "../models/ContactWallet";
 import ScheduledMessages from "../models/ScheduledMessages";
 import ScheduledMessagesEnvio from "../models/ScheduledMessagesEnvio";
 import Versions from "../models/Versions";
+import QuickMessageComponent from "../models/QuickMessageComponent";
+import BirthdaySettings from "../models/BirthdaySettings";
 import { FlowDefaultModel } from "../models/FlowDefault";
 import { FlowBuilderModel } from "../models/FlowBuilder";
 import { FlowAudioModel } from "../models/FlowAudio";
+import { FlowDocModel } from "../models/FlowDoc";
 import { FlowCampaignModel } from "../models/FlowCampaign";
 import { FlowImgModel } from "../models/FlowImg";
 import { WebhookModel } from "../models/Webhook";
+import QueueState from "../models/QueueStates";
+import TicketFinalizationReason from "../models/TicketFinalizationReason";
+import PresetWebhookModel from "../models/PresetWebhook";
+import WhatsappLidMap from "../models/WhatsapplidMap";
+import CallHistory from "../models/CallHistory";
+import CompanyKanbanConfig from "../models/CompanyKanbanConfig";
+import MessageApi from "../models/MessageApi";
 
 // eslint-disable-next-line
 const dbConfig = require("../config/database");
@@ -87,6 +98,7 @@ const models = [
   Baileys,
   CampaignShipping,
   Announcement,
+  AnnouncementAck,
   Chat,
   ChatUser,
   ChatMessage,
@@ -106,12 +118,22 @@ const models = [
   ScheduledMessages,
   ScheduledMessagesEnvio,
   Versions,
+  QuickMessageComponent,
   FlowDefaultModel,
   FlowBuilderModel,
   FlowAudioModel,
   FlowCampaignModel,
   FlowImgModel,
-  WebhookModel
+  FlowDocModel,
+  WebhookModel,
+  QueueState,
+  TicketFinalizationReason,
+  PresetWebhookModel,
+  BirthdaySettings,
+  WhatsappLidMap,
+  CallHistory,
+  CompanyKanbanConfig,
+  MessageApi
 ];
 
 sequelize.addModels(models);

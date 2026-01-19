@@ -10,7 +10,7 @@ const useStyles = makeStyles(theme => ({
     }
 }));
 
-const MessageVariablesPicker = ({ onClick, disabled }) => {
+const MessageVariablesPicker = ({ onClick, disabled, showSchedulingVars = false }) => {
     const classes = useStyles();
 
     const handleClick = (e, value) => {
@@ -61,6 +61,14 @@ const MessageVariablesPicker = ({ onClick, disabled }) => {
             value: "{{connection}} "
         }
     ];
+
+    // Adiciona variáveis específicas para agendamento e resposta rápida
+    if (showSchedulingVars) {
+        msgVars.push({
+            name: i18n.t("messageVariablesPicker.vars.scheduledDate"),
+            value: "{{dataAgendamento}} "
+        });
+    }
 
     return (
         <OutlinedDiv

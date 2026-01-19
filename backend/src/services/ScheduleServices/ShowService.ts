@@ -11,7 +11,7 @@ const ScheduleService = async (id: string | number, companyId: number): Promise<
       { model: Contact, as: "contact", attributes: ["id", "name"] },
       { model: User, as: "user", attributes: ["id", "name"] },
       { model: User, as: "ticketUser", attributes: ["id", "name"] },
-      { model: Whatsapp, as: "whatsapp", attributes: ["id", "name", "channel"] },
+      { model: Whatsapp, as: "whatsapp", attributes: ["id", "name", "channel", "color"] },
     ]
   });
 

@@ -1,7 +1,6 @@
 import { WASocket, proto } from "baileys";
 import Contact from "../../models/Contact";
 import Ticket from "../../models/Ticket";
-import { Store } from "../../libs/store";
 import ShowDialogChatBotsServices from "../DialogChatBotsServices/ShowDialogChatBotsServices";
 import ShowQueueService from "../QueueService/ShowQueueService";
 import ShowChatBotServices from "../ChatBotServices/ShowChatBotServices";
@@ -14,11 +13,8 @@ import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import Chatbot from "../../models/Chatbot";
 import User from "../../models/User";
 import { sendText } from "../FacebookServices/graphAPI";
+import { Session } from "../../libs/wbot";
 
-type Session = WASocket & {
-  id?: number;
-  store?: Store;
-};
 
 const isNumeric = (value: string) => /^-?\d+$/.test(value);
 
@@ -161,6 +157,12 @@ export const sayChatbot = async (
   contact: Contact,
   msg: any
 ): Promise<any> => {
+  // ✅ VERIFICAÇÃO PREVENTIVA: Não processar se ticket estiver "open" (aceito por atendente)
+  if (ticket.status === "open") {
+    console.log(`[CHATBOT FACEBOOK] Ticket ${ticket.id} está "open" - ChatBot não deve processar`);
+    return;
+  }
+
   const selectedOption = msg.text;
   if (!queueId && selectedOption && msg.is_echo) return;
 

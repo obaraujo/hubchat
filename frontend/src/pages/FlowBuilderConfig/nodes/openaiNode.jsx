@@ -2,18 +2,15 @@ import {
   ArrowForwardIos,
   ContentCopy,
   Delete,
-  ConfirmationNumber,
 } from "@mui/icons-material";
 import React, { memo } from "react";
-import TextField from "@mui/material/TextField";
 import { useNodeStorage } from "../../../stores/useNodeStorage";
 import { Handle } from "react-flow-renderer";
-import { Typography, Box } from "@material-ui/core";
 import { SiOpenai } from "react-icons/si";
 
 export default memo(({ data, isConnectable, id }) => {
   const storageItems = useNodeStorage();
-  console.log(12, "ticketNode", data);
+  
   return (
     <div
       style={{
@@ -21,14 +18,14 @@ export default memo(({ data, isConnectable, id }) => {
         padding: "8px",
         borderRadius: "8px",
         boxShadow: "rgba(0, 0, 0, 0.05) 0px 3px 5px",
-        border: "1px solid rgba(33, 94, 151, 0.25)",
+        border: "1px solid rgba(52, 152, 219, 0.25)",
       }}
     >
       <Handle
         type="target"
         position="left"
         style={{
-          background: "#0872b9",
+          background: "#3498db",
           width: "18px",
           height: "18px",
           top: "20px",
@@ -49,6 +46,7 @@ export default memo(({ data, isConnectable, id }) => {
           }}
         />
       </Handle>
+      
       <div
         style={{
           display: "flex",
@@ -75,6 +73,7 @@ export default memo(({ data, isConnectable, id }) => {
           sx={{ width: "12px", height: "12px", color: "#F7953B" }}
         />
       </div>
+      
       <div
         style={{
           color: "#ededed",
@@ -83,36 +82,38 @@ export default memo(({ data, isConnectable, id }) => {
           display: "flex",
         }}
       >
-       <SiOpenai
-          sx={{
+        <SiOpenai
+          style={{
             width: "16px",
             height: "16px",
             marginRight: "4px",
             marginTop: "4px",
-            color: "#3aba38"
+            color: "#3498db"
           }}
         />
         <div style={{ color: "#232323", fontSize: "16px" }}>OpenAI</div>
       </div>
+      
       <div style={{ color: "#232323", fontSize: "12px", width: 180 }}>
         <div
           style={{
-            backgroundColor: "#F6EEEE",
+            backgroundColor: "#E8F4FD",
             marginBottom: "3px",
             borderRadius: "5px",
           }}
         >
           <div style={{ gap: "5px", padding: "6px" }}>
-            <div style={{ textAlign: "center" }}>OpenAI</div>
+            <div style={{ textAlign: "center" }}>GPT AI Assistant</div>
           </div>
         </div>
       </div>
+      
       <Handle
         type="source"
         position="right"
         id="a"
         style={{
-          background: "#0872b9",
+          background: "#3498db",
           width: "18px",
           height: "18px",
           top: "70%",

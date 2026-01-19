@@ -70,7 +70,7 @@ const ImportWhatsAppMessageService = async (whatsappId: number | string) => {
   let whatsApp = await Whatsapp.findByPk(whatsappId);
 
 
-  const wbot = getWbot(whatsApp.id);
+  const wbot = await getWbot(whatsApp.id);
 
   try {
 
@@ -85,8 +85,8 @@ const ImportWhatsAppMessageService = async (whatsappId: number | string) => {
     Whatsapp nome: ${whatsApp.name}
     Whatsapp Id: ${whatsApp.id}
     Criação do arquivo de logs: ${moment().format("DD/MM/YYYY HH:mm:ss")}
-    Selecionado Data de inicio de importação: ${moment(dateOldLimit).format("DD/MM/YYYY HH:mm:ss")} 
-    Selecionado Data final da importação: ${moment(dateRecentLimit).format("DD/MM/YYYY HH:mm:ss")} 
+    Selecionado Data de inicio de importação: ${moment(dateOldLimit).format("DD/MM/YYYY HH:mm:ss")}
+    Selecionado Data final da importação: ${moment(dateRecentLimit).format("DD/MM/YYYY HH:mm:ss")}
     `
     })
 

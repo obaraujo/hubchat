@@ -1,6 +1,7 @@
 import { FlowAudioModel } from "../../models/FlowAudio";
 import { FlowBuilderModel } from "../../models/FlowBuilder";
 import { FlowImgModel } from "../../models/FlowImg";
+import { FlowDocModel } from "../../models/FlowDoc";
 import { WebhookModel } from "../../models/Webhook";
 import { randomString } from "../../utils/randomCode";
 
@@ -23,6 +24,7 @@ const UploadAllFlowBuilderService = async ({
       //  nameFile = medias[i].filename + "." + medias[i].mimetype.split("/")[1];
       //}
       itemsNewNames = [...itemsNewNames, nameFile]
+
       if (
         medias[i].mimetype.split("/")[1] === "png" ||
         medias[i].mimetype.split("/")[1] === "jpg" ||
@@ -33,7 +35,7 @@ const UploadAllFlowBuilderService = async ({
           companyId: companyId,
           name: nameFile
         });
-        
+
       }
       if (
         medias[i].mimetype.split("/")[1] === "mp3" ||
@@ -41,8 +43,8 @@ const UploadAllFlowBuilderService = async ({
         medias[i].mimetype.split("/")[1] === "mp4" ||
         medias[i].mimetype.split("/")[1] === "mpeg"
       ) {
-        
-        if(medias[i].mimetype.split("/")[1] === "mpeg"){
+
+        if (medias[i].mimetype.split("/")[1] === "mpeg") {
           nameFile = nameFile.split('.')[0] + '.mp3'
         }
 
@@ -51,13 +53,19 @@ const UploadAllFlowBuilderService = async ({
           companyId: companyId,
           name: nameFile
         });
-        
+
+      } else {
+        await FlowDocModel.create({
+          userId: userId,
+          companyId: companyId,
+          name: nameFile
+        });
       }
     }
 
     return itemsNewNames;
   } catch (error) {
-    console.error("Erro ao inserir o usuário:", error);
+    console.error("Erro ao inserir os arquivos:", error);
 
     return error;
   }

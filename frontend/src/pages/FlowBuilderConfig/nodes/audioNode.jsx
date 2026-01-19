@@ -2,13 +2,14 @@ import { ContentCopy, Delete, Message, MicNone } from "@mui/icons-material";
 import React, { memo } from "react";
 
 import { Handle } from "react-flow-renderer";
+
 import { useNodeStorage } from "../../../stores/useNodeStorage";
 
 export default memo(({ data, isConnectable, id }) => {
   const link =
-    import.meta.env.VITE_BACKEND_URL === "http://localhost:8090"
+    process.env.REACT_APP_BACKEND_URL === "http://localhost:8090"
       ? "http://localhost:8090"
-      : import.meta.env.VITE_BACKEND_URL;
+      : process.env.REACT_APP_BACKEND_URL;
 
   const storageItems = useNodeStorage();
   return (
@@ -18,7 +19,7 @@ export default memo(({ data, isConnectable, id }) => {
       <Handle
         type="target"
         position="left"
-        style={{ background: "#0000FF" }}
+        style={{ background: "#9a00ed" }}
         onConnect={params => console.log("handle onConnect", params)}
         isConnectable={isConnectable}
       />
@@ -83,7 +84,7 @@ export default memo(({ data, isConnectable, id }) => {
         type="source"
         position="right"
         id="a"
-        style={{ background: "#0000FF" }}
+        style={{ background: "#9a00ed" }}
         isConnectable={isConnectable}
       />
     </div>

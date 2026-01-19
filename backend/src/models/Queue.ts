@@ -26,41 +26,46 @@ import Chatbot from "./Chatbot";
 import QueueIntegrations from "./QueueIntegrations";
 import Files from "./Files";
 import Prompt from "./Prompt";
+import ContactWallet from "./ContactWallet";
 
 @Table
 class Queue extends Model<Queue> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @AllowNull(false)
   @Unique
-  @Column(DataType.TEXT)
+  @Column
   name: string;
 
   @AllowNull(false)
   @Unique
-  @Column(DataType.TEXT)
+  @Column
   color: string;
 
   @Default("")
-  @Column(DataType.TEXT)
+  @Column
   greetingMessage: string;
 
-  @Column(DataType.INTEGER)
+  @Column
   orderQueue: number;
 
   @AllowNull(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   ativarRoteador: boolean;
 
   @AllowNull(false)
-  @Column(DataType.INTEGER)
+  @Column
   tempoRoteador: number;
-  
+
+  @Default("RANDOM")
+  @Column
+  typeRandomMode: string;
+
   @Default("")
-  @Column(DataType.TEXT)
+  @Column
   outOfHoursMessage: string;
 
   @Column({
@@ -75,7 +80,7 @@ class Queue extends Model<Queue> {
   updatedAt: Date;
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @BelongsTo(() => Company)
@@ -95,22 +100,30 @@ class Queue extends Model<Queue> {
   chatbots: Chatbot[];
 
   @ForeignKey(() => QueueIntegrations)
-  @Column(DataType.INTEGER)
+  @Column
   integrationId: number;
 
   @BelongsTo(() => QueueIntegrations)
   queueIntegrations: QueueIntegrations;
 
   @ForeignKey(() => Files)
-  @Column(DataType.INTEGER)
+  @Column
   fileListId: number;
 
   @BelongsTo(() => Files)
   files: Files;
-  
+
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   closeTicket: boolean;
+
+  @Default(false)
+  @Column
+  randomizeImmediate: boolean;
+
+  @Default("")
+  @Column
+  tipoIntegracao: string;
 
   @HasMany(() => Prompt, {
     onUpdate: "SET NULL",
@@ -118,6 +131,9 @@ class Queue extends Model<Queue> {
     hooks: true
   })
   prompt: Prompt[];
+
+  @HasMany(() => ContactWallet)
+  contactWallets: ContactWallet[];
 
   @HasMany(() => Chatbot, {
     foreignKey: 'optQueueId', // Chave estrangeira que referencia o ID da fila

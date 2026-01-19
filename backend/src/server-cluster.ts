@@ -6,9 +6,9 @@ import { StartAllWhatsAppsSessions } from "./services/WbotServices/StartAllWhats
 import Company from "./models/Company";
 import { startQueueProcess } from "./queues";
 
-import express from "express";
-import os from "os";
-import cluster from "cluster";
+const express = require("express")
+const os = require("os")
+const cluster = require("cluster")
 
 const PORT = process.env.PORT || 4000
 

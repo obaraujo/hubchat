@@ -19,7 +19,7 @@ import Company from "./Company";
 class QueueIntegrations extends Model<QueueIntegrations> {
     @PrimaryKey
     @AutoIncrement
-    @Column(DataType.INTEGER)
+    @Column
     id: number;
 
     @Column(DataType.TEXT)
@@ -49,33 +49,33 @@ class QueueIntegrations extends Model<QueueIntegrations> {
     updatedAt: Date;
 
     @ForeignKey(() => Company)
-    @Column(DataType.INTEGER)
+    @Column
     companyId: number;
   
     @BelongsTo(() => Company)
     company: Company;
   
-    @Column(DataType.TEXT)
+    @Column
     typebotSlug: string;
 
     @Default(0)
-    @Column(DataType.INTEGER)
+    @Column
     typebotExpires: number;
 
-    @Column(DataType.TEXT)
+    @Column
     typebotKeywordFinish: string;
 
-    @Column(DataType.TEXT)
+    @Column
     typebotUnknownMessage: string;
 
     @Default(1000)
-    @Column(DataType.INTEGER)
-		typebotDelayMessage: number
+    @Column
+    typebotDelayMessage: number
 
-    @Column(DataType.TEXT)
+    @Column
     typebotKeywordRestart: string;
 
-    @Column(DataType.TEXT)
+    @Column
     typebotRestartMessage: string;
 }
 

@@ -1,10 +1,15 @@
 import io from "socket.io-client";
+import api from "../services/api";
+
 
 class SocketWorker {
   constructor(companyId , userId) {
+    const sessionToken = api.defaults.headers.Authorization
+
     if (!SocketWorker.instance) {
       this.companyId = companyId
       this.userId = userId
+      this.token = sessionToken
       this.socket = null;
       this.configureSocket();
       this.eventListeners = {}; // Armazena os ouvintes de eventos registrados
@@ -21,7 +26,10 @@ class SocketWorker {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: Infinity,
-      query: { userId: this.userId }
+      // transports: ["websocket", "polling", "flashsocket"],
+      // pingTimeout: 18000,
+      // pingInterval: 18000,
+      query: { userId: this.userId, token: this.token }
     });
 
     this.socket.on("connect", () => {
@@ -36,6 +44,7 @@ class SocketWorker {
 
   // Adiciona um ouvinte de eventos
   on(event, callback) {
+
     this.connect();
     this.socket.on(event, callback);
 
@@ -54,6 +63,7 @@ class SocketWorker {
 
   // Desconecta um ou mais ouvintes de eventos
   off(event, callback) {
+    // console.log(event, callback)
     this.connect();
     if (this.eventListeners[event]) {
       // console.log("Desconectando do servidor Socket.IO:", event, callback);

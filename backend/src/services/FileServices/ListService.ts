@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { fn, where, Op, col } from "sequelize";
 import Files from "../../models/Files";
 
 interface Request {
@@ -23,12 +23,19 @@ const ListService = async ({
   const offset = limit * (+pageNumber - 1);
 
   if (searchParam) {
+    const sanitizedSearchParam = searchParam.replace(/[^\w\s]/g, '').toLowerCase();
     whereCondition = {
-      [Op.or]: [{ name: { [Op.like]: `%${searchParam}%` } }]
+      [Op.or]: [{
+        body: where(
+          fn("LOWER", fn('unaccent', col("name"))),
+          "LIKE",
+          `%${sanitizedSearchParam}%`
+        ),
+      }]
     };
   }
   const { count, rows: files } = await Files.findAndCountAll({
-    where: {companyId, ...whereCondition},
+    where: { companyId, ...whereCondition },
     limit,
     offset,
     order: [["name", "ASC"]]

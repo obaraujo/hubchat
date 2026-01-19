@@ -22,6 +22,7 @@ import CheckIcon from "@material-ui/icons/CheckCircle";
 import ReplayIcon from "@material-ui/icons/Replay";
 import ClearOutlinedIcon from "@material-ui/icons/ClearOutlined";
 import api from "../../services/api";
+import { Dialog, DialogContent } from "@material-ui/core";
 
 import MarkdownWrapper from "../MarkdownWrapper";
 import { Tooltip } from "@material-ui/core";
@@ -204,6 +205,30 @@ const useStyles = makeStyles((theme) => ({
             opacity: 0,
         },
     },
+
+    // Estilos para o modal da imagem
+    imageModal: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    imageModalContent: {
+        outline: "none",
+        maxWidth: "90vw",
+        maxHeight: "90vh",
+    },
+    expandedImage: {
+        width: "100%",
+        height: "auto",
+        maxWidth: "500px",
+        borderRadius: theme.spacing(1),
+    },
+    clickableAvatar: {
+        cursor: "pointer",
+        "&:hover": {
+            opacity: 0.8,
+        },
+    }
 }));
 
 const SmallAvatar = withStyles((theme) => ({
@@ -240,19 +265,26 @@ const TicketListItem = ({ ticket }) => {
     const isMounted = useRef(true);
     const { user } = useContext(AuthContext);
     const { setCurrentTicket, setTabOpen } = useContext(TicketsContext);
+    const [imageModalOpen, setImageModalOpen] = useState(false); // Estado para o modal da imagem
 
-    useEffect(() => {
-        console.log("======== TicketListItemCustom ===========")
-        console.log(ticket)
-        console.log("=========================================")
-    }, [ticket])
-
-    
     useEffect(() => {
         return () => {
             isMounted.current = false;
         };
     }, []);
+
+    // Função para abrir modal da imagem
+    const handleImageClick = (e) => {
+        e.stopPropagation(); // Prevenir que o clique no avatar selecione o ticket
+        if (ticket?.contact?.urlPicture) {
+            setImageModalOpen(true);
+        }
+    };
+
+    // Função para fechar modal da imagem
+    const handleImageModalClose = () => {
+        setImageModalOpen(false);
+    };
 
     function getRatingIcon(rate) {
         let icon = "";
@@ -412,6 +444,8 @@ const TicketListItem = ({ ticket }) => {
                         <Avatar
                             alt={ticket?.contact?.name}
                             src={ticket?.contact?.urlPicture}
+                            className={classes.clickableAvatar}
+                            onClick={handleImageClick}
                         />
                     </Badge>
                 </ListItemAvatar>
@@ -428,33 +462,33 @@ const TicketListItem = ({ ticket }) => {
                                 {ticket.contact.name}
                             </Typography>
 
-                            {ticket.lastMessage && (
-                                <Typography
-                                    className={classes.lastMessageTime}
-                                    component="span"
-                                    variant="body2"
-                                    color="textSecondary"
-                                >
-                                    {isSameDay(
-                                        parseISO(ticket.updatedAt),
-                                        new Date()
-                                    ) ? (
-                                        <>
-                                            {format(
-                                                parseISO(ticket.updatedAt),
-                                                "HH:mm"
-                                            )}
-                                        </>
-                                    ) : (
-                                        <>
-                                            {format(
-                                                parseISO(ticket.updatedAt),
-                                                "dd/MM/yyyy"
-                                            )}
-                                        </>
-                                    )}
-                                </Typography>
-                            )}
+                            {/* {ticket.lastMessage && ( */}
+                            <Typography
+                                className={classes.lastMessageTime}
+                                component="span"
+                                variant="body2"
+                                color="textSecondary"
+                            >
+                                {isSameDay(
+                                    parseISO(ticket.updatedAt),
+                                    new Date()
+                                ) ? (
+                                    <>
+                                        {format(
+                                            parseISO(ticket.updatedAt),
+                                            "HH:mm"
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        {format(
+                                            parseISO(ticket.updatedAt),
+                                            "dd/MM/yyyy"
+                                        )}
+                                    </>
+                                )}
+                            </Typography>
+                            {/* )} */}
                             {ticket.whatsappId && (
                                 <div
                                     className={classes.userTag}
@@ -586,6 +620,19 @@ const TicketListItem = ({ ticket }) => {
                             )}
                         </>
                     )}
+                    {/* {ticket?.contact?.contactWallets && ticket.contact.contactWallets.length > 0 && (
+                        <div className={classes.tagsWrapper}>
+                            <div
+                                className={classes.tags}
+                                title={`Carteira: ${ticket.contact.contactWallets[0].wallet?.name || 'N/A'}`}
+                                style={{
+                                    backgroundColor: "#FF6B35",
+                                }}
+                            >
+                                📋 {ticket.contact.contactWallets[0].wallet?.name || 'N/A'}
+                            </div>
+                        </div>
+                    )} */}
                 </div>
 
                 {(ticket.status === "pending" && (user.showDashboard === "enabled" || user.profile === "admin")) && (
@@ -632,6 +679,23 @@ const TicketListItem = ({ ticket }) => {
                 )}
             </ListItem>
             <Divider variant="inset" component="li" />
+
+            {/* Modal da Imagem */}
+            <Dialog
+                open={imageModalOpen}
+                onClose={handleImageModalClose}
+                className={classes.imageModal}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogContent className={classes.imageModalContent}>
+                    <img 
+                        src={ticket?.contact?.urlPicture} 
+                        alt={ticket?.contact?.name || "Foto do contato"}
+                        className={classes.expandedImage}
+                    />
+                </DialogContent>
+            </Dialog>
         </React.Fragment>
     );
 };

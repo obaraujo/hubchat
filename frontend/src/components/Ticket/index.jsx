@@ -3,10 +3,11 @@ import { useParams, useHistory } from "react-router-dom";
 
 import clsx from "clsx";
 
-import { makeStyles, Paper } from "@material-ui/core";
+import { makeStyles, Paper, useMediaQuery } from "@material-ui/core";
+import { useTheme } from "@material-ui/core/styles";
 
 import ContactDrawer from "../ContactDrawer";
-import MessageInput from "../MessageInput";
+import MessageInput from "../MessageInput/";
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
 import TicketActionButtons from "../TicketActionButtonsCustom";
@@ -46,6 +47,9 @@ const useStyles = makeStyles((theme) => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
+    [theme.breakpoints.down('md')]: {
+      marginRight: 0,
+    },
   },
 
   mainWrapperShift: {
@@ -56,12 +60,17 @@ const useStyles = makeStyles((theme) => ({
       duration: theme.transitions.duration.enteringScreen,
     }),
     marginRight: 0,
+    [theme.breakpoints.down('md')]: {
+      marginRight: 0,
+    },
   },
 }));
 
 const Ticket = () => {
   const { ticketId } = useParams();
   const history = useHistory();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const classes = useStyles();
 
   const { user, socket } = useContext(AuthContext);
@@ -74,12 +83,6 @@ const Ticket = () => {
   const [ticket, setTicket] = useState({});
   const [dragDropFiles, setDragDropFiles] = useState([]);
   const { companyId } = user;
-
-  useEffect(() => {
-    console.log("======== Ticket ===========")
-    console.log(ticket)
-    console.log("===========================")
-}, [ticket])
 
   useEffect(() => {
     setLoading(true);
@@ -169,6 +172,26 @@ const Ticket = () => {
     setDrawerOpen(false);
   }, []);
 
+  const handleQuickMessageSelect = (quickMessage) => {
+    try {
+      if (quickMessage.message) {
+        // Disparar evento que o MessageInput vai escutar
+        const event = new CustomEvent('insertQuickMessage', {
+          detail: { message: quickMessage.message }
+        });
+        window.dispatchEvent(event);
+        
+      }
+      
+      if (quickMessage.mediaPath) {
+        // Tratar mídia se necessário
+      }
+    } catch (error) {
+      console.error("Erro ao inserir resposta rápida:", error);
+      toastError("Erro ao inserir resposta rápida");
+    }
+  };
+
   const renderMessagesList = () => {
     return (
       <>
@@ -178,6 +201,7 @@ const Ticket = () => {
           whatsappId={ticket.whatsappId}
           queueId={ticket.queueId}
           channel={ticket.channel}
+          ticketStatus={ticket.status}
         >
         </MessagesList>
         <MessageInput
@@ -186,6 +210,7 @@ const Ticket = () => {
           ticketChannel={ticket.channel}
           droppedFiles={dragDropFiles}
           contactId={contact.id}
+          whatsappId={ticket.whatsappId}
         />
       </>
     );
@@ -198,7 +223,7 @@ const Ticket = () => {
         variant="outlined"
         elevation={0}
         className={clsx(classes.mainWrapper, {
-          [classes.mainWrapperShift]: drawerOpen,
+          [classes.mainWrapperShift]: drawerOpen && !isMobile,
         })}
       >
         {/* <div id="TicketHeader"> */}
@@ -212,9 +237,11 @@ const Ticket = () => {
               />
             </div>
           )}
-          <TicketActionButtons
-            ticket={ticket}
-          />
+        <TicketActionButtons
+          ticket={ticket}
+          contact={contact}
+          onQuickMessageSelect={handleQuickMessageSelect}
+        />
         </TicketHeader>
         {/* </div> */}
         <Paper>

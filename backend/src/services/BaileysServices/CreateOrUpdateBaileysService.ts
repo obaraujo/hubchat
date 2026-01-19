@@ -19,12 +19,33 @@ const createOrUpdateBaileysService = async ({
     });
 
     if (baileysExists) {
-      const getChats = baileysExists.chats
-        ? JSON.parse(baileysExists.chats)
-        : [];
-      const getContacts = baileysExists.contacts
-        ? JSON.parse(baileysExists.contacts)
-        : [];
+      // Adicionado tratamento seguro para parse JSON
+      let getChats = [];
+      let getContacts = [];
+      
+      // Parse seguro para chats
+      try {
+        if (baileysExists.chats && typeof baileysExists.chats === 'string') {
+          getChats = JSON.parse(baileysExists.chats);
+        } else if (Array.isArray(baileysExists.chats)) {
+          getChats = baileysExists.chats;
+        }
+      } catch (parseError) {
+        console.log('[RDS-BAILEYS] Erro ao fazer parse dos chats:', parseError);
+        // Continua com array vazio em caso de erro
+      }
+      
+      // Parse seguro para contatos
+      try {
+        if (baileysExists.contacts && typeof baileysExists.contacts === 'string') {
+          getContacts = JSON.parse(baileysExists.contacts);
+        } else if (Array.isArray(baileysExists.contacts)) {
+          getContacts = baileysExists.contacts;
+        }
+      } catch (parseError) {
+        console.log('[RDS-BAILEYS] Erro ao fazer parse dos contatos:', parseError);
+        // Continua com array vazio em caso de erro
+      }
 
       if (chats) {
         getChats.push(...chats);
@@ -48,10 +69,28 @@ const createOrUpdateBaileysService = async ({
 
     }
 
+    // Verificar e preparar contatos e chats antes de salvar
+    let contactsToSave = [];
+    let chatsToSave = [];
+    
+    try {
+      if (contacts) {
+        // Garantir que contacts é serializável
+        contactsToSave = Array.isArray(contacts) ? contacts : [];
+      }
+      
+      if (chats) {
+        // Garantir que chats é serializável
+        chatsToSave = Array.isArray(chats) ? chats : [];
+      }
+    } catch (prepError) {
+      console.log('[RDS-BAILEYS] Erro ao preparar dados para criar registro:', prepError);
+    }
+    
     const baileys = await Baileys.create({
       whatsappId,
-      contacts: JSON.stringify(contacts),
-      chats: JSON.stringify(chats)
+      contacts: JSON.stringify(contactsToSave),
+      chats: JSON.stringify(chatsToSave)
     });
     await new Promise(resolve => setTimeout(resolve, 1000));
     return baileys;

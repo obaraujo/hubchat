@@ -19,7 +19,7 @@ import TicketTraking from "./TicketTraking";
 @Table
 class Message extends Model<Message> {
   @PrimaryKey
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @Column(DataType.STRING)
@@ -32,15 +32,15 @@ class Message extends Model<Message> {
   dataJson: string;
 
   @Default(0)
-  @Column(DataType.INTEGER)
+  @Column
   ack: number;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   read: boolean;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   fromMe: boolean;
 
   @Column(DataType.TEXT)
@@ -56,11 +56,11 @@ class Message extends Model<Message> {
     return null;
   }
 
-  @Column(DataType.TEXT)
+  @Column
   mediaType: string;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   isDeleted: boolean;
 
   @Column(DataType.DATE(6))
@@ -71,60 +71,60 @@ class Message extends Model<Message> {
   updatedAt: Date;
 
   @ForeignKey(() => Message)
-  @Column(DataType.TEXT)
+  @Column
   quotedMsgId: string;
 
   @BelongsTo(() => Message, "quotedMsgId")
   quotedMsg: Message;
 
   @ForeignKey(() => Ticket)
-  @Column(DataType.INTEGER)
+  @Column
   ticketId: number;
 
   @BelongsTo(() => Ticket)
   ticket: Ticket;
 
   @ForeignKey(() => TicketTraking)
-  @Column(DataType.INTEGER)
+  @Column
   ticketTrakingId: number;
 
   @BelongsTo(() => TicketTraking, "ticketTrakingId")
   ticketTraking: TicketTraking;
 
   @ForeignKey(() => Contact)
-  @Column(DataType.INTEGER)
+  @Column
   contactId: number;
 
   @BelongsTo(() => Contact, "contactId")
   contact: Contact;
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @BelongsTo(() => Company)
   company: Company;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueId: number;
 
   @BelongsTo(() => Queue)
   queue: Queue;
   
-  @Column(DataType.TEXT)
+  @Column
   wid: string;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   isPrivate: boolean;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   isEdited: boolean;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   isForwarded: boolean;
 }
 

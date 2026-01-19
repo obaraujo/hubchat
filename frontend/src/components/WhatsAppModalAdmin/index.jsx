@@ -820,6 +820,8 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
                     </FormControl>
                   </DialogContent>
                 </TabPanel>
+
+                
                 <TabPanel
                   className={classes.container}
                   value={tab}

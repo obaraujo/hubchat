@@ -33,7 +33,6 @@ const ListMessagesService = async ({
   user
 }: Request): Promise<Response> => {
 
-
   if (!isNaN(Number(ticketId))) {
     const uuid = await Ticket.findOne({
       where: {
@@ -104,7 +103,7 @@ const ListMessagesService = async ({
 
   const { count, rows: messages } = await Message.findAndCountAll({
     where: { ticketId: tickets, companyId },
-    attributes: ["id", "fromMe", "mediaUrl", "body", "mediaType", "ack", "createdAt", "ticketId", "isDeleted", "queueId", "isForwarded", "isEdited", "isPrivate", "companyId"],
+    attributes: ["id", "wid", "fromMe", "mediaUrl", "body", "mediaType", "ack", "createdAt", "ticketId", "isDeleted", "queueId", "isForwarded", "isEdited", "isPrivate", "companyId"],
     limit,
     include: [
       {
@@ -114,7 +113,7 @@ const ListMessagesService = async ({
       },
       {
         model: Message,
-        attributes: ["id", "fromMe", "mediaUrl", "body", "mediaType", "companyId"],
+        attributes: ["id", "wid", "fromMe", "mediaUrl", "body", "mediaType", "companyId"],
         as: "quotedMsg",
         include: [
           {

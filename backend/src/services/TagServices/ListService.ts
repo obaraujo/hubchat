@@ -12,6 +12,7 @@ interface Request {
   pageNumber?: string | number;
   kanban?: number;
   tagId?: number;
+  limit?: string | number;
 }
 
 interface Response {
@@ -25,12 +26,16 @@ const ListService = async ({
   searchParam = "",
   pageNumber = "1",
   kanban = 0,
-  tagId = 0
+  tagId = 0,
+  limit: rawLimit
 }: Request): Promise<Response> => {
   let whereCondition = {};
 
-  const limit = 20;
-  const offset = limit * (+pageNumber - 1);
+  // Resolve limit and offset. If limit is 'all' or -1, fetch everything
+  const limitParam = typeof rawLimit === "string" ? rawLimit : rawLimit?.toString();
+  const unlimited = limitParam === "all" || limitParam === "-1";
+  const limit = unlimited ? undefined : Number(limitParam || 20);
+  const offset = unlimited ? undefined : (limit as number) * (+pageNumber - 1);
 
   const sanitizedSearchParam = removeAccents(searchParam.toLocaleLowerCase().trim());
 
@@ -53,7 +58,7 @@ const ListService = async ({
 
     const { count, rows: tags } = await Tag.findAndCountAll({
       where: { ...whereCondition, companyId, kanban },
-      limit,
+      ...(limit !== undefined ? { limit } : {}),
       include: [
         {
           // model: ContactTag,
@@ -71,12 +76,11 @@ const ListService = async ({
         'name',
         'color',
       ],
-      offset,
+      ...(offset !== undefined ? { offset } : {}),
       order: [["name", "ASC"]],
     });
 
-
-    const hasMore = count > offset + tags.length;
+    const hasMore = unlimited ? false : count > (offset as number) + tags.length;
 
     return {
       tags,
@@ -111,8 +115,8 @@ const ListService = async ({
     // console.log(whereCondition)
     const { count, rows: tags } = await Tag.findAndCountAll({
       where: { ...whereCondition, companyId, kanban },
-      limit,
-      offset,
+      ...(limit !== undefined ? { limit } : {}),
+      ...(offset !== undefined ? { offset } : {}),
       order: [["name", "ASC"]],
       include: [
         {
@@ -128,7 +132,7 @@ const ListService = async ({
       ],
     });
 
-    const hasMore = count > offset + tags.length;
+    const hasMore = unlimited ? false : count > (offset as number) + tags.length;
 
     return {
       tags,

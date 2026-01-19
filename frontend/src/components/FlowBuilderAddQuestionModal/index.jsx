@@ -14,6 +14,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { i18n } from "../../translate/i18n";
 import TextField from "@material-ui/core/TextField";
+import { SelectScheduleAnswer } from "./SelectScheduleAnswer";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -67,6 +68,7 @@ const FlowBuilderAddQuestionModal = ({
     title: "Adicionar Perguta ao fluxo",
     btn: "Adicionar",
   });
+  const [scheduleAnswer, setScheduleAnswer] = useState();
 
   useEffect(() => {
     if (open === "edit") {
@@ -75,7 +77,7 @@ const FlowBuilderAddQuestionModal = ({
         btn: "Salvar",
       });
       console.log("FlowTybebotEdit", data.data.typebotIntegration);
-      setMessage(data.data.typebotIntegration.message)
+      setMessage(data.data.typebotIntegration.message);
       setIntegration({
         ...data.data.typebotIntegration,
       });
@@ -100,22 +102,22 @@ const FlowBuilderAddQuestionModal = ({
   };
 
   const handleSavePrompt = (values) => {
-   
-
     if (open === "edit") {
+      let oldVariable = localStorage.getItem("variables");
 
-      let oldVariable = localStorage.getItem("variables")
+      const oldNameKey = data.data.typebotIntegration.answerKey;
 
-      const oldNameKey = data.data.typebotIntegration.answerKey
-      
-      if(oldVariable){
-        oldVariable = JSON.parse(oldVariable)
-      }else{
-        oldVariable = []
+      if (oldVariable) {
+        oldVariable = JSON.parse(oldVariable);
+      } else {
+        oldVariable = [];
       }
-  
-      oldVariable = oldVariable.filter(item => item !== oldNameKey)
-      localStorage.setItem('variables', JSON.stringify([...oldVariable, values.answerKey]))    
+
+      oldVariable = oldVariable.filter((item) => item !== oldNameKey);
+      localStorage.setItem(
+        "variables",
+        JSON.stringify([...oldVariable, values.answerKey])
+      );
 
       handleClose();
       onUpdate({
@@ -123,23 +125,25 @@ const FlowBuilderAddQuestionModal = ({
         data: { typebotIntegration: { ...values, message } },
       });
     } else if (open === "create") {
-      
-      let oldVariable = localStorage.getItem("variables")
+      let oldVariable = localStorage.getItem("variables");
 
-      if(oldVariable){
-        oldVariable = JSON.parse(oldVariable)
-      }else{
-        oldVariable = []
+      if (oldVariable) {
+        oldVariable = JSON.parse(oldVariable);
+      } else {
+        oldVariable = [];
       }
-  
-      oldVariable = oldVariable.filter(item => item !== values.answerKey)
-      localStorage.setItem('variables', JSON.stringify([...oldVariable, values.answerKey]))    
+
+      oldVariable = oldVariable.filter((item) => item !== values.answerKey);
+      localStorage.setItem(
+        "variables",
+        JSON.stringify([...oldVariable, values.answerKey])
+      );
 
       handleClose();
       onSave({
         typebotIntegration: {
           ...values,
-          message
+          message,
         },
       });
     }
@@ -195,6 +199,7 @@ const FlowBuilderAddQuestionModal = ({
                   fullWidth
                   required
                 />
+                <SelectScheduleAnswer />
               </DialogContent>
               <DialogActions>
                 <Button

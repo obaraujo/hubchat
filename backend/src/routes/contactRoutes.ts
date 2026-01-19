@@ -8,12 +8,16 @@ import * as ImportPhoneContactsController from "../controllers/ImportPhoneContac
 
 const contactRoutes = express.Router();
 const upload = multer(uploadConfig);
-
+contactRoutes.post("/contacts/bulk-delete", isAuth, ContactController.bulkDelete);
+contactRoutes.delete("/contacts/all", isAuth, ContactController.deleteAll);
 contactRoutes.post("/contacts/import", isAuth, ImportPhoneContactsController.store);
-
+contactRoutes.get("/contacts/:contactId/participants", isAuth, ContactController.getGroupParticipants);
+contactRoutes.get("/contacts/:contactId/media", isAuth, ContactController.getContactMedia);
+contactRoutes.get("/contacts/:contactId/messages/search", isAuth, ContactController.searchMessages);
 contactRoutes.post("/contactsImport", isAuth, ContactController.importXls);
 contactRoutes.get("/contacts", isAuth, ContactController.index);
 contactRoutes.get("/contacts/list", isAuth, ContactController.list);
+contactRoutes.get("/contacts/wallets", isAuth, ContactController.listWallets);
 contactRoutes.get("/contacts/:contactId", isAuth, ContactController.show);
 contactRoutes.post("/contacts", isAuth, ContactController.store);
 contactRoutes.put("/contacts/:contactId", isAuth, ContactController.update);
@@ -26,7 +30,8 @@ contactRoutes.put("/contacts/block/:contactId", isAuth, ContactController.blockU
 contactRoutes.post("/contacts/upload", isAuth, upload.array("file"), ContactController.upload);
 contactRoutes.get("/contactTags/:contactId", isAuth, ContactController.getContactTags);
 contactRoutes.put("/contacts/toggleDisableBot/:contactId", isAuth, ContactController.toggleDisableBot);
-contactRoutes.put("/contact-wallet/:contactId", isAuth, ContactController.updateContactWallet);
+contactRoutes.put("/contacts/wallet/:contactId", isAuth, ContactController.updateContactWallet);
+contactRoutes.delete("/contacts/wallet/:contactId", isAuth, ContactController.deleteContactWallet);
 // contactRoutes.get("/contacts/list-whatsapp", isAuth, ContactController.listWhatsapp);
 
 export default contactRoutes;

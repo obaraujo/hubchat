@@ -10,11 +10,12 @@ import Queue from "../../models/Queue";
 const ShowService = async (id: string | number): Promise<Campaign> => {
   const record = await Campaign.findByPk(id, {
     include: [
-      { model: CampaignShipping },
+      // Removido CampaignShipping para evitar estouro de memória
+      // Os dados de shipping serão carregados separadamente via endpoint dedicado
       { model: ContactList, include: [{ model: ContactListItem }] },
-      { model: Whatsapp, attributes: ["id", "name"] },
+      { model: Whatsapp, attributes: ["id", "name", "color"] },
       { model: User, attributes: ["id", "name"] },
-      { model: Queue, attributes: ["id", "name"] },
+      { model: Queue, attributes: ["id", "name", "color"] },
     ]
   });
 

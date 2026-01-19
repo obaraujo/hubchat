@@ -83,7 +83,12 @@ export function PlanManagerForm(props) {
         useKanban: true,
         useOpenAi: true,
         useIntegrations: true,
-        isPublic: true
+        isPublic: true,
+        useWhatsappOfficial: false,
+        trial: false,
+        trialDays: 3,
+        recurrence: 'monthly',
+        wavoip: false
     });
 
     useEffect(() => {
@@ -109,18 +114,9 @@ export function PlanManagerForm(props) {
             {(values) => (
                 <Form className={classes.fullWidth}>
                     <Grid spacing={1} justifyContent="flex-start" container>
-                        {/* NOME */}
-                        <Grid xs={12} sm={6} md={2} xl={2} item>
-                            <Field
-                                as={TextField}
-                                label={i18n.t("plans.form.name")}
-                                name="name"
-                                variant="outlined"
-                                className={classes.fullWidth}
-                                margin="dense"
-                            />
-                        </Grid>
-                        <Grid xs={12} sm={6} md={2} xl={2} item>
+
+                        {/* PUBLICO */}
+                        <Grid xs={12} sm={6} md={1} xl={1} item>
                             <FormControl margin="dense" variant="outlined" fullWidth>
                                 <InputLabel htmlFor="status-selection">{i18n.t("plans.form.public")}</InputLabel>
                                 <Field
@@ -136,6 +132,52 @@ export function PlanManagerForm(props) {
                                 </Field>
                             </FormControl>
                         </Grid>
+
+                        {/* TRIAL */}
+                        <Grid xs={12} sm={6} md={1} xl={1} item>
+                            <FormControl margin="dense" variant="outlined" fullWidth>
+                                <InputLabel htmlFor="trial-selection">Trial</InputLabel>
+                                <Field
+                                    as={Select}
+                                    id="trial-selection"
+                                    label="Trial"
+                                    labelId="trial-selection-label"
+                                    name="trial"
+                                    margin="dense"
+                                >
+                                    <MenuItem value={true}>Sim</MenuItem>
+                                    <MenuItem value={false}>Não</MenuItem>
+                                </Field>
+                            </FormControl>
+                        </Grid>
+
+                        {/* TRIAL DAYS */}
+                        <Grid xs={12} sm={6} md={1} xl={1} item>
+                            <Field
+                                as={TextField}
+                                label={i18n.t("plans.form.trialDays")}
+                                name="trialDays"
+                                variant="outlined"
+                                className={classes.fullWidth}
+                                margin="dense"
+                                type="number"
+                                inputProps={{ min: 1 }}
+                                disabled={!values.values.trial}
+                            />
+                        </Grid>
+
+                        {/* NOME */}
+                        <Grid xs={12} sm={6} md={3} xl={3} item>
+                            <Field
+                                as={TextField}
+                                label={i18n.t("plans.form.name")}
+                                name="name"
+                                variant="outlined"
+                                className={classes.fullWidth}
+                                margin="dense"
+                            />
+                        </Grid>
+
                         {/* USUARIOS */}
                         <Grid xs={12} sm={6} md={1} item>
                             <Field
@@ -198,6 +240,24 @@ export function PlanManagerForm(props) {
                                     label="Whatsapp"
                                     labelId="useWhatsapp-selection-label"
                                     name="useWhatsapp"
+                                    margin="dense"
+                                >
+                                    <MenuItem value={true}>{i18n.t("plans.form.enabled")}</MenuItem>
+                                    <MenuItem value={false}>{i18n.t("plans.form.disabled")}</MenuItem>
+                                </Field>
+                            </FormControl>
+                        </Grid>
+
+                        {/* WHATSAPP OFICIAL */}
+                        <Grid xs={12} sm={6} md={2} item>
+                            <FormControl margin="dense" variant="outlined" fullWidth>
+                                <InputLabel htmlFor="useWhatsappOfficial-selection">Whatsapp Oficial</InputLabel>
+                                <Field
+                                    as={Select}
+                                    id="useWhatsappOfficial-selection"
+                                    label="Whatsapp Oficial"
+                                    labelId="useWhatsappOfficial-selection-label"
+                                    name="useWhatsappOfficial"
                                     margin="dense"
                                 >
                                     <MenuItem value={true}>{i18n.t("plans.form.enabled")}</MenuItem>
@@ -297,7 +357,7 @@ export function PlanManagerForm(props) {
                         </Grid>
 
                         {/* API Externa */}
-                        <Grid xs={12} sm={8} md={4} item>
+                        <Grid xs={12} sm={8} md={2} item>
                             <FormControl margin="dense" variant="outlined" fullWidth>
                                 <InputLabel htmlFor="useExternalApi-selection">API Externa</InputLabel>
                                 <Field
@@ -367,6 +427,25 @@ export function PlanManagerForm(props) {
                                 </Field>
                             </FormControl>
                         </Grid>
+
+                        {/* WAVOIP */}
+                        <Grid xs={12} sm={8} md={2} item>
+                            <FormControl margin="dense" variant="outlined" fullWidth>
+                                <InputLabel htmlFor="wavoip-selection">Wavoip</InputLabel>
+                                <Field
+                                    as={Select}
+                                    id="wavoip-selection"
+                                    label="Wavoip"
+                                    labelId="wavoip-selection-label"
+                                    name="wavoip"
+                                    margin="dense"
+                                >
+                                    <MenuItem value={true}>{i18n.t("plans.form.enabled")}</MenuItem>
+                                    <MenuItem value={false}>{i18n.t("plans.form.disabled")}</MenuItem>
+                                </Field>
+                            </FormControl>
+                        </Grid>
+
                     </Grid>
                     <Grid spacing={2} justifyContent="flex-end" container>
 
@@ -400,6 +479,10 @@ export function PlansManagerGrid(props) {
 
     const renderWhatsapp = (row) => {
         return row.useWhatsapp === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
+    };
+
+    const renderWhatsappOfficial = (row) => {
+        return row.useWhatsappOfficial === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
     };
 
     const renderFacebook = (row) => {
@@ -438,6 +521,10 @@ export function PlansManagerGrid(props) {
         return row.useIntegrations === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
     };
 
+    const renderWavoip = (row) => {
+        return row.wavoip === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
+    };
+
     return (
         <Paper className={classes.tableContainer}>
             <Table
@@ -449,6 +536,7 @@ export function PlansManagerGrid(props) {
                 <TableHead>
                     <TableRow>
                         <TableCell align="center" style={{ width: '1%' }}>#</TableCell>
+                        <TableCell align="center">{i18n.t("plans.form.trial")}</TableCell>
                         <TableCell align="left">{i18n.t("plans.form.name")}</TableCell>
                         <TableCell align="center">{i18n.t("plans.form.users")}</TableCell>
                         <TableCell align="center">{i18n.t("plans.form.public")}</TableCell>
@@ -456,6 +544,7 @@ export function PlansManagerGrid(props) {
                         <TableCell align="center">Filas</TableCell>
                         <TableCell align="center">Valor</TableCell>
                         <TableCell align="center">Whatsapp</TableCell>
+                        <TableCell align="center">Whatsapp Oficial</TableCell>
                         <TableCell align="center">Facebook</TableCell>
                         <TableCell align="center">Instagram</TableCell>
                         <TableCell align="center">{i18n.t("plans.form.campaigns")}</TableCell>
@@ -465,6 +554,7 @@ export function PlansManagerGrid(props) {
                         <TableCell align="center">Kanban</TableCell>
                         <TableCell align="center">Talk.Ai</TableCell>
                         <TableCell align="center">Integrações</TableCell>
+                        <TableCell align="center">Wavoip</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -475,13 +565,15 @@ export function PlansManagerGrid(props) {
                                     <EditIcon />
                                 </IconButton>
                             </TableCell>
+                            <TableCell align="center">{row.trialDays || '-'}</TableCell>
                             <TableCell align="left">{row.name || '-'}</TableCell>
                             <TableCell align="center">{row.users || '-'}</TableCell>
-                            <TableCell align="center">{row.isPublic ? "Sim": "Não" || '-'}</TableCell>
+                            <TableCell align="center">{row.isPublic ? "Sim" : "Não" || '-'}</TableCell>
                             <TableCell align="center">{row.connections || '-'}</TableCell>
                             <TableCell align="center">{row.queues || '-'}</TableCell>
                             <TableCell align="center">{i18n.t("plans.form.money")} {row.amount ? row.amount.toLocaleString('pt-br', { minimumFractionDigits: 2 }) : '00.00'}</TableCell>
                             <TableCell align="center">{renderWhatsapp(row)}</TableCell>
+                            <TableCell align="center">{renderWhatsappOfficial(row)}</TableCell>
                             <TableCell align="center">{renderFacebook(row)}</TableCell>
                             <TableCell align="center">{renderInstagram(row)}</TableCell>
                             <TableCell align="center">{renderCampaigns(row)}</TableCell>
@@ -491,6 +583,7 @@ export function PlansManagerGrid(props) {
                             <TableCell align="center">{renderKanban(row)}</TableCell>
                             <TableCell align="center">{renderOpenAi(row)}</TableCell>
                             <TableCell align="center">{renderIntegrations(row)}</TableCell>
+                            <TableCell align="center">{renderWavoip(row)}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
@@ -522,7 +615,12 @@ export default function PlansManager() {
         useKanban: true,
         useOpenAi: true,
         useIntegrations: true,
-        isPublic: true
+        isPublic: true,
+        useWhatsappOfficial: false,
+        trial: false,
+        trialDays: 3,
+        recurrence: 'monthly',
+        wavoip: false
     })
 
     useEffect(() => {
@@ -597,13 +695,19 @@ export default function PlansManager() {
             useKanban: true,
             useOpenAi: true,
             useIntegrations: true,
-            isPublic: true
+            isPublic: true,
+            useWhatsappOfficial: false,
+            trial: false,
+            trialDays: 3,
+            recurrence: 'monthly',
+            wavoip: false
         })
     }
 
     const handleSelect = (data) => {
 
         let useWhatsapp = data.useWhatsapp === false ? false : true
+        let useWhatsappOfficial = data.useWhatsappOfficial === false ? false : true
         let useFacebook = data.useFacebook === false ? false : true
         let useInstagram = data.useInstagram === false ? false : true
         let useCampaigns = data.useCampaigns === false ? false : true
@@ -613,6 +717,7 @@ export default function PlansManager() {
         let useKanban = data.useKanban === false ? false : true
         let useOpenAi = data.useOpenAi === false ? false : true
         let useIntegrations = data.useIntegrations === false ? false : true
+        let wavoip = data.wavoip === false ? false : true
 
         setRecord({
             id: data.id,
@@ -622,6 +727,7 @@ export default function PlansManager() {
             queues: data.queues || 0,
             amount: data.amount?.toLocaleString('pt-br', { minimumFractionDigits: 2 }) || 0,
             useWhatsapp,
+            useWhatsappOfficial,
             useFacebook,
             useInstagram,
             useCampaigns,
@@ -631,7 +737,11 @@ export default function PlansManager() {
             useKanban,
             useOpenAi,
             useIntegrations,
-            isPublic: data.isPublic
+            isPublic: data.isPublic,
+            trial: data.trial,
+            trialDays: data.trialDays,
+            recurrence: data.recurrence,
+            wavoip
         })
     }
 

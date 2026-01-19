@@ -1,137 +1,247 @@
 import React, { useState, useEffect, useContext } from "react";
+import MainContainer from "../../components/MainContainer";
+import MainHeader from "../../components/MainHeader";
+import Title from "../../components/Title";
+import { makeStyles, Paper, Tabs, Tab } from "@material-ui/core";
 
-import { makeStyles } from "@material-ui/core/styles";
-import Paper from "@material-ui/core/Paper";
-import Typography from "@material-ui/core/Typography";
-import Container from "@material-ui/core/Container";
-import Select from "@material-ui/core/Select";
+import TabPanel from "../../components/TabPanel";
+
+import SchedulesForm from "../../components/SchedulesForm";
+import CompaniesManager from "../../components/CompaniesManager";
+import PlansManager from "../../components/PlansManager";
+import HelpsManager from "../../components/HelpsManager";
+import Options from "../../components/Settings/Options";
+import Whitelabel from "../../components/Settings/Whitelabel";
+import FinalizacaoAtendimento from "../../components/Settings/FinalizacaoAtendimento";
+
+import { i18n } from "../../translate/i18n";
 import { toast } from "react-toastify";
 
-import api from "../../services/api";
-import { i18n } from "../../translate/i18n";
-import toastError from "../../errors/toastError";
-// import { SocketContext } from "../../context/Socket/SocketContext";
+import useCompanies from "../../hooks/useCompanies";
 import { AuthContext } from "../../context/Auth/AuthContext";
+
+import OnlyForSuperUser from "../../components/OnlyForSuperUser";
+import useCompanySettings from "../../hooks/useSettings/companySettings";
+import useSettings from "../../hooks/useSettings";
+import ForbiddenPage from "../../components/ForbiddenPage";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    display: "flex",
-    alignItems: "center",
-    padding: theme.padding,
+    flex: 1,
+    backgroundColor: theme.palette.background.paper,
   },
-
+  mainPaper: {
+    ...theme.scrollbarStyles,
+    overflowY: "scroll",
+    flex: 1,
+  },
+  tab: {
+    backgroundColor: theme.mode === "light" ? "#f2f2f2" : "#7f7f7f",
+    borderRadius: 4,
+  },
   paper: {
-    padding: theme.padding,
+    ...theme.scrollbarStyles,
+    overflowY: "scroll",
+    padding: theme.spacing(2),
     display: "flex",
     alignItems: "center",
+    width: "100%",
   },
-
-  settingOption: {
-    marginLeft: "auto",
+  container: {
+    width: "100%",
+    maxHeight: "100%",
   },
-  margin: {
-    // margin: theme.spacing(1),
-    margin: theme.padding,
+  control: {
+    padding: theme.spacing(1),
+  },
+  textfield: {
+    width: "100%",
   },
 }));
 
-const Settings = () => {
+const SettingsCustom = () => {
   const classes = useStyles();
-  //   const socketManager = useContext(SocketContext);
+  const [tab, setTab] = useState("options");
+  const [schedules, setSchedules] = useState([]);
+  const [company, setCompany] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState({});
+  const [settings, setSettings] = useState({});
+  const [oldSettings, setOldSettings] = useState({});
+  const [schedulesEnabled, setSchedulesEnabled] = useState(false);
+
+  const { find, updateSchedules } = useCompanies();
+
+  const { getAll: getAllSettings } = useCompanySettings();
+  const { getAll: getAllSettingsOld } = useSettings();
   const { user, socket } = useContext(AuthContext);
 
-  const [settings, setSettings] = useState([]);
-
   useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const { data } = await api.get("/settings");
-        setSettings(data);
-      } catch (err) {
-        toastError(err);
+    async function findData() {
+      if (!user || !user.companyId) {
+        return;
       }
-    };
-    fetchSession();
+
+      setLoading(true);
+      try {
+        const companyId = user.companyId;
+
+        const company = await find(companyId);
+        const settingList = await getAllSettings(companyId);
+        const settingListOld = await getAllSettingsOld();
+
+        setCompany(company);
+        setSchedules(company.schedules);
+        setSettings(settingList);
+        setOldSettings(settingListOld);
+        setSchedulesEnabled(settingList.scheduleType === "company");
+        setCurrentUser(user);
+      } catch (e) {
+        toast.error(e);
+      }
+      setLoading(false);
+    }
+    findData();
   }, []);
 
   useEffect(() => {
-    const companyId = user.companyId;
-    // const socket = socketManager.GetSocket();
-
-    const onSettingsEvent = (data) => {
-      if (data.action === "update") {
-        setSettings((prevState) => {
-          const aux = [...prevState];
-          const settingIndex = aux.findIndex((s) => s.key === data.setting.key);
-          aux[settingIndex].value = data.setting.value;
-          return aux;
-        });
-      }
+    if (!socket || !user || !user.companyId) return;
+    const onSettingsEvent = () => {
+      getAllSettingsOld().then(setOldSettings);
     };
-    socket.on(`company-${companyId}-settings`, onSettingsEvent);
-
+    socket.on(`company-${user.companyId}-settings`, onSettingsEvent);
     return () => {
-      socket.off(`company-${companyId}-settings`, onSettingsEvent);
+      socket.off(`company-${user.companyId}-settings`, onSettingsEvent);
     };
-  }, [socket]);
+  }, [socket, user]);
 
-  const handleChangeSetting = async (e) => {
-    const selectedValue = e.target.value;
-    const settingKey = e.target.name;
-
-    try {
-      await api.put(`/settings/${settingKey}`, {
-        value: selectedValue,
-      });
-      toast.success(i18n.t("settings.success"));
-    } catch (err) {
-      toastError(err);
-    }
+  const handleTabChange = (event, newValue) => {
+    setTab(newValue);
   };
 
-  const getSettingValue = (key) => {
-    const { value } = settings.find((s) => s.key === key);
-    return value;
+  const handleSubmitSchedules = async (data) => {
+    setLoading(true);
+    try {
+      setSchedules(data);
+      await updateSchedules({ id: company.id, schedules: data });
+      toast.success("Horários atualizados com sucesso.");
+    } catch (e) {
+      toast.error(e);
+    }
+    setLoading(false);
+  };
+
+  const isSuper = () => {
+    return currentUser && currentUser.super;
   };
 
   return (
-    <div className={classes.root}>
-      {user.profile === "user" ?
+    <MainContainer className={classes.root}>
+      {user.profile === "user" ? (
         <ForbiddenPage />
-        :
+      ) : (
         <>
-          <Container className={classes.container} maxWidth="sm">
-            <Typography variant="body2" gutterBottom>
-              {i18n.t("settings.title")}
-            </Typography>
-            <Paper className={classes.paper}>
-              <Typography variant="body1">
-                {i18n.t("settings.settings.userCreation.name")}
-              </Typography>
-              <Select
-                margin="dense"
-                variant="outlined"
-                native
-                id="userCreation-setting"
-                name="userCreation"
-                value={
-                  settings && settings.length > 0 && getSettingValue("userCreation")
-                }
-                className={classes.settingOption}
-                onChange={handleChangeSetting}
-              >
-                <option value="enabled">
-                  {i18n.t("settings.settings.userCreation.options.enabled")}
-                </option>
-                <option value="disabled">
-                  {i18n.t("settings.settings.userCreation.options.disabled")}
-                </option>
-              </Select>
+          <MainHeader>
+            <Title>{i18n.t("settings.title")}</Title>
+          </MainHeader>
+          <Paper className={classes.mainPaper} elevation={1}>
+            <Tabs
+              value={tab}
+              indicatorColor="primary"
+              textColor="primary"
+              scrollButtons="on"
+              variant="scrollable"
+              onChange={handleTabChange}
+              className={classes.tab}
+            >
+              <Tab label={i18n.t("settings.tabs.options")} value={"options"} />
+              {schedulesEnabled && <Tab label="Horários" value={"schedules"} />}
+              {user.profile === "admin" &&
+                user.finalizacaoComValorVendaAtiva && (
+                  <Tab
+                    label="Finalização do Atendimento"
+                    value={"finalizacao"}
+                  />
+                )}
+              {isSuper() ? (
+                <Tab
+                  label={i18n.t("settings.tabs.companies")}
+                  value={"companies"}
+                />
+              ) : null}
+              {isSuper() ? (
+                <Tab label={i18n.t("settings.tabs.plans")} value={"plans"} />
+              ) : null}
+              {isSuper() ? (
+                <Tab label={i18n.t("settings.tabs.helps")} value={"helps"} />
+              ) : null}
+              {isSuper() ? (
+                <Tab label="Whitelabel" value={"whitelabel"} />
+              ) : null}
+            </Tabs>
+            <Paper className={classes.paper} elevation={0}>
+              {/* Renderização condicional simples - apenas a aba ativa renderiza */}
+              {tab === "schedules" && (
+                <div className={classes.container}>
+                  <SchedulesForm
+                    loading={loading}
+                    onSubmit={handleSubmitSchedules}
+                    initialValues={schedules}
+                  />
+                </div>
+              )}
+
+              {tab === "companies" && isSuper() && (
+                <div className={classes.container}>
+                  <CompaniesManager />
+                </div>
+              )}
+
+              {tab === "plans" && isSuper() && (
+                <div className={classes.container}>
+                  <PlansManager />
+                </div>
+              )}
+
+              {tab === "helps" && isSuper() && (
+                <div className={classes.container}>
+                  <HelpsManager />
+                </div>
+              )}
+
+              {tab === "whitelabel" && isSuper() && (
+                <div className={classes.container}>
+                  <Whitelabel settings={oldSettings} />
+                </div>
+              )}
+
+              {tab === "finalizacao" && (
+                <div className={classes.container}>
+                  <FinalizacaoAtendimento
+                    settings={settings}
+                    onSettingsChange={(newSettings) => setSettings(newSettings)}
+                  />
+                </div>
+              )}
+
+              {tab === "options" && (
+                <div className={classes.container}>
+                  <Options
+                    settings={settings}
+                    oldSettings={oldSettings}
+                    user={currentUser}
+                    scheduleTypeChanged={(value) =>
+                      setSchedulesEnabled(value === "company")
+                    }
+                  />
+                </div>
+              )}
             </Paper>
-          </Container>
-        </>}
-    </div>
+          </Paper>
+        </>
+      )}
+    </MainContainer>
   );
 };
 
-export default Settings;
+export default SettingsCustom;

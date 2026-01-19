@@ -3,7 +3,7 @@ import GetWhatsappWbot from "./GetWhatsappWbot";
 import fs from "fs";
 
 import { getMessageOptions } from "../services/WbotServices/SendWhatsAppMedia";
-import { createJid } from "../functionts";
+import { getJidOf } from "../services/WbotServices/getJidOf";
 
 export type MessageData = {
   number: number | string;
@@ -19,7 +19,7 @@ export const SendMessageFlow = async (
 ): Promise<any> => {
   try {
     const wbot = await GetWhatsappWbot(whatsapp);
-    const chatId = `${createJid(String(messageData.number))}`;
+    const chatId = `${messageData.number}@s.whatsapp.net`;
 
     let message;
 
@@ -32,7 +32,7 @@ export const SendMessageFlow = async (
     const body = `\u200e${messageData.body}`;
 
     //@ts-ignore
-    message = await wbot.sendMessage(chatId, { text: body, templateButtons: templateButtons });
+    message = await wbot.sendMessage(getJidOf(chatId), { text: body, templateButtons: templateButtons });
 
 
     return message;

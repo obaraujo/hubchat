@@ -21,7 +21,7 @@ import {
   Tooltip,
   Typography,
   CircularProgress,
-  Divider
+  Divider,
 } from "@material-ui/core";
 import {
   Edit,
@@ -33,7 +33,7 @@ import {
   DeleteOutline,
   Facebook,
   Instagram,
-  WhatsApp
+  WhatsApp,
 } from "@material-ui/icons";
 
 import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
@@ -55,38 +55,38 @@ import { WhatsAppsContext } from "../../context/WhatsApp/WhatsAppsContext";
 import toastError from "../../errors/toastError";
 import ForbiddenPage from "../../components/ForbiddenPage";
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   mainPaper: {
     flex: 1,
     padding: theme.spacing(1),
     overflowY: "scroll",
     borderRadius: "10px",
     boxShadow: "rgba(0, 0, 0, 0.1) 0px 4px 12px",
-    ...theme.scrollbarStyles
+    ...theme.scrollbarStyles,
   },
   customTableCell: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   tooltip: {
     backgroundColor: "#f5f5f9",
     color: "rgba(0, 0, 0, 0.87)",
     fontSize: theme.typography.pxToRem(14),
     border: "1px solid #dadde9",
-    maxWidth: 450
+    maxWidth: 450,
   },
   tooltipPopper: {
-    textAlign: "center"
+    textAlign: "center",
   },
   buttonProgress: {
-    color: green[500]
+    color: green[500],
   },
   TableHead: {
-    backgroundColor: theme.palette.barraSuperior,//"#3d3d3d",
+    backgroundColor: theme.palette.barraSuperior, //"#3d3d3d",
     color: "textSecondary",
-    borderRadius: "5px"
-  }
+    borderRadius: "5px",
+  },
 }));
 
 const CustomToolTip = ({ title, content, children }) => {
@@ -97,7 +97,7 @@ const CustomToolTip = ({ title, content, children }) => {
       arrow
       classes={{
         tooltip: classes.tooltip,
-        popper: classes.tooltipPopper
+        popper: classes.tooltipPopper,
       }}
       title={
         <React.Fragment>
@@ -113,7 +113,7 @@ const CustomToolTip = ({ title, content, children }) => {
   );
 };
 
-const IconChannel = channel => {
+const IconChannel = (channel) => {
   switch (channel) {
     case "facebook":
       return <Facebook />;
@@ -145,7 +145,7 @@ const AllConnections = () => {
     title: "",
     message: "",
     whatsAppId: "",
-    open: false
+    open: false,
   };
   const [confirmModalInfo, setConfirmModalInfo] = useState(
     confirmationModalInitialState
@@ -153,9 +153,8 @@ const AllConnections = () => {
 
   const history = useHistory();
   if (!user.super) {
-    history.push("/tickets")
+    history.push("/tickets");
   }
-
 
   useEffect(() => {
     setLoadingWhatsapp(true);
@@ -172,19 +171,19 @@ const AllConnections = () => {
     fetchSession();
   }, []);
 
-  const responseFacebook = response => {
+  const responseFacebook = (response) => {
     if (response.status !== "unknown") {
       const { accessToken, id } = response;
 
       api
         .post("/facebook", {
           facebookUserId: id,
-          facebookUserToken: accessToken
+          facebookUserToken: accessToken,
         })
-        .then(response => {
+        .then((response) => {
           toast.success(i18n.t("connections.facebook.success"));
         })
-        .catch(error => {
+        .catch((error) => {
           toastError(error);
         });
     }
@@ -201,9 +200,9 @@ const AllConnections = () => {
       toast.error("Não foi possível carregar a lista de registros");
     }
     setLoadingComp(false);
-  }
+  };
 
-  const responseInstagram = response => {
+  const responseInstagram = (response) => {
     if (response.status !== "unknown") {
       const { accessToken, id } = response;
 
@@ -211,18 +210,18 @@ const AllConnections = () => {
         .post("/facebook", {
           addInstagram: true,
           facebookUserId: id,
-          facebookUserToken: accessToken
+          facebookUserToken: accessToken,
         })
-        .then(response => {
+        .then((response) => {
           toast.success(i18n.t("connections.facebook.success"));
         })
-        .catch(error => {
+        .catch((error) => {
           toastError(error);
         });
     }
   };
 
-  const handleStartWhatsAppSession = async whatsAppId => {
+  const handleStartWhatsAppSession = async (whatsAppId) => {
     try {
       await api.post(`/whatsappsession/${whatsAppId}`);
     } catch (err) {
@@ -230,7 +229,7 @@ const AllConnections = () => {
     }
   };
 
-  const handleRequestNewQrCode = async whatsAppId => {
+  const handleRequestNewQrCode = async (whatsAppId) => {
     try {
       await api.put(`/whatsappsession/${whatsAppId}`);
     } catch (err) {
@@ -247,8 +246,6 @@ const AllConnections = () => {
     }
   };
 
-
-
   const handleCloseWhatsAppModal = useCallback(() => {
     setWhatsAppModalOpen(false);
     setSelectedWhatsApp(null);
@@ -256,7 +253,7 @@ const AllConnections = () => {
     setCompanyWhatsApps(null);
   }, [setSelectedWhatsApp, setWhatsAppModalOpen]);
 
-  const handleOpenQrModal = whatsApp => {
+  const handleOpenQrModal = (whatsApp) => {
     setSelectedWhatsApp(whatsApp);
     setQrModalOpen(true);
   };
@@ -266,7 +263,7 @@ const AllConnections = () => {
     setQrModalOpen(false);
   }, [setQrModalOpen, setSelectedWhatsApp]);
 
-  const handleEditWhatsApp = whatsApp => {
+  const handleEditWhatsApp = (whatsApp) => {
     setSelectedWhatsApp(whatsApp);
     setWhatsAppModalOpen(true);
   };
@@ -277,7 +274,7 @@ const AllConnections = () => {
         action: action,
         title: i18n.t("connections.confirmationModal.disconnectTitle"),
         message: i18n.t("connections.confirmationModal.disconnectMessage"),
-        whatsAppId: whatsAppId
+        whatsAppId: whatsAppId,
       });
     }
 
@@ -286,7 +283,7 @@ const AllConnections = () => {
         action: action,
         title: i18n.t("connections.confirmationModal.deleteTitle"),
         message: i18n.t("connections.confirmationModal.deleteMessage"),
-        whatsAppId: whatsAppId
+        whatsAppId: whatsAppId,
       });
     }
     setConfirmModalOpen(true);
@@ -313,7 +310,7 @@ const AllConnections = () => {
     setConfirmModalInfo(confirmationModalInitialState);
   };
 
-  const renderActionButtons = whatsApp => {
+  const renderActionButtons = (whatsApp) => {
     return (
       <>
         {whatsApp.status === "qrcode" && (
@@ -349,17 +346,17 @@ const AllConnections = () => {
         {(whatsApp.status === "CONNECTED" ||
           whatsApp.status === "PAIRING" ||
           whatsApp.status === "TIMEOUT") && (
-            <Button
-              size="small"
-              variant="outlined"
-              color="secondary"
-              onClick={() => {
-                handleOpenConfirmationModal("disconnect", whatsApp.id);
-              }}
-            >
-              {i18n.t("connections.buttons.disconnect")}
-            </Button>
-          )}
+          <Button
+            size="small"
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              handleOpenConfirmationModal("disconnect", whatsApp.id);
+            }}
+          >
+            {i18n.t("connections.buttons.disconnect")}
+          </Button>
+        )}
         {whatsApp.status === "OPENING" && (
           <Button size="small" variant="outlined" disabled color="default">
             {i18n.t("connections.buttons.connecting")}
@@ -369,7 +366,7 @@ const AllConnections = () => {
     );
   };
 
-  const renderStatusToolTips = whatsApp => {
+  const renderStatusToolTips = (whatsApp) => {
     return (
       <div className={classes.customTableCell}>
         {whatsApp.status === "DISCONNECTED" && (
@@ -430,24 +427,43 @@ const AllConnections = () => {
         whatsAppId={!qrModalOpen && selectedWhatsApp?.id}
       />
 
-      {user.profile === "user" ?
+      {user.profile === "user" ? (
         <ForbiddenPage />
-        :
+      ) : (
         <>
-          <Paper className={classes.mainPaper} style={{ overflow: "hidden" }} variant="outlined">
+          <Paper
+            className={classes.mainPaper}
+            style={{ overflow: "hidden" }}
+            variant="outlined"
+          >
             <MainHeader>
               <Stack>
-                <Typography variant="h5" color="black" style={{ fontWeight: "bold", marginLeft: "10px", marginTop: "10px" }} gutterBottom>
+                <Typography
+                  variant="h5"
+                  color="black"
+                  style={{
+                    fontWeight: "bold",
+                    marginLeft: "10px",
+                    marginTop: "10px",
+                  }}
+                  gutterBottom
+                >
                   {i18n.t("connections.title")}
                 </Typography>
-                <Typography style={{ marginTop: "-10px", marginLeft: "10px" }} variant="caption" color="textSecondary">
-                  Conecte seus canais de atendimento para receber mensagens e iniciar conversas com seus clientes.
+                <Typography
+                  style={{ marginTop: "-10px", marginLeft: "10px" }}
+                  variant="caption"
+                  color="textSecondary"
+                >
+                  {i18n.t(
+                    "connections.connectYourServiceChannelsToReceiveMessagesAndStartConversationsWithYourCustomers"
+                  )}
                 </Typography>
               </Stack>
 
               <MainHeaderButtonsWrapper>
                 <PopupState variant="popover" popupId="demo-popup-menu">
-                  {popupState => (
+                  {(popupState) => (
                     <React.Fragment>
                       <Menu {...bindMenu(popupState)}>
                         <MenuItem
@@ -459,24 +475,24 @@ const AllConnections = () => {
                           <WhatsApp
                             fontSize="small"
                             style={{
-                              marginRight: "10px"
+                              marginRight: "10px",
                             }}
                           />
                           WhatsApp
                         </MenuItem>
                         <FacebookLogin
-                          appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                          appId={process.env.REACT_APP_FACEBOOK_APP_ID}
                           autoLoad={false}
                           fields="name,email,picture"
                           version="13.0"
                           scope="public_profile,pages_messaging,pages_show_list,pages_manage_metadata,pages_read_engagement,business_management"
                           callback={responseFacebook}
-                          render={renderProps => (
+                          render={(renderProps) => (
                             <MenuItem onClick={renderProps.onClick}>
                               <Facebook
                                 fontSize="small"
                                 style={{
-                                  marginRight: "10px"
+                                  marginRight: "10px",
                                 }}
                               />
                               Facebook
@@ -485,18 +501,18 @@ const AllConnections = () => {
                         />
 
                         <FacebookLogin
-                          appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                          appId={process.env.REACT_APP_FACEBOOK_APP_ID}
                           autoLoad={false}
                           fields="name,email,picture"
                           version="13.0"
                           scope="public_profile,instagram_basic,instagram_manage_messages,pages_messaging,pages_show_list,pages_manage_metadata,pages_read_engagement,business_management"
                           callback={responseInstagram}
-                          render={renderProps => (
+                          render={(renderProps) => (
                             <MenuItem onClick={renderProps.onClick}>
                               <Instagram
                                 fontSize="small"
                                 style={{
-                                  marginRight: "10px"
+                                  marginRight: "10px",
                                 }}
                               />
                               Instagram
@@ -515,24 +531,24 @@ const AllConnections = () => {
                 padding: "20px",
                 backgroundColor: "rgb(244 244 244 / 53%)",
                 borderRadius: "5px",
-                height: "93%"
+                height: "93%",
               }}
             >
-              <Paper >
+              <Paper>
                 <Table size="small">
                   <TableHead className={classes.TableHead}>
                     <TableRow style={{ color: "#fff" }}>
                       <TableCell style={{ color: "#fff" }} align="center">
-                        {i18n.t("Cliente")}
+                        {i18n.t("connections.client")}
                       </TableCell>
                       <TableCell style={{ color: "#fff" }} align="center">
-                        {i18n.t("Conexões conectadas")}
+                        {i18n.t("connections.connectedConnections")}
                       </TableCell>
                       <TableCell style={{ color: "#fff" }} align="center">
-                        {i18n.t("Conexões desconectadas")}
+                        {i18n.t("connections.disconnectedConnections")}
                       </TableCell>
                       <TableCell style={{ color: "#fff" }} align="center">
-                        {i18n.t("Total de Conexões")}
+                        {i18n.t("connections.totalConnections")}
                       </TableCell>
                       {user.profile === "admin" && (
                         <TableCell style={{ color: "#fff" }} align="center">
@@ -547,47 +563,79 @@ const AllConnections = () => {
                     ) : (
                       <>
                         {console.log(companies, whats)}
-                        {companies?.length > 0 && companies.map(company => (
-                          <TableRow key={company.id}>
-                            <TableCell align="center">
-                              {company?.name}
-                            </TableCell>
-                            <TableCell align="center">
-                              {whats?.length && whats.filter((item) => item?.companyId === company?.id && item?.status === 'CONNECTED').length}
-                            </TableCell>
-                            <TableCell align="center">
-                              {whats?.length && whats.filter((item) => item?.companyId === company?.id && item?.status !== 'CONNECTED').length}
-                            </TableCell>
-                            <TableCell align="center">
-                              {whats?.length && whats.filter((item) => item?.companyId === company?.id).length}
-                            </TableCell>
-                            {user.profile === "admin" && (
+                        {companies?.length > 0 &&
+                          companies.map((company) => (
+                            <TableRow key={company.id}>
                               <TableCell align="center">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleOpenWhatsAppModal(whats.filter((item) => item?.companyId === company?.id), company)}
-                                >
-                                  <Edit />
-                                </IconButton>
+                                {company?.name}
                               </TableCell>
-                            )}
-                          </TableRow>
-                        )
-                        )}
+                              <TableCell align="center">
+                                {whats?.length &&
+                                  whats.filter(
+                                    (item) =>
+                                      item?.companyId === company?.id &&
+                                      item?.status === "CONNECTED"
+                                  ).length}
+                              </TableCell>
+                              <TableCell align="center">
+                                {whats?.length &&
+                                  whats.filter(
+                                    (item) =>
+                                      item?.companyId === company?.id &&
+                                      item?.status !== "CONNECTED"
+                                  ).length}
+                              </TableCell>
+                              <TableCell align="center">
+                                {whats?.length &&
+                                  whats.filter(
+                                    (item) => item?.companyId === company?.id
+                                  ).length}
+                              </TableCell>
+                              {user.profile === "admin" && (
+                                <TableCell align="center">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      handleOpenWhatsAppModal(
+                                        whats.filter(
+                                          (item) =>
+                                            item?.companyId === company?.id
+                                        ),
+                                        company
+                                      )
+                                    }
+                                  >
+                                    <Edit />
+                                  </IconButton>
+                                </TableCell>
+                              )}
+                            </TableRow>
+                          ))}
                         <TableRow className={classes.TableHead}>
-                          <TableCell style={{ color: "#fff" }} align="center">{i18n.t("Total")}</TableCell>
                           <TableCell style={{ color: "#fff" }} align="center">
-                            {whats?.length &&
-                              whats.filter((item) => item?.status === 'CONNECTED').length}
+                            {i18n.t("connections.total")}
                           </TableCell>
                           <TableCell style={{ color: "#fff" }} align="center">
                             {whats?.length &&
-                              whats.filter((item) => item?.status !== 'CONNECTED').length}
+                              whats.filter(
+                                (item) => item?.status === "CONNECTED"
+                              ).length}
+                          </TableCell>
+                          <TableCell style={{ color: "#fff" }} align="center">
+                            {whats?.length &&
+                              whats.filter(
+                                (item) => item?.status !== "CONNECTED"
+                              ).length}
                           </TableCell>
                           <TableCell style={{ color: "#fff" }} align="center">
                             {whats?.length && whats.length}
                           </TableCell>
-                          {user.profile === "admin" && <TableCell style={{ color: "#fff" }} align="center"></TableCell>}
+                          {user.profile === "admin" && (
+                            <TableCell
+                              style={{ color: "#fff" }}
+                              align="center"
+                            ></TableCell>
+                          )}
                         </TableRow>
                       </>
                     )}
@@ -596,7 +644,8 @@ const AllConnections = () => {
               </Paper>
             </Stack>
           </Paper>
-        </>}
+        </>
+      )}
     </MainContainer>
   );
 };

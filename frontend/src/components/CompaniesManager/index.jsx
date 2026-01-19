@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   makeStyles,
   Paper,
@@ -28,9 +28,11 @@ import ModalUsers from "../ModalUsers";
 import api from "../../services/api";
 import { head, isArray, has } from "lodash";
 import { useDate } from "../../hooks/useDate";
+import ColorModeContext from "../../layout/themeContext";
 
 import moment from "moment";
 import { i18n } from "../../translate/i18n";
+import { useTheme } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -88,6 +90,7 @@ export function CompanyForm(props) {
     dueDate: "",
     recurrence: "",
     password: "",
+    generateInvoice: true,
     ...initialValue,
   });
 
@@ -120,8 +123,9 @@ export function CompanyForm(props) {
     if (data.dueDate === "" || moment(data.dueDate).isValid() === false) {
       data.dueDate = null;
     }
+    console.log("Dados do formulário:", data);
     onSubmit(data);
-    setRecord({ ...initialValue, dueDate: "" });
+    setRecord({ ...initialValue, dueDate: "", generateInvoice: true });
   };
 
   const handleOpenModalUsers = async () => {
@@ -279,7 +283,7 @@ export function CompanyForm(props) {
                     <MenuItem value={false}>{i18n.t("compaies.table.no")}</MenuItem>
                   </Field>
                 </FormControl>
-              </Grid>
+              </Grid>              
               {/* <Grid xs={12} sm={6} md={3} item>
                 <FormControl margin="dense" variant="outlined" fullWidth>
                   <InputLabel htmlFor="payment-method-selection">
@@ -360,6 +364,26 @@ export function CompanyForm(props) {
                   </Field>
                 </FormControl>
               </Grid>
+
+              <Grid xs={12} sm={6} md={2} item>
+                <FormControl margin="dense" variant="outlined" fullWidth>
+                  <InputLabel htmlFor="generate-invoice-selection">
+                    Gerar Fatura
+                  </InputLabel>
+                  <Field
+                    as={Select}
+                    id="generate-invoice-selection"
+                    label="Gerar Fatura"
+                    labelId="generate-invoice-selection-label"
+                    name="generateInvoice"
+                    margin="dense"
+                  >
+                    <MenuItem value={true}>Sim</MenuItem>
+                    <MenuItem value={false}>Não</MenuItem>
+                  </Field>
+                </FormControl>
+              </Grid>
+
               <Grid xs={12} item>
                 <Grid justifyContent="flex-end" spacing={1} container>
                   <Grid xs={4} md={1} item>
@@ -383,6 +407,7 @@ export function CompanyForm(props) {
                           onClick={() => onDelete(record)}
                           variant="contained"
                           color="secondary"
+                          disabled={record.id === 1}
                         >
                           {i18n.t("compaies.table.delete")}
                         </ButtonWithSpinner>
@@ -439,6 +464,8 @@ export function CompaniesManagerGrid(props) {
   const { records, onSelect } = props;
   const classes = useStyles();
   const { dateToClient, datetimeToClient } = useDate();
+  const { mode } = useContext(ColorModeContext);
+  const theme = useTheme();
 
   const renderStatus = (row) => {
     return row.status === false ? "Não" : "Sim";
@@ -477,9 +504,33 @@ export function CompaniesManagerGrid(props) {
       if (diff <= 0) {
         return { backgroundColor: "#fa8c8c" };
       }
-      // else {
-      //   return { backgroundColor: "#affa8c" };
-      // }
+    }
+    return {};
+  };
+  
+  const cellStyle = (record) => {
+    if (moment(record.dueDate).isValid()) {
+      const now = moment();
+      const dueDate = moment(record.dueDate);
+      const diff = dueDate.diff(now, "days");
+      if (diff >= 1 && diff <= 5) {
+        return { color: "#000" }; // Texto preto para fundo amarelo
+      }
+      if (diff <= 0) {
+        return { color: "#fff" }; // Texto branco para fundo vermelho
+      }
+    }
+    return {};
+  };
+
+  const iconStyle = (record) => {
+    if (moment(record.dueDate).isValid()) {
+      const now = moment();
+      const dueDate = moment(record.dueDate);
+      const diff = dueDate.diff(now, "days");
+      if (diff >= 1 && diff <= 5) {
+        return { color: "#000" }; // Ícone preto para fundo amarelo
+      }
     }
     return {};
   };
@@ -505,26 +556,28 @@ export function CompaniesManagerGrid(props) {
             <TableCell align="center">{i18n.t("compaies.table.createdAt")}</TableCell>
             <TableCell align="center">{i18n.t("compaies.table.dueDate")}</TableCell>
             <TableCell align="center">{i18n.t("compaies.table.lastLogin")}</TableCell>
+            <TableCell align="center">{i18n.t("compaies.table.generateInvoice")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {records.map((row, key) => (
             <TableRow style={rowStyle(row)} key={key}>
-              <TableCell align="center" style={{ width: "1%" }}>
-                <IconButton onClick={() => onSelect(row)} aria-label="delete">
-                  <EditIcon />
+              <TableCell style={{...cellStyle(row), width: "1%"}} align="center">
+                <IconButton style={iconStyle(row)} onClick={() => onSelect(row)} aria-label="delete">
+                  <EditIcon style={iconStyle(row)} />
                 </IconButton>
               </TableCell>
-              <TableCell align="left">{row.name || "-"}</TableCell>
-              <TableCell align="left" size="small">{row.email || "-"}</TableCell>
-              <TableCell align="center">{row.phone || "-"}</TableCell>
-              <TableCell align="center">{renderPlan(row)}</TableCell>
-              <TableCell align="center">{i18n.t("compaies.table.money")} {renderPlanValue(row)}</TableCell>
-              {/* <TableCell align="center">{renderCampaignsStatus(row)}</TableCell> */}
-              <TableCell align="center">{renderStatus(row)}</TableCell>
-              <TableCell align="center">{dateToClient(row.createdAt)}</TableCell>
-              <TableCell align="center">{dateToClient(row.dueDate)}<br /><span>{row.recurrence}</span></TableCell>
-              <TableCell align="center">{datetimeToClient(row.lastLogin)}</TableCell>
+              <TableCell style={cellStyle(row)} align="left">{row.name || "-"}</TableCell>
+              <TableCell style={cellStyle(row)} align="left" size="small">{row.email || "-"}</TableCell>
+              <TableCell style={cellStyle(row)} align="center">{row.phone || "-"}</TableCell>
+              <TableCell style={cellStyle(row)} align="center">{renderPlan(row)}</TableCell>
+              <TableCell style={cellStyle(row)} align="center">{i18n.t("compaies.table.money")} {renderPlanValue(row)}</TableCell>
+              {/* <TableCell style={cellStyle(row)} align="center">{renderCampaignsStatus(row)}</TableCell> */}
+              <TableCell style={cellStyle(row)} align="center">{renderStatus(row)}</TableCell>
+              <TableCell style={cellStyle(row)} align="center">{dateToClient(row.createdAt)}</TableCell>
+              <TableCell style={cellStyle(row)} align="center">{dateToClient(row.dueDate)}<br /><span>{row.recurrence}</span></TableCell>
+              <TableCell style={cellStyle(row)} align="center">{datetimeToClient(row.lastLogin)}</TableCell>
+              <TableCell style={cellStyle(row)} align="center">{row.generateInvoice ? i18n.t("compaies.table.yes") : i18n.t("compaies.table.no")}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -551,7 +604,8 @@ export default function CompaniesManager() {
     recurrence: "",
     password: "",
     document: "",
-    paymentMethod: ""
+    paymentMethod: "",
+    generateInvoice: true
   });
 
   useEffect(() => {
@@ -563,6 +617,7 @@ export default function CompaniesManager() {
     setLoading(true);
     try {
       const companyList = await list();
+      console.log("Lista de empresas carregada:", companyList);
       setRecords(companyList);
     } catch (e) {
       toast.error("Não foi possível carregar a lista de registros");
@@ -571,6 +626,7 @@ export default function CompaniesManager() {
   };
 
   const handleSubmit = async (data) => {
+    console.log("Dados enviados para o backend:", data);
     setLoading(true);
     try {
       if (data.id !== undefined) {
@@ -619,7 +675,8 @@ export default function CompaniesManager() {
       recurrence: "",
       password: "",
       document: "",
-      paymentMethod: ""
+      paymentMethod: "",
+      generateInvoice: true
     }));
   };
 
@@ -633,6 +690,7 @@ export default function CompaniesManager() {
     //   campaignsEnabled = setting.value === "true" || setting.value === "enabled";
     // }
 
+    console.log("Dados da empresa selecionada:", data);
     setRecord((prev) => ({
       ...prev,
       id: data.id,
@@ -647,6 +705,7 @@ export default function CompaniesManager() {
       password: "",
       document: data.document || "",
       paymentMethod: data.paymentMethod || "",
+      generateInvoice: data.generateInvoice !== undefined ? data.generateInvoice : true,
     }));
   };
 

@@ -23,6 +23,8 @@ interface ScheduleData {
   enviarQuantasVezes?: number;
   tipoDias?: number;
   assinar?: boolean;
+  // ✅ Campos de lembrete
+  reminderDate?: string;
 }
 
 interface Request {
@@ -62,7 +64,9 @@ const UpdateUserService = async ({
     valorIntervalo,
     enviarQuantasVezes,
     tipoDias,
-    assinar
+    assinar,
+    // ✅ Campos de lembrete
+    reminderDate
   } = scheduleData;
 
   try {
@@ -87,7 +91,13 @@ const UpdateUserService = async ({
     valorIntervalo,
     enviarQuantasVezes,
     tipoDias,
-    assinar
+    assinar,
+    // ✅ Se tem lembrete, não marcar como PENDENTE para não ser processado no horário original
+    status: reminderDate ? 'AGUARDANDO_LEMBRETE' : 'PENDENTE',
+    // ✅ Incluir campos de lembrete
+    reminderDate: reminderDate || null,
+    reminderMessage: null, // Não usar mais o campo reminderMessage
+    reminderStatus: reminderDate ? 'PENDENTE' : null
   });
 
   await schedule.reload();

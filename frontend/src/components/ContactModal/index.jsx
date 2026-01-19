@@ -18,6 +18,14 @@ import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Switch from "@material-ui/core/Switch";
 
+
+import Grid from '@mui/material/Grid';
+import Autocomplete from '@mui/material/Autocomplete';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+
 import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
@@ -53,7 +61,45 @@ const useStyles = makeStyles(theme => ({
 		marginTop: -12,
 		marginLeft: -12,
 	},
+
+
 }));
+
+const formatDateForInput = (date) => {
+	if (!date) return '';
+	
+	// Se já está no formato YYYY-MM-DD, retorna como está
+	if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+		return date;
+	}
+	
+	// Se é uma data ISO ou objeto Date, converte para YYYY-MM-DD
+	const d = new Date(date);
+	if (isNaN(d.getTime())) return '';
+	
+	// Usar métodos locais para evitar problemas de timezone
+	const year = d.getFullYear();
+	const month = String(d.getMonth() + 1).padStart(2, '0');
+	const day = String(d.getDate()).padStart(2, '0');
+	
+	return `${year}-${month}-${day}`;
+};
+  
+const parseDateFromInput = (dateString) => {
+	if (!dateString) return null;
+	
+	// Se já está no formato YYYY-MM-DD, retorna como está
+	if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+		return dateString;
+	}
+	
+	// Se é uma data ISO, extrai apenas a parte da data
+	if (dateString.includes('T')) {
+		return dateString.split('T')[0];
+	}
+	
+	return dateString;
+};
 
 const ContactSchema = Yup.object().shape({
 	name: Yup.string()
@@ -73,11 +119,21 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 		number: "",
 		email: "",
 		disableBot: false,
-		lgpdAcceptedAt: ""
+		lgpdAcceptedAt: "",
+		birthDate: ""
 	};
 
 	const [contact, setContact] = useState(initialState);
 	const [disableBot, setDisableBot] = useState(false);
+	const [selectedUser, setSelectedUser] = useState(null);
+	const [selectedQueue, setSelectedQueue] = useState(null);
+	const [queues, setQueues] = useState([]);
+	const [allQueues, setAllQueues] = useState([]);
+	const [options, setOptions] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [searchParam, setSearchParam] = useState("");
+
+
 	useEffect(() => {
 		return () => {
 			isMounted.current = false;
@@ -85,20 +141,74 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 	}, []);
 
 	useEffect(() => {
+		if (!open || searchParam.length < 3) {
+			setLoading(false);
+			setSelectedQueue("");
+			return;
+		}
+		const delayDebounceFn = setTimeout(() => {
+			setLoading(true);
+			const fetchUsers = async () => {
+				try {
+					const { data } = await api.get("/users/", {
+						params: { searchParam },
+					});
+					setOptions(data.users);
+					setLoading(false);
+				} catch (err) {
+					setLoading(false);
+					toastError(err);
+				}
+			};
+
+			fetchUsers();
+		}, 500);
+		return () => clearTimeout(delayDebounceFn);
+	}, [searchParam, open]);
+
+	useEffect(() => {
 		const fetchContact = async () => {
-			if (initialValues) {
-				setContact(prevState => {
-					return { ...prevState, ...initialValues };
-				});
-			}
+		  if (initialValues) {
+			setContact(prevState => {
+			  return { 
+				...prevState, 
+				...initialValues,
+				// Formatar a data corretamente
+				birthDate: formatDateForInput(initialValues.birthDate)
+			  };
+			});
+		  }
 
 			if (!contactId) return;
 
 			try {
 				const { data } = await api.get(`/contacts/${contactId}`);
 				if (isMounted.current) {
-					setContact(data);
+					setContact({
+						...data,
+						birthDate: formatDateForInput(data.birthDate)
+				});
 					setDisableBot(data.disableBot)
+
+					// Preenche automaticamente os campos de Wallet e Queue
+					if (data.contactWallets && data.contactWallets.length > 0) {
+						const wallet = data.contactWallets[0].wallet;
+						const queue = data.contactWallets[0].queue;
+
+						setSelectedUser({
+							id: wallet.id,
+							name: wallet.name,
+						});
+						setSelectedQueue(queue.id);
+
+						// Atualiza as filas disponíveis no campo de seleção
+						setQueues([{ id: queue.id, name: queue.name }]);
+					} else {
+						// Limpa os valores quando não há contactWallets
+						setSelectedUser(null);
+						setSelectedQueue(null);
+						setQueues([]);
+					}
 				}
 			} catch (err) {
 				toastError(err);
@@ -111,25 +221,67 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 	const handleClose = () => {
 		onClose();
 		setContact(initialState);
+		setSelectedUser(null);
+		setSelectedQueue(null);
+		setQueues([]);
 	};
 
 	const handleSaveContact = async values => {
 		try {
-			if (contactId) {
-				await api.put(`/contacts/${contactId}`, { ...values, disableBot: disableBot });
-				handleClose();
-			} else {
-				const { data } = await api.post("/contacts", { ...values, disableBot: disableBot });
-				if (onSave) {
-					onSave(data);
-				}
-				handleClose();
+		  // Preparar os dados com a data corretamente formatada
+		  const contactData = {
+			...values,
+			disableBot: disableBot,
+			birthDate: parseDateFromInput(values.birthDate)
+		  };
+	  
+		  if (contactId) {
+			if (!selectedUser && !selectedQueue) {
+			  delete contact.contactWallets;
+			  await api.delete(`/contacts/wallet/${contactId}`);
 			}
-			toast.success(i18n.t("contactModal.success"));
+	  
+			const { contactWallets, ...valuesWithoutWallets } = contactData;
+			delete contact.contactWallets;
+	  
+			await api.put(`/contacts/${contactId}`, contactData);
+	  
+			if (selectedUser && selectedQueue && selectedUser !== null && selectedQueue !== null) {
+			  await api.put(`/contacts/wallet/${contactId}`, {
+				wallets: {
+				  userId: selectedUser.id,
+				  queueId: selectedQueue,
+				},
+			  });
+			}
+	  
+			handleClose();
+	  
+		  } else {
+			delete contactData.contactWallets;
+	  
+			const { data } = await api.post("/contacts", contactData);
+	  
+			if (data.id && selectedUser && selectedQueue) {
+			  await api.put(`/contacts/wallet/${data.id}`, {
+				wallets: {
+				  userId: selectedUser.id,
+				  queueId: selectedQueue,
+				},
+			  });
+			}
+	  
+			if (onSave) {
+			  onSave(data);
+			}
+	  
+			handleClose();
+		  }
+		  toast.success(i18n.t("contactModal.success"));
 		} catch (err) {
-			toastError(err);
+		  toastError(err);
 		}
-	};
+	  };
 
 	return (
 		<div className={classes.root}>
@@ -167,16 +319,32 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 									margin="dense"
 									className={classes.textField}
 								/>
-								<Field
-									as={TextField}
-									label={i18n.t("contactModal.form.number")}
-									name="number"
-									error={touched.number && Boolean(errors.number)}
-									helperText={touched.number && errors.number}
-									placeholder="5513912344321"
-									variant="outlined"
-									margin="dense"
-								/>
+								<Grid container spacing={2}>
+									<Grid item xs={12} sm={6}>
+										<Field
+											as={TextField}
+											label={i18n.t("contactModal.form.number")}
+											name="number"
+											error={touched.number && Boolean(errors.number)}
+											helperText={touched.number && errors.number}
+											placeholder="5513912344321"
+											variant="outlined"
+											margin="dense"
+											fullWidth
+										/>
+									</Grid>
+									<Grid item xs={12} sm={6}>
+										<TextField
+											label="LID (Linked Device ID)"
+											value={contact.lid || ""}
+											disabled
+											fullWidth
+											margin="dense"
+											variant="outlined"
+											helperText="Identificador do dispositivo vinculado"
+										/>
+									</Grid>
+								</Grid>
 								<div>
 									<Field
 										as={TextField}
@@ -191,8 +359,122 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 									/>
 								</div>
 								<div>
+  <Field
+    as={TextField}
+    label="Data de Nascimento"
+    name="birthDate"
+    type="date"
+    InputLabelProps={{
+      shrink: true,
+    }}
+    fullWidth
+    margin="dense"
+    variant="outlined"
+    helperText="Data de nascimento para mensagens automáticas de aniversário"
+    onChange={(e) => {
+      const formattedDate = parseDateFromInput(e.target.value);
+      setFieldValue('birthDate', formattedDate);
+    }}
+  />
+</div>
+
+								<div>
 									<TagsContainer contact={contact} className={classes.textField} />
 								</div>
+
+								<Grid item>
+									<Typography
+										variant="subtitle1"
+										gutterBottom
+										style={{ marginTop: 24, marginBottom: 8 }}
+									>
+										<b>{i18n.t("contactModal.form.assignWallet")}</b>
+									</Typography>
+								</Grid>
+								{/* <div className={classes.blockCustomerField}> */}
+								<Grid container spacing={2}>
+									<Grid xs={12} sm={6} xl={6} item>
+										<Autocomplete
+											value={selectedUser}
+											fullWidth
+											getOptionLabel={(option) => `${option.name}`}
+											onChange={(e, newValue) => {
+												setSelectedUser(newValue);
+												if (
+													newValue != null &&
+													Array.isArray(newValue.queues)
+												) {
+													if (newValue.queues.length === 1) {
+														setSelectedQueue(newValue.queues[0].id);
+													}
+													setQueues(newValue.queues);
+												} else {
+													setQueues(allQueues);
+													setSelectedQueue(null);
+													setSelectedUser(null);
+												}
+											}}
+											options={options}
+											filterOptions={(options, { inputValue }) =>
+												options.filter((option) =>
+													option.name
+														.toLowerCase()
+														.includes(inputValue.toLowerCase())
+												)
+											}
+											freeSolo
+											autoHighlight
+											noOptionsText={i18n.t("transferTicketModal.noOptions")}
+											loading={loading}
+											renderOption={(props, option) => (
+												<li {...props}>
+													<span style={{ marginLeft: 8 }}>{option.name}</span>
+												</li>
+											)}
+											renderInput={(params) => (
+												<TextField
+													{...params}
+													label={i18n.t("transferTicketModal.fieldLabel")}
+													variant="outlined"
+													onChange={(e) => setSearchParam(e.target.value)}
+													InputProps={{
+														...params.InputProps,
+														endAdornment: (
+															<React.Fragment>
+																{loading ? (
+																	<CircularProgress color="inherit" size={20} />
+																) : null}
+																{params.InputProps.endAdornment}
+															</React.Fragment>
+														),
+													}}
+												/>
+											)}
+										/>
+									</Grid>
+
+									<Grid xs={12} sm={6} xl={6} item>
+										<FormControl variant="outlined" fullWidth>
+											<InputLabel>
+												{i18n.t("transferTicketModal.fieldQueueLabel")}
+											</InputLabel>
+											<Select
+												value={selectedQueue}
+												onChange={(e) => setSelectedQueue(e.target.value)}
+												label={i18n.t(
+													"transferTicketModal.fieldQueuePlaceholder"
+												)}
+											>
+												{queues.map((queue) => (
+													<MenuItem key={queue.id} value={queue.id}>
+														{queue.name}
+													</MenuItem>
+												))}
+											</Select>
+										</FormControl>
+									</Grid>
+								</Grid>
+
 								<Typography
 									style={{ marginBottom: 8, marginTop: 12 }}
 									variant="subtitle1"

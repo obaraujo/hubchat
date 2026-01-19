@@ -33,11 +33,59 @@ const CreateMessageService = async ({
   messageData,
   companyId
 }: Request): Promise<Message> => {
-  await Message.upsert({ ...messageData, companyId });
+  
+  const correctMediaType = (data: MessageData): MessageData => {
+    // Se já tem mediaType definido como audio, manter
+    if (data.mediaType === 'audio') {
+      return data;
+    }
+
+    // Verificar se deveria ser áudio baseado na URL ou outros indicadores
+    const shouldBeAudio = (data: MessageData): boolean => {
+      // Verificar pela URL
+      if (data.mediaUrl) {
+        const audioExtensions = ['.mp3', '.wav', '.ogg', '.webm', '.m4a', '.aac'];
+        const url = data.mediaUrl.toLowerCase();
+        if (audioExtensions.some(ext => url.includes(ext))) {
+          return true;
+        }
+        
+        // Verificar se tem padrão de nome de áudio
+        if (url.includes('audio_')) {
+          return true;
+        }
+      }
+
+      // Verificar pelo body
+      if (data.body && typeof data.body === 'string') {
+        const body = data.body.toLowerCase();
+        if (body.includes('áudio gravado') || body.includes('🎵 arquivo de áudio')) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    // Se deveria ser áudio, corrigir o tipo
+    if (shouldBeAudio(data)) {
+      console.log(`🎵 Corrigindo tipo de mídia de '${data.mediaType}' para 'audio'`);
+      return {
+        ...data,
+        mediaType: 'audio'
+      };
+    }
+
+    return data;
+  };
+
+  const correctedMessageData = correctMediaType(messageData);
+  
+  await Message.upsert({ ...correctedMessageData, companyId });
 
   const message = await Message.findOne({
     where: {
-      wid: messageData.wid,
+      wid: correctedMessageData.wid,
       companyId
     },
     include: [
@@ -57,7 +105,7 @@ const CreateMessageService = async ({
           },
           {
             model: Whatsapp,
-            attributes: ["id", "name", "groupAsTicket"]
+            attributes: ["id", "name", "groupAsTicket", "color"]
           },
           {
             model: User,
@@ -93,12 +141,7 @@ const CreateMessageService = async ({
   const io = getIO();
 
   if (!messageData?.ticketImported) {
-    // console.log("emitiu socket 96", message.ticketId)
-
     io.of(String(companyId))
-      // .to(message.ticketId.toString())
-      // .to(message.ticket.status)
-      // .to("notification")
       .emit(`company-${companyId}-appMessage`, {
         action: "create",
         message,
@@ -106,7 +149,6 @@ const CreateMessageService = async ({
         contact: message.ticket.contact
       });
   }
-
 
   return message;
 };

@@ -27,7 +27,7 @@ export default memo(({ data, isConnectable, id }) => {
         type="target"
         position="left"
         style={{
-          background: "#0000FF",
+          background: "#9a00ed",
           width: "18px",
           height: "18px",
           top: "20px",
@@ -112,7 +112,7 @@ export default memo(({ data, isConnectable, id }) => {
         position="right"
         id="a"
         style={{
-          background: "#0000FF",
+          background: "#9a00ed",
           width: "18px",
           height: "18px",
           right: "-11px",
@@ -152,7 +152,7 @@ export default memo(({ data, isConnectable, id }) => {
         position="right"
         id="b"
         style={{
-          background: "#0000FF",
+          background: "#9a00ed",
           width: "18px",
           height: "18px",
           right: "-11px",

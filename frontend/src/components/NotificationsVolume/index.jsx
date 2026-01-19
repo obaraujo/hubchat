@@ -12,6 +12,7 @@ import { Grid, Slider } from "@material-ui/core";
 const useStyles = makeStyles((theme) => ({
     tabContainer: {
         padding: theme.spacing(2),
+        minWidth: 250,
     },
     popoverPaper: {
         width: "100%",
@@ -32,6 +33,49 @@ const useStyles = makeStyles((theme) => ({
         backgroundColor: "#f44336",
         color: "#fff",
     },
+    volumeSlider: {
+        color: theme.palette.primary.main,
+        height: 6,
+        '& .MuiSlider-track': {
+            border: 'none',
+            backgroundColor: theme.palette.primary.main,
+            height: 6,
+        },
+        '& .MuiSlider-thumb': {
+            height: 16,
+            width: 16,
+            backgroundColor: '#fff',
+            border: '2px solid currentColor',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            '&:focus, &:hover, &.Mui-active, &.Mui-focusVisible': {
+                boxShadow: '0 3px 8px rgba(0,0,0,0.15)',
+                height: 18,
+                width: 18,
+            },
+            '&:before': {
+                display: 'none',
+            },
+        },
+        '& .MuiSlider-rail': {
+            color: theme.palette.grey[300],
+            opacity: 1,
+            height: 6,
+        },
+    },
+    volumeContainer: {
+        alignItems: 'center',
+        display: 'flex',
+        gap: theme.spacing(2),
+    },
+    volumeIcon: {
+        color: theme.palette.grey[600],
+        fontSize: '1.25rem',
+    },
+    sliderContainer: {
+        flex: 1,
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+    },
 }));
 
 const NotificationsVolume = ({ volume, setVolume }) => {
@@ -48,7 +92,7 @@ const NotificationsVolume = ({ volume, setVolume }) => {
         setIsOpen(false);
     };
 
-    const handleVolumeChange = (value) => {
+    const handleVolumeChange = (event, value) => {
         setVolume(value);
         localStorage.setItem("volume", value);
     };
@@ -81,26 +125,21 @@ const NotificationsVolume = ({ volume, setVolume }) => {
                 onClose={handleClickAway}
             >
                 <List dense className={classes.tabContainer}>
-                    <Grid container spacing={2}>
-                        <Grid item>
-                            <VolumeDownIcon />
-                        </Grid>
-                        <Grid item xs>
+                    <div className={classes.volumeContainer}>
+                        <VolumeDownIcon className={classes.volumeIcon} />
+                        <div className={classes.sliderContainer}>
                             <Slider
                                 value={Number(volume)}
-                                aria-labelledby="continuous-slider"
+                                className={classes.volumeSlider}
+                                aria-labelledby="volume-slider"
                                 step={0.1}
                                 min={0}
                                 max={1}
-                                onChange={(e, value) =>
-                                    handleVolumeChange(value)
-                                }
+                                onChange={handleVolumeChange}
                             />
-                        </Grid>
-                        <Grid item>
-                            <VolumeUpIcon />
-                        </Grid>
-                    </Grid>
+                        </div>
+                        <VolumeUpIcon className={classes.volumeIcon} />
+                    </div>
                 </List>
             </Popover>
         </>

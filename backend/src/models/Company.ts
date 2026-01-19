@@ -9,7 +9,8 @@ import {
   ForeignKey,
   BelongsTo,
   DataType,
-  HasMany
+  HasMany,
+  Default
 } from "sequelize-typescript";
 import Contact from "./Contact";
 import Message from "./Message";
@@ -24,39 +25,40 @@ import UserRating from "./UserRating";
 import Whatsapp from "./Whatsapp";
 import CompaniesSettings from "./CompaniesSettings";
 import Invoices from "./Invoices";
+import BirthdaySettings from "./BirthdaySettings";
 
 @Table
 class Company extends Model<Company> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.TEXT)
+  @Column
   name: string;
 
-  @Column(DataType.TEXT)
+  @Column
   phone: string;
 
-  @Column(DataType.TEXT)
+  @Column
   email: string;
 
-  @Column({ defaultValue: "", type:DataType.TEXT })
+  @Column({ defaultValue: "" })
   document: string;
 
-  @Column({ defaultValue: "", type:DataType.TEXT })
+  @Column({ defaultValue: "" })
   paymentMethod: string;
 
-  @Column(DataType.DATE)
+  @Column
   lastLogin: Date;
 
-  @Column(DataType.BOOLEAN)
+  @Column
   status: boolean;
 
-  @Column(DataType.TEXT)
+  @Column
   dueDate: string;
 
-  @Column(DataType.TEXT)
+  @Column
   recurrence: string;
 
   @Column({
@@ -65,7 +67,7 @@ class Company extends Model<Company> {
   schedules: [];
 
   @ForeignKey(() => Plan)
-  @Column(DataType.INTEGER)
+  @Column
   planId: number;
 
   @BelongsTo(() => Plan)
@@ -77,13 +79,17 @@ class Company extends Model<Company> {
   @UpdatedAt
   updatedAt: Date;
 
-  @Column(DataType.TEXT)
+  @Column
   folderSize: string;
 
-  @Column(DataType.TEXT)
+  @Default(true)
+  @Column
+  generateInvoice: boolean;
+
+  @Column
   numberFileFolder: string;
 
-  @Column(DataType.TEXT)
+  @Column
   updatedAtFolder: string;
 
   @HasMany(() => User, {
@@ -135,7 +141,7 @@ class Company extends Model<Company> {
   })
   settings: Setting[];
 
-  @HasMany (() => CompaniesSettings, {
+  @HasMany(() => CompaniesSettings, {
     onUpdate: "CASCADE",
     onDelete: "CASCADE",
     hooks: true
@@ -162,6 +168,14 @@ class Company extends Model<Company> {
     hooks: true
   })
   invoices: Invoices[];
+
+  @HasMany(() => BirthdaySettings, {
+    onUpdate: "CASCADE",
+    onDelete: "CASCADE",
+    hooks: true
+  })
+  birthdaySettings: BirthdaySettings[];
+
 }
 
 export default Company;

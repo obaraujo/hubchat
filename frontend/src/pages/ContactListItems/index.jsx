@@ -275,7 +275,7 @@ const ContactListItems = () => {
         )}
       </ConfirmationModal>
       {
-        user.profile === "user" ?
+        user.profile === "user" && user?.showCampaign === "disabled" ?
           <ForbiddenPage />
           :
           <>

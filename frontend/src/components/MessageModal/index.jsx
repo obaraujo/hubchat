@@ -162,10 +162,14 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
         const { data: connectionList } = await api.get(`/whatsapp`);
         setConexoes(connectionList);
 
-        const { data: userList } = await api.get(`/users/list?companyId=${companyId}`);
+        const { data: userList } = await api.get(
+          `/users/list?companyId=${companyId}`
+        );
         setUsuarios(userList);
 
-        const { data: contactList } = await api.get('/contacts/list', { params: { companyId: companyId } });
+        const { data: contactList } = await api.get("/contacts/list", {
+          params: { companyId: companyId },
+        });
         setContatos(contactList);
 
         // const { data: tagList } = await api.get('/tags/list', { params: { companyId: companyId, kanban: 0 } });
@@ -175,7 +179,8 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
           const { data } = await api.get(`/schedules-message/${messageId}`);
           scheduleMessage.nome = data.nome;
           scheduleMessage.mensagem = data.mensagem;
-          scheduleMessage.mostrar_usuario_mensagem = data.mostrar_usuario_mensagem;
+          scheduleMessage.mostrar_usuario_mensagem =
+            data.mostrar_usuario_mensagem;
           scheduleMessage.criar_ticket = data.criar_ticket;
           scheduleMessage.tipo_dias_envio = data.tipo_dias_envio;
           scheduleMessage.enviar_quantas_vezes = data.enviar_quantas_vezes;
@@ -185,7 +190,9 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
           scheduleMessage.criar_ticket = data.criar_ticket;
 
           const data_agendada = moment(data.data_mensagem_programada);
-          scheduleMessage.data_mensagem_programada = data_agendada.format("YYYY-MM-DD HH:mm:ss");
+          scheduleMessage.data_mensagem_programada = data_agendada.format(
+            "YYYY-MM-DD HH:mm:ss"
+          );
 
           if (!!data.mediaName) scheduleMessage.file = { name: data.mediaName };
 
@@ -215,7 +222,9 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
           // }
 
           if (!!data.usuario_envio && usuarios.length > 0) {
-            const finded_users = usuarios.find((_u) => +_u.id == +data.usuario_envio);
+            const finded_users = usuarios.find(
+              (_u) => +_u.id == +data.usuario_envio
+            );
             scheduleMessage.usuario_envio = finded_users.id;
             setCurrentUsers(finded_users);
           }
@@ -252,7 +261,10 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
         }
       }
       if (!!messageId) {
-        const responseUpdate = await api.put(`/schedules-message/${messageId}`, formData);
+        const responseUpdate = await api.put(
+          `/schedules-message/${messageId}`,
+          formData
+        );
         toast.success(i18n.t("messageModal.success.save"));
         handleClose();
         reload();
@@ -263,7 +275,6 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
         handleClose();
         reload();
       }
-
     } catch (err) {
       toastError(err);
     }
@@ -353,7 +364,9 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
                             ...scheduleMessage,
                             id_conexao: +contactId,
                           });
-                          setCurrentConexao(contact ? contact : initialConexoes);
+                          setCurrentConexao(
+                            contact ? contact : initialConexoes
+                          );
                         }}
                         getOptionLabel={(option) => option.name}
                         getOptionSelected={(option, value) => {
@@ -379,20 +392,20 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
                         multiple={true}
                         options={contatos}
                         size="small"
-                        getOptionLabel={(option) => Array.isArray(option) ? "" : option.name}
+                        getOptionLabel={(option) =>
+                          Array.isArray(option) ? "" : option.name
+                        }
                         onChange={(e, contacts) => {
-
                           if (contacts instanceof Array) {
-                            setCurrentContacts(contacts)
+                            setCurrentContacts(contacts);
 
                             setScheduleMessage((prev) => ({
                               ...prev,
-                              contatos: contacts.map(_contact => {
+                              contatos: contacts.map((_contact) => {
                                 return +_contact.id;
                               }),
-                            }))
+                            }));
                           }
-
                         }}
                         getOptionSelected={(option, value) => {
                           return value.id === option.id;
@@ -445,32 +458,34 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
                   </Grid> */}
                 </Grid>
                 {/* <br /> */}
-                <h3>Recorrencia</h3>
-                <p>
-                  Você pode escolher enviar a mensagem de forma recorrente e
-                  escolher o intervalo. Caso seja uma mensagem a ser enviada
-                  uma unica vez, não altere nada nessa seção.
-                </p>
+                <h3>{t("recurrenceSection.title")}</h3>
+                <p>{t("recurrenceSection.description")}</p>
                 <br />
                 <Grid container spacing={1}>
                   <Grid item xs={12} md={4} xl={4}>
                     <FormControl size="small" fullWidth variant="outlined">
-                      <InputLabel id="demo-simple-select-label">Intervalo</InputLabel>
+                      <InputLabel id="demo-simple-select-label">
+                        {t("recurrenceSection.labelInterval")}
+                      </InputLabel>
                       <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
-                        value={scheduleMessage.intervalo}
-                        onChange={(e) =>
-                          setScheduleMessage((prev) => ({
-                            ...prev,
-                            intervalo: e.target.value,
-                          }))
-                        }
-                        label="Intervalo"
+                        value={intervalo}
+                        onChange={(e) => setIntervalo(e.target.value || 1)}
+                        label={t("recurrenceSection.labelInterval")}
                       >
-                        <MenuItem value={1}>Dias</MenuItem>
-                        <MenuItem value={2}>Semanas</MenuItem>
-                        <MenuItem value={3}>Meses</MenuItem>
+                        <MenuItem value={1}>
+                          {t("recurrenceSection.options.days")}
+                        </MenuItem>
+                        <MenuItem value={2}>
+                          {t("recurrenceSection.options.weeks")}
+                        </MenuItem>
+                        <MenuItem value={3}>
+                          {t("recurrenceSection.options.months")}
+                        </MenuItem>
+                        <MenuItem value={4}>
+                          {t("recurrenceSection.options.minutes")}
+                        </MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -481,7 +496,10 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
                       label="Valor do Intervalo"
                       name="valor_intervalo"
                       size="small"
-                      error={touched.valor_intervalo && Boolean(errors.valor_intervalo)}
+                      error={
+                        touched.valor_intervalo &&
+                        Boolean(errors.valor_intervalo)
+                      }
                       InputLabelProps={{ shrink: true }}
                       onChange={(e) =>
                         setScheduleMessage((prev) => ({
@@ -514,8 +532,10 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
                     />
                   </Grid>
                   <Grid item xs={12} md={12} xl={12}>
-                  <FormControl size="small" fullWidth variant="outlined">
-                      <InputLabel id="demo-simple-select-label">Enviar quantas vezes</InputLabel>
+                    <FormControl size="small" fullWidth variant="outlined">
+                      <InputLabel id="demo-simple-select-label">
+                        Enviar quantas vezes
+                      </InputLabel>
                       <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
@@ -528,9 +548,11 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
                         }
                         label="Enviar quantas vezes"
                       >
-                        <MenuItem value={4}>Enviar normalmente em dias não úteis</MenuItem>
-                      <MenuItem value={5}>Enviar um dia útil antes</MenuItem>
-                      <MenuItem value={6}>Enviar um dia útil depois</MenuItem>
+                        <MenuItem value={4}>
+                          Enviar normalmente em dias não úteis
+                        </MenuItem>
+                        <MenuItem value={5}>Enviar um dia útil antes</MenuItem>
+                        <MenuItem value={6}>Enviar um dia útil depois</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -543,25 +565,21 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
                           name="mostrar_usuario_mensagem"
                           checked={scheduleMessage.mostrar_usuario_mensagem}
                           onChange={(e) => {
-
                             if (!e.target.checked) {
                               setScheduleMessage((prev) => ({
                                 ...prev,
                                 mostrar_usuario_mensagem: e.target.checked,
-                                usuario_envio: undefined
+                                usuario_envio: undefined,
                               }));
 
-                              setCurrentUsers(null)
+                              setCurrentUsers(null);
                             } else {
                               setScheduleMessage((prev) => ({
                                 ...prev,
                                 mostrar_usuario_mensagem: e.target.checked,
                               }));
                             }
-
-                          }
-
-                          }
+                          }}
                         />
                       }
                       label="Mostrar Usuário"
@@ -580,7 +598,9 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
                             ...scheduleMessage,
                             usuario_envio: +usuarioId,
                           });
-                          setCurrentUsers(usuario ? usuario : initialCurrentUser);
+                          setCurrentUsers(
+                            usuario ? usuario : initialCurrentUser
+                          );
                         }}
                         getOptionLabel={(option) => option.name}
                         getOptionSelected={(option, value) => {
@@ -696,7 +716,7 @@ const MessageModal = ({ open, onClose, messageId, reload }) => {
           )}
         </Formik>
       </Dialog>
-    </div >
+    </div>
   );
 };
 

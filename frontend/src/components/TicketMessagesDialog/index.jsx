@@ -20,7 +20,7 @@ import { ForwardMessageProvider } from "../../context/ForwarMessage/ForwardMessa
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
 
-import html2pdf from 'html2pdf.js';
+import html2pdf from "html2pdf.js";
 
 const drawerWidth = 320;
 
@@ -72,18 +72,16 @@ export default function TicketMessagesDialog({ open, handleClose, ticketId }) {
 
   const [exportedToPDF, setExportedToPDF] = useState(false);
 
-  
   const handleExportToPDF = () => {
     const messagesListElement = document.getElementById("messagesList"); // Id do elemento que você deseja exportar para PDF
     const headerElement = document.getElementById("TicketHeader"); // Id do elemento de cabeçalho que você deseja exportar
 
-
     const pdfOPtions = {
       margin: 1,
       filename: `relatório_atendimento_${ticketId}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     };
 
     if (messagesListElement) {
@@ -93,10 +91,7 @@ export default function TicketMessagesDialog({ open, handleClose, ticketId }) {
       const containerElement = document.createElement("div");
       containerElement.appendChild(headerClone); // Adicione o elemento do cabeçalho
       containerElement.appendChild(messagesListClone);
-      html2pdf()
-        .from(containerElement)
-        .set(pdfOPtions)
-        .save();
+      html2pdf().from(containerElement).set(pdfOPtions).save();
     } else {
       toastError("Elemento não encontrado para exportar.");
     }
@@ -116,7 +111,6 @@ export default function TicketMessagesDialog({ open, handleClose, ticketId }) {
       handleExportAndClose();
     }
   }, [open, ticketId, handleExportAndClose]);
-
 
   return (
     <Dialog maxWidth="md" onClose={handleClose} open={open}>

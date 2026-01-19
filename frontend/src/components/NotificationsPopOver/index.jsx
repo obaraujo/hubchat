@@ -142,7 +142,7 @@ const NotificationsPopOver = (volume) => {
 	useEffect(() => {
 		const companyId = user.companyId;
 		// const socket = socketManager.GetSocket();
-		if (user.id) {
+		if (user.id && socket) {
 			const queueIds = queues.map((q) => q.id);
 
 			const onConnectNotificationsPopover = () => {
@@ -174,50 +174,60 @@ const NotificationsPopOver = (volume) => {
 				}
 			};
 
-			const onCompanyAppMessageNotificationsPopover = (data) => {
-				// if (
-				// 	data.action === "create" && !data.message.fromMe &&
-				// 	(
-				// 		data.ticket.status !== 'pending' &&
-				// 		data.ticket.status !== "lgpd" &&
-				// 		data.ticket.status !== "nps"						
-				// 	) &&
-				// 	(!data.message.read || (data.ticket.status === "pending" && showTicketWithoutQueue && data.ticket.queueId === null) || (data.ticket.status === "pending" && !showTicketWithoutQueue && user?.queues?.some(queue => (queue.id === data.ticket.queueId)))) &&
-				// 	(data.ticket.userId === user?.id || !data.ticket.userId)
-				// ) {
-				// 
-				
-				if (
-					data.action === "create" && !data.message.fromMe &&
-					!data.message.read &&
-					(data.ticket?.userId === user?.id || !data.ticket?.userId) &&
-					(user?.queues?.some(queue => (queue.id === data.ticket.queueId)) ||
-						!data.ticket.queueId && showTicketWithoutQueue === true) &&
-					(!["pending", "lgpd", "nps", "group"].includes(data.ticket?.status) ||
-						(data.ticket?.status === "pending" && showNotificationPending === true) ||
-						(data.ticket?.status === "group" && data.ticket?.whatsapp?.groupAsTicket === "enabled" && showGroupNotification === true))
-				) {
-					setNotifications(prevState => {
-						const ticketIndex = prevState.findIndex(t => t.id === data.ticket.id);
-						if (ticketIndex !== -1) {
-							prevState[ticketIndex] = data.ticket;
-							return [...prevState];
-						}
-						return [data.ticket, ...prevState];
-					});
+// Adicione esta lógica no componente NotificationsPopOver
+const onCompanyAppMessageNotificationsPopover = (data) => {
+    if (
+        data.action === "create" && !data.message.fromMe &&
+        !data.message.read &&
+        (data.ticket?.userId === user?.id || !data.ticket?.userId) &&
+        (user?.queues?.some(queue => (queue.id === data.ticket.queueId)) ||
+            !data.ticket.queueId && showTicketWithoutQueue === true) &&
+        (!["pending", "lgpd", "nps", "group"].includes(data.ticket?.status) ||
+            (data.ticket?.status === "pending" && showNotificationPending === true) ||
+            (data.ticket?.status === "group" && data.ticket?.whatsapp?.groupAsTicket === "enabled" && showGroupNotification === true))
+    ) {
+        // Aplicar lógica de permissão para mensagens pending
+        const shouldBlurMessages = data.ticket.status === "pending" && user.allowSeeMessagesInPendingTickets === "disabled";
+        
+        // Se deve ocultar a mensagem, modifique o ticket antes de adicioná-lo às notificações
+        const ticketToAdd = shouldBlurMessages 
+            ? {
+                ...data.ticket,
+                lastMessage: i18n.t("notifications.messageHidden") // ou "Mensagem oculta"
+              }
+            : data.ticket;
 
-					const shouldNotNotificate =
-						(data.message.ticketId === ticketIdRef.current &&
-							document.visibilityState === "visible") ||
-						(data.ticket.userId && data.ticket.userId !== user?.id) ||
-						(data.ticket.isGroup && data.ticket?.whatsapp?.groupAsTicket === "disabled" && showGroupNotification === false);
+        setNotifications(prevState => {
+            const ticketIndex = prevState.findIndex(t => t.id === ticketToAdd.id);
+            if (ticketIndex !== -1) {
+                prevState[ticketIndex] = ticketToAdd;
+                return [...prevState];
+            }
+            return [ticketToAdd, ...prevState];
+        });
 
+        const shouldNotNotificate =
+            (data.message.ticketId === ticketIdRef.current &&
+                document.visibilityState === "visible") ||
+            (data.ticket.userId && data.ticket.userId !== user?.id) ||
+            (data.ticket.isGroup && data.ticket?.whatsapp?.groupAsTicket === "disabled" && showGroupNotification === false);
 
-					if (shouldNotNotificate === true) return;
+        if (shouldNotNotificate === true) return;
 
-					handleNotifications(data);
-				}
-			}
+        // Para notificações desktop, também aplicar a lógica de ocultação
+        const messageBody = shouldBlurMessages 
+            ? i18n.t("notifications.messageHidden")
+            : data.message.body;
+
+        handleNotifications({
+            ...data,
+            message: {
+                ...data.message,
+                body: messageBody
+            }
+        });
+    }
+}
 
 			socket.on("connect", onConnectNotificationsPopover);
 			socket.on(`company-${companyId}-ticket`, onCompanyTicketNotificationsPopover);
@@ -229,6 +239,7 @@ const NotificationsPopOver = (volume) => {
 				socket.off(`company-${companyId}-appMessage`, onCompanyAppMessageNotificationsPopover);
 			};
 		}
+		return undefined;
 	}, [user, profile, queues, showTicketWithoutQueue, socket, showNotificationPending, showGroupNotification]);
 
 	const handleNotifications = data => {

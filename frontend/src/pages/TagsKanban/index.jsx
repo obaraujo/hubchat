@@ -20,6 +20,7 @@ import IconButton from "@material-ui/core/IconButton";
 import SearchIcon from "@material-ui/icons/Search";
 import TextField from "@material-ui/core/TextField";
 import InputAdornment from "@material-ui/core/InputAdornment";
+import { FormControl, InputLabel, Select, MenuItem } from "@material-ui/core";
 
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditIcon from "@material-ui/icons/Edit";
@@ -100,10 +101,10 @@ const Tags = () => {
   //   const socketManager = useContext(SocketContext);
   const { user, socket } = useContext(AuthContext);
 
-
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [pageSize, setPageSize] = useState(50);
   const [selectedTag, setSelectedTag] = useState(null);
   const [deletingTag, setDeletingTag] = useState(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -117,7 +118,7 @@ const Tags = () => {
       const fetchTags = async () => {
         try {
           const { data } = await api.get("/tags/", {
-            params: { searchParam, pageNumber, kanban: 1 },
+            params: { searchParam, pageNumber, kanban: 1, limit: pageSize },
           });
           dispatch({ type: "LOAD_TAGS", payload: data.tags });
           setHasMore(data.hasMore);
@@ -129,7 +130,7 @@ const Tags = () => {
       fetchTags();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, pageNumber]);
+  }, [searchParam, pageNumber, pageSize]);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -169,6 +170,13 @@ const Tags = () => {
     setSearchParam(event.target.value.toLowerCase());
   };
 
+  const handlePageSizeChange = (event) => {
+    const newSize = Number(event.target.value);
+    setPageSize(newSize);
+    setPageNumber(1);
+    dispatch({ type: "RESET" });
+  };
+
   const handleEditTag = (tag) => {
     setSelectedTag(tag);
     setTagModalOpen(true);
@@ -205,7 +213,9 @@ const Tags = () => {
   return (
     <MainContainer>
       <ConfirmationModal
-        title={deletingTag && `${i18n.t("tagsKanban.confirmationModal.deleteTitle")}`}
+        title={
+          deletingTag && `${i18n.t("tagsKanban.confirmationModal.deleteTitle")}`
+        }
         open={confirmModalOpen}
         onClose={setConfirmModalOpen}
         onConfirm={() => handleDeleteTag(deletingTag.id)}
@@ -222,8 +232,23 @@ const Tags = () => {
         />
       )}
       <MainHeader>
-        <Title>{i18n.t("tagsKanban.title")} ({tags.length})</Title>
+        <Title>
+          {i18n.t("tagsKanban.title")} ({tags.length})
+        </Title>
         <MainHeaderButtonsWrapper>
+            <FormControl variant="outlined" size="small" style={{ minWidth: 140 }}>
+              <InputLabel id="page-size-label">Itens/página</InputLabel>
+              <Select
+                labelId="page-size-label"
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                label="Itens/página"
+              >
+                <MenuItem value={20}>20</MenuItem>
+                <MenuItem value={50}>50</MenuItem>
+                <MenuItem value={100}>100</MenuItem>
+              </Select>
+            </FormControl>
           <TextField
             placeholder={i18n.t("contacts.searchPlaceholder")}
             type="search"
@@ -249,7 +274,7 @@ const Tags = () => {
             color="primary"
             onClick={handleReturnToKanban}
           >
-            {'Voltar para o Kanban'}
+            {i18n.t("tagsKanban.backToKanban")}
           </Button>
         </MainHeaderButtonsWrapper>
       </MainHeader>
@@ -258,12 +283,18 @@ const Tags = () => {
         variant="outlined"
         onScroll={handleScroll}
       >
-        <Table size="small">
+        <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell align="center">{i18n.t("tagsKanban.table.name")}</TableCell>
-              <TableCell align="center">{i18n.t("tagsKanban.table.tickets")}</TableCell>
-              <TableCell align="center">{i18n.t("tagsKanban.table.actions")}</TableCell>
+              <TableCell align="center">
+                {i18n.t("tagsKanban.table.name")}
+              </TableCell>
+              <TableCell align="center">
+                {i18n.t("tagsKanban.table.tickets")}
+              </TableCell>
+              <TableCell align="center">
+                {i18n.t("tagsKanban.table.actions")}
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -282,7 +313,13 @@ const Tags = () => {
                       size="small"
                     />
                   </TableCell>
-                  <TableCell align="center">{tag?.ticketTags ? (<span>{tag?.ticketTags?.length}</span>) : <span>0</span>}</TableCell>
+                  <TableCell align="center">
+                    {tag?.ticketTags ? (
+                      <span>{tag?.ticketTags?.length}</span>
+                    ) : (
+                      <span>0</span>
+                    )}
+                  </TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={() => handleEditTag(tag)}>
                       <EditIcon />
@@ -300,10 +337,19 @@ const Tags = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {loading && <TableRowSkeleton columns={4} />}
+              {loading && Array.from({ length: 5 }).map((_, idx) => (
+                <TableRowSkeleton key={`skeleton-${idx}`} columns={4} />
+              ))}
             </>
           </TableBody>
         </Table>
+        {hasMore && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 8 }}>
+            <Button variant="outlined" color="primary" onClick={loadMore} disabled={loading}>
+              {loading ? i18n.t("contacts.loading") : i18n.t("contacts.loadMore")}
+            </Button>
+          </div>
+        )}
       </Paper>
     </MainContainer>
   );

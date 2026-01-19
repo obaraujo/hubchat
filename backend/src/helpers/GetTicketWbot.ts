@@ -1,22 +1,23 @@
 import { WASocket } from "baileys";
-import { getWbot } from "../libs/wbot";
+import { getWbot, Session } from "../libs/wbot";
 import GetDefaultWhatsApp from "./GetDefaultWhatsApp";
 import Ticket from "../models/Ticket";
-
-type Session = WASocket & {
-  id?: number;
-};
+import Whatsapp from "../models/Whatsapp";
 
 const GetTicketWbot = async (ticket: Ticket): Promise<Session> => {
-  if (!ticket.whatsappId) {
-    const defaultWhatsapp = await GetDefaultWhatsApp(ticket.whatsappId, ticket.companyId);
+  const whatsapp = await Whatsapp.findByPk(ticket.whatsappId);
 
-    await ticket.$set("whatsapp", defaultWhatsapp);
+  if (whatsapp.channel !== "whatsapp_oficial") {
+    if (!ticket.whatsappId) {
+      const defaultWhatsapp = await GetDefaultWhatsApp(ticket.companyId);
+
+      await ticket.$set("whatsapp", defaultWhatsapp);
+    }
+
+    const wbot = await getWbot(ticket.whatsappId);
+
+    return wbot;
   }
-
-  const wbot = getWbot(ticket.whatsappId);
-
-  return wbot;
 };
 
 export default GetTicketWbot;

@@ -5,6 +5,7 @@ import { getIO } from "../../libs/socket";
 import wbotMonitor from "./wbotMonitor";
 import logger from "../../utils/logger";
 import * as Sentry from "@sentry/node";
+import { redisGroupCache } from "../../utils/RedisGroupCache";
 
 export const StartWhatsAppSession = async (
   whatsapp: Whatsapp,
@@ -21,8 +22,19 @@ export const StartWhatsAppSession = async (
 
   try {
     const wbot = await initWASocket(whatsapp);
-   
+
     if (wbot.id) {
+
+      const groups = await wbot.groupFetchAllParticipating()
+      if (groups) {
+        for (const [id, groupMetadata] of Object.entries(groups)) {
+          //limpa os grupos existentes no cache
+          await redisGroupCache.del(whatsapp.id, id);
+
+          await redisGroupCache.set(whatsapp.id, id, groupMetadata);
+        }
+      }
+
       wbotMessageListener(wbot, companyId);
       wbotMonitor(wbot, whatsapp, companyId);
     }

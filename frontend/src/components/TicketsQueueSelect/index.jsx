@@ -15,6 +15,16 @@ const useStyles = makeStyles((theme) => ({
   menuItem: {
     maxHeight: 30,
   },
+  queueSelectContainer: {
+    minWidth: 120,
+    maxWidth: 200,
+    width: '100%',
+    marginTop: -4,
+    [theme.breakpoints.down('sm')]: {
+      minWidth: 100,
+      maxWidth: 150,
+    },
+  },
 }));
 
 const TicketsQueueSelect = ({
@@ -29,7 +39,7 @@ const TicketsQueueSelect = ({
   };
 
   return (
-    <div style={{ width: 120, marginTop: -4 }}>
+    <div className={classes.queueSelectContainer}>
       <FormControl fullWidth margin="dense">
         <Select
           multiple

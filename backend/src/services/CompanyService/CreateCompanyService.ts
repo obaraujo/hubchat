@@ -4,6 +4,7 @@ import Company from "../../models/Company";
 import User from "../../models/User";
 import sequelize from "../../database";
 import CompaniesSettings from "../../models/CompaniesSettings";
+import axios from "axios";
 
 interface CompanyData {
   name: string;
@@ -17,7 +18,27 @@ interface CompanyData {
   paymentMethod?: string;
   password?: string;
   companyUserName?: string;
+  generateInvoice?: boolean;
 }
+
+const validateCnpjWithReceita = async (cnpj: string): Promise<boolean> => {
+  try {
+    // Remover formatação do CNPJ
+    const cleanCnpj = cnpj.replace(/\D/g, '');
+    
+    const response = await axios.get(`https://receitaws.com.br/v1/cnpj/${cleanCnpj}`);
+    const data = response.data;
+    
+    if (data.status === "ERROR") {
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Erro ao validar CNPJ:", error);
+    return false;
+  }
+};
 
 const CreateCompanyService = async (
   companyData: CompanyData
@@ -33,7 +54,8 @@ const CreateCompanyService = async (
     recurrence,
     document,
     paymentMethod,
-    companyUserName
+    companyUserName,
+    generateInvoice
   } = companyData;
 
   const companySchema = Yup.object().shape({
@@ -48,6 +70,27 @@ const CreateCompanyService = async (
     throw new AppError(err.message);
   }
 
+// Validar CNPJ se fornecido e for um CNPJ (14 dígitos)
+if (document && document.trim() !== "") {
+  // Remove todos os caracteres não numéricos
+  const cleanDoc = document.replace(/\D/g, '');
+  
+  // Verifica se é um CNPJ (14 dígitos)
+  if (cleanDoc.length === 14) {
+    const isCnpjValid = await validateCnpjWithReceita(document);
+    if (!isCnpjValid) {
+      throw new AppError("CNPJ inválido ou não encontrado na Receita Federal", 400);
+    }
+  }
+  // Opcional: Você pode adicionar validação de CPF aqui se quiser
+  // else if (cleanDoc.length === 11) {
+  //   const isCpfValid = await validateCpfWithReceita(document);
+  //   if (!isCpfValid) {
+  //     throw new AppError("CPF inválido ou não encontrado na Receita Federal", 400);
+  //   }
+  // }
+}
+
   const t = await sequelize.transaction();
 
   try {
@@ -59,8 +102,9 @@ const CreateCompanyService = async (
       planId,
       dueDate,
       recurrence,
-      document,
-      paymentMethod
+      document: document ? document.replace(/\D/g, '') : "",
+      paymentMethod,
+      generateInvoice
     },
       { transaction: t }
     );

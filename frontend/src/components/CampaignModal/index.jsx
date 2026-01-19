@@ -18,6 +18,8 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import AttachFileIcon from "@material-ui/icons/AttachFile";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import Chip from '@material-ui/core/Chip';
+import RepeatIcon from '@material-ui/icons/Repeat';
+import VisibilityIcon from '@material-ui/icons/Visibility';
 import { isNil } from "lodash";
 import { i18n } from "../../translate/i18n";
 import moment from "moment";
@@ -33,6 +35,18 @@ import {
   Select,
   Tab,
   Tabs,
+  FormControlLabel,
+  Switch,
+  Typography,
+  Collapse,
+  List,
+  ListItem,
+  ListItemText,
+  FormHelperText,
+  Card,
+  CardContent,
+  Checkbox,
+  FormGroup,
 } from "@material-ui/core";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import ConfirmationModal from "../ConfirmationModal";
@@ -45,22 +59,18 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexWrap: "wrap",
   },
-
   textField: {
     marginRight: theme.spacing(1),
     flex: 1,
   },
-
   extraAttr: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
   },
-
   btnWrapper: {
     position: "relative",
   },
-
   buttonProgress: {
     color: green[500],
     position: "absolute",
@@ -69,13 +79,62 @@ const useStyles = makeStyles((theme) => ({
     marginTop: -12,
     marginLeft: -12,
   },
+  recurrenceCard: {
+    marginTop: theme.spacing(2),
+    padding: theme.spacing(2),
+    backgroundColor: theme.palette.grey[50],
+  },
+  previewCard: {
+    marginTop: theme.spacing(1),
+    maxHeight: 200,
+    overflow: 'auto',
+  },
+  recurrenceIcon: {
+    marginRight: theme.spacing(1),
+    color: theme.palette.primary.main,
+  },
 }));
+
+
+// No CampaignModal.js - Atualizar o schema de validação
 
 const CampaignSchema = Yup.object().shape({
   name: Yup.string()
     .min(2, "Too Short!")
     .max(50, "Too Long!")
     .required("Required"),
+  isRecurring: Yup.boolean().default(false),
+  recurrenceType: Yup.string().when('isRecurring', {
+    is: true,
+    then: Yup.string().oneOf(['minutely', 'hourly', 'daily', 'weekly', 'biweekly', 'monthly', 'yearly']).required('Tipo de recorrência é obrigatório'),
+    otherwise: Yup.string().nullable()
+  }),
+  recurrenceInterval: Yup.number().when('isRecurring', {
+    is: true,
+    then: Yup.number().min(1, 'Intervalo deve ser maior que 0').required('Intervalo é obrigatório'),
+    otherwise: Yup.number().nullable()
+  }),
+  // CORREÇÃO: Validar como array mas permitir vazio
+  recurrenceDaysOfWeek: Yup.array().when(['isRecurring', 'recurrenceType'], {
+    is: (isRecurring, recurrenceType) => isRecurring && recurrenceType === 'weekly',
+    then: Yup.array().min(1, 'Selecione pelo menos um dia da semana').required(),
+    otherwise: Yup.array().nullable()
+  }),
+  recurrenceDayOfMonth: Yup.number().when(['isRecurring', 'recurrenceType'], {
+    is: (isRecurring, recurrenceType) => isRecurring && recurrenceType === 'monthly',
+    then: Yup.number().min(1, 'Dia deve ser entre 1 e 31').max(31, 'Dia deve ser entre 1 e 31').required('Dia do mês é obrigatório'),
+    otherwise: Yup.number().nullable()
+  }),
+  recurrenceEndDate: Yup.date().when('isRecurring', {
+    is: true,
+    then: Yup.date().min(new Date(), 'Data final deve ser futura').nullable(),
+    otherwise: Yup.date().nullable()
+  }),
+  maxExecutions: Yup.number().when('isRecurring', {
+    is: true,
+    then: Yup.number().min(1, 'Número máximo deve ser maior que 0').nullable(),
+    otherwise: Yup.number().nullable()
+  })
 });
 
 const CampaignModal = ({
@@ -103,30 +162,37 @@ const CampaignModal = ({
     confirmationMessage3: "",
     confirmationMessage4: "",
     confirmationMessage5: "",
-    status: "INATIVA", // INATIVA, PROGRAMADA, EM_ANDAMENTO, CANCELADA, FINALIZADA,
+    status: "INATIVA",
     confirmation: false,
     scheduledAt: "",
-    //whatsappId: "",
     contactListId: "",
     tagListId: "Nenhuma",
     companyId,
     statusTicket: "closed",
-    openTicket: "disabled"
+    openTicket: "disabled",
+    // Novos campos de recorrência
+    isRecurring: false,
+    recurrenceType: "",
+    recurrenceInterval: 1,
+    recurrenceDaysOfWeek: [],
+    recurrenceDayOfMonth: 1,
+    recurrenceEndDate: "",
+    maxExecutions: null,
   };
 
   const [campaign, setCampaign] = useState(initialState);
   const [whatsapps, setWhatsapps] = useState([]);
   const [selectedWhatsapps, setSelectedWhatsapps] = useState([]);
-  const [whatsappId, setWhatsappId] = useState(false);
-
+ const [whatsappId, setWhatsappId] = useState(null);
   const [contactLists, setContactLists] = useState([]);
   const [tagLists, setTagLists] = useState([]);
   const [messageTab, setMessageTab] = useState(0);
   const [attachment, setAttachment] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [campaignEditable, setCampaignEditable] = useState(true);
+  const [previewExecutions, setPreviewExecutions] = useState([]);
+  const [showPreview, setShowPreview] = useState(false);
   const attachmentFile = useRef(null);
-
 
   const [options, setOptions] = useState([]);
   const [queues, setQueues] = useState([]);
@@ -136,6 +202,84 @@ const CampaignModal = ({
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedQueue, setSelectedQueue] = useState(null);
   const { findAll: findAllQueues } = useQueues();
+
+  // Opções para dias da semana
+  const daysOfWeekOptions = [
+    { value: 0, label: 'Domingo' },
+    { value: 1, label: 'Segunda-feira' },
+    { value: 2, label: 'Terça-feira' },
+    { value: 3, label: 'Quarta-feira' },
+    { value: 4, label: 'Quinta-feira' },
+    { value: 5, label: 'Sexta-feira' },
+    { value: 6, label: 'Sábado' },
+  ];
+
+  // Função para preview das execuções
+  const handlePreviewRecurrence = async (values) => {
+    if (!values.isRecurring || !values.recurrenceType || !values.scheduledAt) {
+      setPreviewExecutions([]);
+      return;
+    }
+
+    try {
+      const params = {
+        recurrenceType: values.recurrenceType,
+        recurrenceInterval: values.recurrenceInterval,
+        recurrenceDaysOfWeek: JSON.stringify(values.recurrenceDaysOfWeek),
+        recurrenceDayOfMonth: values.recurrenceDayOfMonth,
+      };
+
+      if (campaignId) {
+        const { data } = await api.get(`/campaigns/${campaignId}/recurrence-preview`, { params });
+        setPreviewExecutions(data.executions);
+      } else {
+        // Para campanhas novas, calcular localmente ou usar endpoint genérico
+        const mockExecutions = calculateMockExecutions(values);
+        setPreviewExecutions(mockExecutions);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar preview:', err);
+    }
+  };
+
+  // Função auxiliar para calcular execuções mock
+  const calculateMockExecutions = (values) => {
+    const executions = [];
+    let currentDate = moment(values.scheduledAt);
+    
+    for (let i = 0; i < 5; i++) {
+      executions.push(currentDate.format('DD/MM/YYYY HH:mm'));
+      
+      switch (values.recurrenceType) {
+        case 'minutely':
+          currentDate = currentDate.clone().add(values.recurrenceInterval, 'minutes');
+          break;
+        case 'hourly':
+          currentDate = currentDate.clone().add(values.recurrenceInterval, 'hours');
+          break;
+        case 'daily':
+          currentDate = currentDate.clone().add(values.recurrenceInterval, 'days');
+          break;
+        case 'weekly':
+          currentDate = currentDate.clone().add(values.recurrenceInterval, 'weeks');
+          break;
+        case 'biweekly':
+          currentDate = currentDate.clone().add(values.recurrenceInterval * 2, 'weeks');
+          break;
+        case 'monthly':
+          currentDate = currentDate.clone().add(values.recurrenceInterval, 'months');
+          if (values.recurrenceDayOfMonth) {
+            currentDate = currentDate.date(values.recurrenceDayOfMonth);
+          }
+          break;
+        case 'yearly':
+          currentDate = currentDate.clone().add(values.recurrenceInterval, 'years');
+          break;
+      }
+    }
+    
+    return executions;
+  };
 
   useEffect(() => {
     return () => {
@@ -149,11 +293,9 @@ const CampaignModal = ({
         const list = await findAllQueues();
         setAllQueues(list);
         setQueues(list);
-
       };
       loadQueues();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -174,7 +316,6 @@ const CampaignModal = ({
           toastError(err);
         }
       };
-
       fetchUsers();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
@@ -195,26 +336,22 @@ const CampaignModal = ({
       api
         .get(`/whatsapp`, { params: { companyId, session: 0 } })
         .then(({ data }) => {
-          // Mapear os dados recebidos da API para adicionar a propriedade 'selected'
           const mappedWhatsapps = data.map((whatsapp) => ({
             ...whatsapp,
             selected: false,
           }));
-
           setWhatsapps(mappedWhatsapps);
         });
 
       api.get(`/tags/list`, { params: { companyId, kanban: 0 } })
         .then(({ data }) => {
           const fetchedTags = data;
-          // Perform any necessary data transformation here
           const formattedTagLists = fetchedTags
-            .filter(tag => tag.contacts.length > 0)  // Filtra as tags com contacts.length > 0
+            .filter(tag => tag.contacts.length > 0)
             .map((tag) => ({
               id: tag.id,
               name: `${tag.name} (${tag.contacts.length})`,
             }));
-
           setTagLists(formattedTagLists);
         })
         .catch((error) => {
@@ -224,23 +361,24 @@ const CampaignModal = ({
       if (!campaignId) return;
 
       api.get(`/campaigns/${campaignId}`).then(({ data }) => {
-
-        if (data?.user)
-          setSelectedUser(data.user);
-
-        if (data?.queue)
-          setSelectedQueue(data.queue.id)
-
+        if (data?.user) setSelectedUser(data.user);
+        if (data?.queue) setSelectedQueue(data.queue.id);
         if (data?.whatsappId) {
-          // const selectedWhatsapps = data.whatsappId.split(",");
-          setWhatsappId(data.whatsappId);
+          setWhatsappId(parseInt(data.whatsappId)); // Converter para número
+        } else {
+          setWhatsappId(null);
         }
+        
         setCampaign((prev) => {
           let prevCampaignData = Object.assign({}, prev);
 
           Object.entries(data).forEach(([key, value]) => {
             if (key === "scheduledAt" && value !== "" && value !== null) {
               prevCampaignData[key] = moment(value).format("YYYY-MM-DDTHH:mm");
+            } else if (key === "recurrenceEndDate" && value !== "" && value !== null) {
+              prevCampaignData[key] = moment(value).format("YYYY-MM-DD");
+            } else if (key === "recurrenceDaysOfWeek" && value) {
+              prevCampaignData[key] = JSON.parse(value);
             } else {
               prevCampaignData[key] = value === null ? "" : value;
             }
@@ -251,8 +389,6 @@ const CampaignModal = ({
       });
     }
   }, [campaignId, open, initialValues, companyId]);
-
-
 
   useEffect(() => {
     const now = moment();
@@ -269,6 +405,8 @@ const CampaignModal = ({
   const handleClose = () => {
     onClose();
     setCampaign(initialState);
+    setPreviewExecutions([]);
+    setShowPreview(false);
   };
 
   const handleAttachmentFile = (e) => {
@@ -278,54 +416,66 @@ const CampaignModal = ({
     }
   };
 
-  const handleSaveCampaign = async (values) => {
-    try {
-      const dataValues = {
-        ...values,  // Merge the existing values object
-        whatsappId: whatsappId,
-        userId: selectedUser?.id || null,
-        queueId: selectedQueue || null
-      };
+const handleSaveCampaign = async (values) => {
+  try {
+    const dataValues = {
+      ...values,
+      whatsappId: whatsappId,
+      userId: selectedUser?.id || null,
+      queueId: selectedQueue || null,
+      // CORREÇÃO: Garantir conversão correta do array
+      recurrenceDaysOfWeek: (values.isRecurring && values.recurrenceDaysOfWeek && values.recurrenceDaysOfWeek.length > 0) 
+        ? values.recurrenceDaysOfWeek // Enviar array, o backend irá converter para JSON
+        : null, // Enviar null se não for recorrente ou array vazio
+    };
 
-      //console.log(values);
-      //console.log(selectedWhatsapps);
-
-      Object.entries(values).forEach(([key, value]) => {
-        if (key === "scheduledAt" && value !== "" && value !== null) {
-          dataValues[key] = moment(value).format("YYYY-MM-DD HH:mm:ss");
-        } else {
-          dataValues[key] = value === "" ? null : value;
-        }
-      });
-
-      if (campaignId) {
-        await api.put(`/campaigns/${campaignId}`, dataValues);
-
-        if (attachment != null) {
-          const formData = new FormData();
-          formData.append("file", attachment);
-          await api.post(`/campaigns/${campaignId}/media-upload`, formData);
-        }
-        handleClose();
-      } else {
-        const { data } = await api.post("/campaigns", dataValues);
-
-        if (attachment != null) {
-          const formData = new FormData();
-          formData.append("file", attachment);
-          await api.post(`/campaigns/${data.id}/media-upload`, formData);
-        }
-        if (onSave) {
-          onSave(data);
-        }
-        handleClose();
+    // Processar datas
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === "scheduledAt" && value !== "" && value !== null) {
+        dataValues[key] = moment(value).format("YYYY-MM-DD HH:mm:ss");
+      } else if (key === "recurrenceEndDate" && value !== "" && value !== null) {
+        dataValues[key] = moment(value).format("YYYY-MM-DD HH:mm:ss");
+      } else if (key !== "recurrenceDaysOfWeek") { // Não processar recurrenceDaysOfWeek aqui
+        dataValues[key] = value === "" ? null : value;
       }
-      toast.success(i18n.t("campaigns.toasts.success"));
-    } catch (err) {
-      console.log(err);
-      toastError(err);
+    });
+
+    // Garantir que campos não recorrentes sejam null quando isRecurring é false
+    if (!values.isRecurring) {
+      dataValues.recurrenceType = null;
+      dataValues.recurrenceInterval = null;
+      dataValues.recurrenceDaysOfWeek = null;
+      dataValues.recurrenceDayOfMonth = null;
+      dataValues.recurrenceEndDate = null;
+      dataValues.maxExecutions = null;
     }
-  };
+
+    if (campaignId) {
+      await api.put(`/campaigns/${campaignId}`, dataValues);
+      if (attachment != null) {
+        const formData = new FormData();
+        formData.append("file", attachment);
+        await api.post(`/campaigns/${campaignId}/media-upload`, formData);
+      }
+      handleClose();
+    } else {
+      const { data } = await api.post("/campaigns", dataValues);
+      if (attachment != null) {
+        const formData = new FormData();
+        formData.append("file", attachment);
+        await api.post(`/campaigns/${data.id}/media-upload`, formData);
+      }
+      if (onSave) {
+        onSave(data);
+      }
+      handleClose();
+    }
+    toast.success(i18n.t("campaigns.toasts.success"));
+  } catch (err) {
+    console.log(err);
+    toastError(err);
+  }
+};
 
   const deleteMedia = async () => {
     if (attachment) {
@@ -415,7 +565,7 @@ const CampaignModal = ({
         open={open}
         onClose={handleClose}
         fullWidth
-        maxWidth="md"
+        maxWidth="lg"
         scroll="paper"
       >
         <DialogTitle id="form-dialog-title">
@@ -447,7 +597,7 @@ const CampaignModal = ({
             }, 400);
           }}
         >
-          {({ values, errors, touched, isSubmitting }) => (
+          {({ values, errors, touched, isSubmitting, setFieldValue }) => (
             <Form>
               <DialogContent dividers>
                 <Grid spacing={2} container>
@@ -465,6 +615,7 @@ const CampaignModal = ({
                       disabled={!campaignEditable}
                     />
                   </Grid>
+                  
                   <Grid xs={12} md={4} item>
                     <FormControl
                       variant="outlined"
@@ -478,15 +629,11 @@ const CampaignModal = ({
                       <Field
                         as={Select}
                         label={i18n.t("campaigns.dialog.form.confirmation")}
-                        placeholder={i18n.t(
-                          "campaigns.dialog.form.confirmation"
-                        )}
+                        placeholder={i18n.t("campaigns.dialog.form.confirmation")}
                         labelId="confirmation-selection-label"
                         id="confirmation"
                         name="confirmation"
-                        error={
-                          touched.confirmation && Boolean(errors.confirmation)
-                        }
+                        error={touched.confirmation && Boolean(errors.confirmation)}
                         disabled={!campaignEditable}
                       >
                         <MenuItem value={false}>Desabilitada</MenuItem>
@@ -494,6 +641,7 @@ const CampaignModal = ({
                       </Field>
                     </FormControl>
                   </Grid>
+
                   <Grid xs={12} md={4} item>
                     <FormControl
                       variant="outlined"
@@ -507,30 +655,24 @@ const CampaignModal = ({
                       <Field
                         as={Select}
                         label={i18n.t("campaigns.dialog.form.contactList")}
-                        placeholder={i18n.t(
-                          "campaigns.dialog.form.contactList"
-                        )}
+                        placeholder={i18n.t("campaigns.dialog.form.contactList")}
                         labelId="contactList-selection-label"
                         id="contactListId"
                         name="contactListId"
-                        error={
-                          touched.contactListId && Boolean(errors.contactListId)
-                        }
+                        error={touched.contactListId && Boolean(errors.contactListId)}
                         disabled={!campaignEditable}
                       >
                         <MenuItem value="">Nenhuma</MenuItem>
                         {contactLists &&
                           contactLists.map((contactList) => (
-                            <MenuItem
-                              key={contactList.id}
-                              value={contactList.id}
-                            >
+                            <MenuItem key={contactList.id} value={contactList.id}>
                               {contactList.name}
                             </MenuItem>
                           ))}
                       </Field>
                     </FormControl>
                   </Grid>
+
                   <Grid xs={12} md={4} item>
                     <FormControl
                       variant="outlined"
@@ -551,7 +693,6 @@ const CampaignModal = ({
                         error={touched.tagListId && Boolean(errors.tagListId)}
                         disabled={!campaignEditable}
                       >
-                        {/* <MenuItem value="">Nenhuma</MenuItem> */}
                         {Array.isArray(tagLists) &&
                           tagLists.map((tagList) => (
                             <MenuItem key={tagList.id} value={tagList.id}>
@@ -574,7 +715,6 @@ const CampaignModal = ({
                       </InputLabel>
                       <Field
                         as={Select}
-                        // multiple
                         label={i18n.t("campaigns.dialog.form.whatsapp")}
                         placeholder={i18n.t("campaigns.dialog.form.whatsapp")}
                         labelId="whatsapp-selection-label"
@@ -585,16 +725,8 @@ const CampaignModal = ({
                         disabled={!campaignEditable}
                         value={whatsappId}
                         onChange={(event) => {
-                          console.log(event.target.value)
                           setWhatsappId(event.target.value)
                         }}
-                        // renderValue={(selected) => (
-                        //   <div>
-                        //     {selected.map((value) => (
-                        //       <Chip key={value} label={whatsapps.find((whatsapp) => whatsapp.id === value).name} />
-                        //     ))}
-                        //   </div>
-                        // )}
                       >
                         {whatsapps &&
                           whatsapps.map((whatsapp) => (
@@ -624,6 +756,244 @@ const CampaignModal = ({
                       disabled={!campaignEditable}
                     />
                   </Grid>
+
+                  {/* SEÇÃO DE RECORRÊNCIA */}
+                  <Grid xs={12} item>
+                    <Card className={classes.recurrenceCard}>
+                      <CardContent>
+                        <Box display="flex" alignItems="center" mb={2}>
+                          <RepeatIcon className={classes.recurrenceIcon} />
+                          <Typography variant="h6">
+                            Configuração de Recorrência
+                          </Typography>
+                        </Box>
+                        
+                        <Grid spacing={2} container>
+                          <Grid xs={12} item>
+                            <FormControlLabel
+                              control={
+                                <Field
+                                  as={Switch}
+                                  name="isRecurring"
+                                  checked={values.isRecurring}
+                                  onChange={(e) => {
+                                    setFieldValue('isRecurring', e.target.checked);
+                                    if (!e.target.checked) {
+                                      setPreviewExecutions([]);
+                                      setShowPreview(false);
+                                    }
+                                  }}
+                                  disabled={!campaignEditable}
+                                />
+                              }
+                              label="Habilitar recorrência"
+                            />
+                          </Grid>
+
+                          <Collapse in={values.isRecurring}>
+                            <Grid spacing={2} container>
+                              <Grid xs={12} md={3} item>
+                                <FormControl
+                                  variant="outlined"
+                                  margin="dense"
+                                  fullWidth
+                                  error={touched.recurrenceType && Boolean(errors.recurrenceType)}
+                                >
+                                  <InputLabel>Tipo de Recorrência</InputLabel>
+                                  <Field
+                                    as={Select}
+                                    name="recurrenceType"
+                                    label="Tipo de Recorrência"
+                                    disabled={!campaignEditable}
+                                    onChange={(e) => {
+                                      setFieldValue('recurrenceType', e.target.value);
+                                      // Reset outros campos quando mudar tipo
+                                      setFieldValue('recurrenceDaysOfWeek', []);
+                                      setFieldValue('recurrenceDayOfMonth', 1);
+                                    }}
+                                  >
+                                    <MenuItem value="minutely">Por Minuto</MenuItem>
+                                    <MenuItem value="hourly">Por Hora</MenuItem>
+                                    <MenuItem value="daily">Diário</MenuItem>
+                                    <MenuItem value="weekly">Semanal</MenuItem>
+                                    <MenuItem value="biweekly">Quinzenal</MenuItem>
+                                    <MenuItem value="monthly">Mensal</MenuItem>
+                                    <MenuItem value="yearly">Anual</MenuItem>
+                                  </Field>
+                                  {touched.recurrenceType && errors.recurrenceType && (
+                                    <FormHelperText error>{errors.recurrenceType}</FormHelperText>
+                                  )}
+                                </FormControl>
+                              </Grid>
+
+                              <Grid xs={12} md={3} item>
+                                <Field
+                                  as={TextField}
+                                  name="recurrenceInterval"
+                                  label="Intervalo"
+                                  type="number"
+                                  variant="outlined"
+                                  margin="dense"
+                                  fullWidth
+                                  inputProps={{ min: 1 }}
+                                  error={touched.recurrenceInterval && Boolean(errors.recurrenceInterval)}
+                                  helperText={
+                                    touched.recurrenceInterval && errors.recurrenceInterval ||
+                                    `A cada ${values.recurrenceInterval || 1} ${
+                                      values.recurrenceType === 'minutely' ? 'minuto(s)' :
+                                      values.recurrenceType === 'hourly' ? 'hora(s)' :
+                                      values.recurrenceType === 'daily' ? 'dia(s)' :
+                                      values.recurrenceType === 'weekly' ? 'semana(s)' :
+                                      values.recurrenceType === 'biweekly' ? 'quinzena(s)' :
+                                      values.recurrenceType === 'monthly' ? 'mês(es)' :
+                                      values.recurrenceType === 'yearly' ? 'ano(s)' : ''
+                                    }`
+                                  }
+                                  disabled={!campaignEditable}
+                                />
+                              </Grid>
+
+                              {/* Dias da semana para recorrência semanal */}
+                              {values.recurrenceType === 'weekly' && (
+                                <Grid xs={12} md={6} item>
+                                  <Typography variant="subtitle2" gutterBottom>
+                                    Dias da Semana
+                                  </Typography>
+                                  <FormGroup row>
+                                    {daysOfWeekOptions.map((day) => (
+                                      <FormControlLabel
+                                        key={day.value}
+                                        control={
+                                          <Checkbox
+                                            checked={values.recurrenceDaysOfWeek.includes(day.value)}
+                                            onChange={(e) => {
+                                              const currentDays = values.recurrenceDaysOfWeek || [];
+                                              if (e.target.checked) {
+                                                setFieldValue('recurrenceDaysOfWeek', [...currentDays, day.value]);
+                                              } else {
+                                                setFieldValue('recurrenceDaysOfWeek', 
+                                                  currentDays.filter(d => d !== day.value)
+                                                );
+                                              }
+                                            }}
+                                            disabled={!campaignEditable}
+                                          />
+                                        }
+                                        label={day.label.substring(0, 3)}
+                                      />
+                                    ))}
+                                  </FormGroup>
+                                  {touched.recurrenceDaysOfWeek && errors.recurrenceDaysOfWeek && (
+                                    <FormHelperText error>{errors.recurrenceDaysOfWeek}</FormHelperText>
+                                  )}
+                                </Grid>
+                              )}
+
+                              {/* Dia do mês para recorrência mensal */}
+                              {values.recurrenceType === 'monthly' && (
+                                <Grid xs={12} md={3} item>
+                                  <Field
+                                    as={TextField}
+                                    name="recurrenceDayOfMonth"
+                                    label="Dia do Mês"
+                                    type="number"
+                                    variant="outlined"
+                                    margin="dense"
+                                    fullWidth
+                                    inputProps={{ min: 1, max: 31 }}
+                                    error={touched.recurrenceDayOfMonth && Boolean(errors.recurrenceDayOfMonth)}
+                                    helperText={
+                                      touched.recurrenceDayOfMonth && errors.recurrenceDayOfMonth ||
+                                      "Dia específico do mês (1-31)"
+                                    }
+                                    disabled={!campaignEditable}
+                                  />
+                                </Grid>
+                              )}
+
+                              <Grid xs={12} md={4} item>
+                                <Field
+                                  as={TextField}
+                                  name="recurrenceEndDate"
+                                  label="Data Final (opcional)"
+                                  type="date"
+                                  variant="outlined"
+                                  margin="dense"
+                                  fullWidth
+                                  InputLabelProps={{ shrink: true }}
+                                  error={touched.recurrenceEndDate && Boolean(errors.recurrenceEndDate)}
+                                  helperText={
+                                    touched.recurrenceEndDate && errors.recurrenceEndDate ||
+                                    "Deixe vazio para recorrência infinita"
+                                  }
+                                  disabled={!campaignEditable}
+                                />
+                              </Grid>
+
+                              <Grid xs={12} md={4} item>
+                                <Field
+                                  as={TextField}
+                                  name="maxExecutions"
+                                  label="Máximo de Execuções (opcional)"
+                                  type="number"
+                                  variant="outlined"
+                                  margin="dense"
+                                  fullWidth
+                                  inputProps={{ min: 1 }}
+                                  error={touched.maxExecutions && Boolean(errors.maxExecutions)}
+                                  helperText={
+                                    touched.maxExecutions && errors.maxExecutions ||
+                                    "Deixe vazio para recorrência infinita"
+                                  }
+                                  disabled={!campaignEditable}
+                                />
+                              </Grid>
+
+                              <Grid xs={12} md={4} item>
+                                <Button
+                                  variant="outlined"
+                                  startIcon={<VisibilityIcon />}
+                                  onClick={() => {
+                                    handlePreviewRecurrence(values);
+                                    setShowPreview(!showPreview);
+                                  }}
+                                  disabled={!values.recurrenceType || !values.scheduledAt}
+                                  fullWidth
+                                  style={{ marginTop: 8 }}
+                                >
+                                  {showPreview ? 'Ocultar' : 'Visualizar'} Próximas Execuções
+                                </Button>
+                              </Grid>
+
+                              {/* Preview das execuções */}
+                              <Collapse in={showPreview && previewExecutions.length > 0}>
+                                <Grid xs={12} item>
+                                  <Card className={classes.previewCard}>
+                                    <CardContent>
+                                      <Typography variant="subtitle2" gutterBottom>
+                                        Próximas 5 Execuções:
+                                      </Typography>
+                                      <List dense>
+                                        {previewExecutions.slice(0, 5).map((execution, index) => (
+                                          <ListItem key={index} divider>
+                                            <ListItemText
+                                              primary={`${index + 1}ª Execução`}
+                                              secondary={typeof execution === 'string' ? execution : moment(execution).format('DD/MM/YYYY HH:mm')}
+                                            />
+                                          </ListItem>
+                                        ))}
+                                      </List>
+                                    </CardContent>
+                                  </Card>
+                                </Grid>
+                              </Collapse>
+                            </Grid>
+                          </Collapse>
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
                   <Grid xs={12} md={4} item>
                     <FormControl
                       variant="outlined"
@@ -637,15 +1007,11 @@ const CampaignModal = ({
                       <Field
                         as={Select}
                         label={i18n.t("campaigns.dialog.form.openTicket")}
-                        placeholder={i18n.t(
-                          "campaigns.dialog.form.openTicket"
-                        )}
+                        placeholder={i18n.t("campaigns.dialog.form.openTicket")}
                         labelId="openTicket-selection-label"
                         id="openTicket"
                         name="openTicket"
-                        error={
-                          touched.openTicket && Boolean(errors.openTicket)
-                        }
+                        error={touched.openTicket && Boolean(errors.openTicket)}
                         disabled={!campaignEditable}
                       >
                         <MenuItem value={"enabled"}>{i18n.t("campaigns.dialog.form.enabledOpenTicket")}</MenuItem>
@@ -653,6 +1019,7 @@ const CampaignModal = ({
                       </Field>
                     </FormControl>
                   </Grid>
+
                   {/* SELECIONAR USUARIO */}
                   <Grid xs={12} md={4} item>
                     <Autocomplete
@@ -670,7 +1037,6 @@ const CampaignModal = ({
                             setSelectedQueue(newValue.queues[0].id);
                           }
                           setQueues(newValue.queues);
-
                         } else {
                           setQueues(allQueues);
                           setSelectedQueue("");
@@ -706,6 +1072,7 @@ const CampaignModal = ({
                       )}
                     />
                   </Grid>
+
                   <Grid xs={12} md={4} item>
                     <FormControl
                       variant="outlined"
@@ -745,15 +1112,11 @@ const CampaignModal = ({
                       <Field
                         as={Select}
                         label={i18n.t("campaigns.dialog.form.statusTicket")}
-                        placeholder={i18n.t(
-                          "campaigns.dialog.form.statusTicket"
-                        )}
+                        placeholder={i18n.t("campaigns.dialog.form.statusTicket")}
                         labelId="statusTicket-selection-label"
                         id="statusTicket"
                         name="statusTicket"
-                        error={
-                          touched.statusTicket && Boolean(errors.statusTicket)
-                        }
+                        error={touched.statusTicket && Boolean(errors.statusTicket)}
                         disabled={!campaignEditable || values.openTicket === 'disabled'}
                       >
                         <MenuItem value={"closed"}>{i18n.t("campaigns.dialog.form.closedTicketStatus")}</MenuItem>
@@ -763,6 +1126,7 @@ const CampaignModal = ({
                     </FormControl>
                   </Grid>
 
+                  {/* SEÇÃO DE MENSAGENS */}
                   <Grid xs={12} item>
                     <Tabs
                       value={messageTab}
@@ -792,11 +1156,7 @@ const CampaignModal = ({
                                 <>{renderMessageField("message1")}</>
                               </Grid>
                               <Grid xs={12} md={4} item>
-                                <>
-                                  {renderConfirmationMessageField(
-                                    "confirmationMessage1"
-                                  )}
-                                </>
+                                <>{renderConfirmationMessageField("confirmationMessage1")}</>
                               </Grid>
                             </Grid>
                           ) : (
@@ -812,11 +1172,7 @@ const CampaignModal = ({
                                 <>{renderMessageField("message2")}</>
                               </Grid>
                               <Grid xs={12} md={4} item>
-                                <>
-                                  {renderConfirmationMessageField(
-                                    "confirmationMessage2"
-                                  )}
-                                </>
+                                <>{renderConfirmationMessageField("confirmationMessage2")}</>
                               </Grid>
                             </Grid>
                           ) : (
@@ -832,11 +1188,7 @@ const CampaignModal = ({
                                 <>{renderMessageField("message3")}</>
                               </Grid>
                               <Grid xs={12} md={4} item>
-                                <>
-                                  {renderConfirmationMessageField(
-                                    "confirmationMessage3"
-                                  )}
-                                </>
+                                <>{renderConfirmationMessageField("confirmationMessage3")}</>
                               </Grid>
                             </Grid>
                           ) : (
@@ -852,11 +1204,7 @@ const CampaignModal = ({
                                 <>{renderMessageField("message4")}</>
                               </Grid>
                               <Grid xs={12} md={4} item>
-                                <>
-                                  {renderConfirmationMessageField(
-                                    "confirmationMessage4"
-                                  )}
-                                </>
+                                <>{renderConfirmationMessageField("confirmationMessage4")}</>
                               </Grid>
                             </Grid>
                           ) : (
@@ -872,11 +1220,7 @@ const CampaignModal = ({
                                 <>{renderMessageField("message5")}</>
                               </Grid>
                               <Grid xs={12} md={4} item>
-                                <>
-                                  {renderConfirmationMessageField(
-                                    "confirmationMessage5"
-                                  )}
-                                </>
+                                <>{renderConfirmationMessageField("confirmationMessage5")}</>
                               </Grid>
                             </Grid>
                           ) : (
@@ -886,12 +1230,11 @@ const CampaignModal = ({
                       )}
                     </Box>
                   </Grid>
+
                   {(campaign.mediaPath || attachment) && (
                     <Grid xs={12} item>
                       <Button startIcon={<AttachFileIcon />}>
-                        {attachment != null
-                          ? attachment.name
-                          : campaign.mediaName}
+                        {attachment != null ? attachment.name : campaign.mediaName}
                       </Button>
                       {campaignEditable && (
                         <IconButton

@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import { has, isArray } from "lodash";
 
@@ -8,7 +8,6 @@ import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { socketConnection } from "../../services/socket";
-// import { useDate } from "../../hooks/useDate";
 import moment from "moment";
 
 const useAuth = () => {
@@ -16,9 +15,12 @@ const useAuth = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({});
-  const [socket, setSocket] = useState({})
- 
+  const [socket, setSocket] = useState(null);
+  
+  // Ref para manter referência dos listeners ativos
+  const listenersRef = useRef(new Set());
 
+  // Interceptors do API (mantém como estava)
   api.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem("token");
@@ -58,6 +60,7 @@ const useAuth = () => {
     }
   );
 
+  // Effect para inicialização do token
   useEffect(() => {
     const token = localStorage.getItem("token");
     (async () => {
@@ -66,7 +69,7 @@ const useAuth = () => {
           const { data } = await api.post("/auth/refresh_token");
           api.defaults.headers.Authorization = `Bearer ${data.token}`;
           setIsAuth(true);
-          setUser(data.user);
+          setUser(data.user || data);
         } catch (err) {
           toastError(err);
         }
@@ -75,30 +78,81 @@ const useAuth = () => {
     })();
   }, []);
 
+  // Effect para configuração do socket
   useEffect(() => {
     if (Object.keys(user).length && user.id > 0) {
-      // console.log("Entrou useWhatsapp com user", Object.keys(user).length, Object.keys(socket).length ,user, socket)
-      let io;
-      if (!Object.keys(socket).length) {
-        io = socketConnection({ user });
-        setSocket(io)
-      } else {
-        io = socket
+      console.log("Configurando socket para user", user.id, "company", user.companyId);
+      
+      // Limpar listeners anteriores
+      if (socket) {
+        listenersRef.current.forEach(eventName => {
+          if (socket.off) {
+            socket.off(eventName);
+          }
+        });
+        listenersRef.current.clear();
       }
-      io.on(`company-${user.companyId}-user`, (data) => {
-        if (data.action === "update" && data.user.id === user.id) {
-          setUser(data.user);
-        }
-      });
 
-      return () => {
-        // console.log("desconectou o company user ", user.id)
-        io.off(`company-${user.companyId}-user`);
-        // io.disconnect();
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // Criar nova conexão socket
+      const socketInstance = socketConnection({ user: {
+        companyId: user.companyId,
+        id: user.id }
+      });
+      
+      if (socketInstance) {
+        setSocket(socketInstance);
+
+        // Aguardar um pouco para garantir que o socket está configurado
+        setTimeout(() => {
+          const eventName = `company-${user.companyId}-user`;
+          
+          const handleUserUpdate = (data) => {
+            if (data.action === "update" && data.user.id === user.id) {
+              setUser(data.user);
+            }
+          };
+
+          // Verificar se o socket tem o método 'on'
+          if (socketInstance && typeof socketInstance.on === 'function') {
+            socketInstance.on(eventName, handleUserUpdate);
+            listenersRef.current.add(eventName);
+            console.log(`Listener adicionado para: ${eventName}`);
+          } else {
+            console.error("Socket instance não tem método 'on'", socketInstance);
+          }
+        }, 100);
+      }
     }
-  }, [user]);
+
+    // Cleanup function
+    return () => {
+      if (socket && listenersRef.current.size > 0) {
+        console.log("Limpando listeners do socket para user", user.id);
+        listenersRef.current.forEach(eventName => {
+          if (socket.off) {
+            socket.off(eventName);
+          }
+        });
+        listenersRef.current.clear();
+      }
+    };
+  }, [user.id, user.companyId]); // Dependências específicas
+
+  // Effect para buscar dados do usuário atual
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const { data } = await api.get("/auth/me");
+        setUser(data.user || data);
+      } catch (err) {
+        console.log("Erro ao buscar usuário atual:", err);
+      }
+    };
+    
+    if (isAuth) {
+      fetchCurrentUser();
+    }
+  }, [isAuth]);
 
   const handleLogin = async (userData) => {
     setLoading(true);
@@ -109,16 +163,23 @@ const useAuth = () => {
         user: { company },
       } = data;
 
-      if (has(company, "companieSettings") && isArray(company.companieSettings[0])) {
+      // Lógica de configurações da empresa (mantém como estava)
+      if (
+        has(company, "companieSettings") &&
+        isArray(company.companieSettings[0])
+      ) {
         const setting = company.companieSettings[0].find(
           (s) => s.key === "campaignsEnabled"
         );
         if (setting && setting.value === "true") {
-          localStorage.setItem("cshow", null); //regra pra exibir campanhas
+          localStorage.setItem("cshow", null);
         }
       }
 
-      if (has(company, "companieSettings") && isArray(company.companieSettings[0])) {
+      if (
+        has(company, "companieSettings") &&
+        isArray(company.companieSettings[0])
+      ) {
         const setting = company.companieSettings[0].find(
           (s) => s.key === "sendSignMessage"
         );
@@ -126,49 +187,50 @@ const useAuth = () => {
         const signEnable = setting.value === "enable";
 
         if (setting && setting.value === "enabled") {
-          localStorage.setItem("sendSignMessage", signEnable); //regra pra exibir campanhas
+          localStorage.setItem("sendSignMessage", signEnable);
         }
       }
-      localStorage.setItem("profileImage", data.user.profileImage); //regra pra exibir imagem contato
+      
+      localStorage.setItem("profileImage", data.user.profileImage);
 
-      moment.locale('pt-br');
+      moment.locale("pt-br");
       let dueDate;
       if (data.user.company.id === 1) {
-        dueDate = '2999-12-31T00:00:00.000Z'
+        dueDate = "2999-12-31T00:00:00.000Z";
       } else {
         dueDate = data.user.company.dueDate;
       }
+      
       const hoje = moment(moment()).format("DD/MM/yyyy");
       const vencimento = moment(dueDate).format("DD/MM/yyyy");
 
-      var diff = moment(dueDate).diff(moment(moment()).format());
-
-      var before = moment(moment().format()).isBefore(dueDate);
-      var dias = moment.duration(diff).asDays();
+      // Comparar apenas as datas (sem horas) para permitir acesso até 23h59 do dia do vencimento
+      const hojeInicio = moment().startOf('day');
+      const vencimentoInicio = moment(dueDate).startOf('day');
+      
+      var diff = vencimentoInicio.diff(hojeInicio, 'days');
+      var before = hojeInicio.isSameOrBefore(vencimentoInicio, 'day');
+      var dias = diff;
 
       if (before === true) {
         localStorage.setItem("token", JSON.stringify(data.token));
-        // localStorage.setItem("public-token", JSON.stringify(data.user.token));
-        // localStorage.setItem("companyId", companyId);
-        // localStorage.setItem("userId", id);
         localStorage.setItem("companyDueDate", vencimento);
         api.defaults.headers.Authorization = `Bearer ${data.token}`;
-        setUser(data.user);
+        setUser(data.user || data);
         setIsAuth(true);
         toast.success(i18n.t("auth.toasts.success"));
+        
         if (Math.round(dias) < 5) {
-          toast.warn(`Sua assinatura vence em ${Math.round(dias)} ${Math.round(dias) === 1 ? 'dia' : 'dias'} `);
+          toast.warn(
+            `Sua assinatura vence em ${Math.round(dias)} ${
+              Math.round(dias) === 1 ? "dia" : "dias"
+            } `
+          );
         }
-
-        // // Atraso para garantir que o cache foi limpo
-        // setTimeout(() => {
-        //   window.location.reload(true); // Recarregar a página
-        // }, 1000);
 
         history.push("/tickets");
         setLoading(false);
       } else {
-        // localStorage.setItem("companyId", companyId);
         api.defaults.headers.Authorization = `Bearer ${data.token}`;
         setIsAuth(true);
         toastError(`Opss! Sua assinatura venceu ${vencimento}.
@@ -176,7 +238,6 @@ Entre em contato com o Suporte para mais informações! `);
         history.push("/financeiro-aberto");
         setLoading(false);
       }
-
     } catch (err) {
       toastError(err);
       setLoading(false);
@@ -187,13 +248,26 @@ Entre em contato com o Suporte para mais informações! `);
     setLoading(true);
 
     try {
-      // socket.disconnect();
+      // Limpar socket antes do logout
+      if (socket) {
+        listenersRef.current.forEach(eventName => {
+          if (socket.off) {
+            socket.off(eventName);
+          }
+        });
+        listenersRef.current.clear();
+        
+        if (typeof socket.disconnect === 'function') {
+          socket.disconnect();
+        }
+      }
+
       await api.delete("/auth/logout");
       setIsAuth(false);
       setUser({});
+      setSocket(null);
       localStorage.removeItem("token");
       localStorage.removeItem("cshow");
-      // localStorage.removeItem("public-token");
       api.defaults.headers.Authorization = undefined;
       setLoading(false);
       history.push("/login");
@@ -206,7 +280,7 @@ Entre em contato com o Suporte para mais informações! `);
   const getCurrentUserInfo = async () => {
     try {
       const { data } = await api.get("/auth/me");
-      console.log(data)
+      console.log(data);
       return data;
     } catch (_) {
       return null;
@@ -220,7 +294,7 @@ Entre em contato com o Suporte para mais informações! `);
     handleLogin,
     handleLogout,
     getCurrentUserInfo,
-    socket
+    socket,
   };
 };
 

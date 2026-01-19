@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useReducer, useCallback, useContext } from "react";
+import React, {
+  useState,
+  useEffect,
+  useReducer,
+  useCallback,
+  useContext,
+} from "react";
 import { toast } from "react-toastify";
 import { useHistory } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
@@ -44,24 +50,24 @@ const eventTitleStyle = {
 
 const localizer = momentLocalizer(moment);
 var defaultMessages = {
-  date: "Data",
-  time: "Hora",
-  event: "Evento",
-  allDay: "Dia Todo",
-  week: "Semana",
-  work_week: "Agendamentos",
-  day: "Dia",
-  month: "Mês",
-  previous: "Anterior",
-  next: "Próximo",
-  yesterday: "Ontem",
-  tomorrow: "Amanhã",
-  today: "Hoje",
-  agenda: "Agenda",
-  noEventsInRange: "Não há agendamentos no período.",
+  date: i18n.t("schedules.date"),
+  time: i18n.t("schedules.time"),
+  event: i18n.t("schedules.event"),
+  allDay: i18n.t("schedules.allDay"),
+  week: i18n.t("schedules.week"),
+  work_week: i18n.t("schedules.work_week"),
+  day: i18n.t("schedules.day"),
+  month: i18n.t("schedules.month"),
+  previous: i18n.t("schedules.previous"),
+  next: i18n.t("schedules.next"),
+  yesterday: i18n.t("schedules.yesterday"),
+  tomorrow: i18n.t("schedules.tomorrow"),
+  today: i18n.t("schedules.today"),
+  agenda: i18n.t("schedules.agenda"),
+  noEventsInRange: i18n.t("schedules.noEventsInRange"),
   showMore: function showMore(total) {
     return "+" + total + " mais";
-  }
+  },
 };
 
 const reducer = (state, action) => {
@@ -116,22 +122,22 @@ const useStyles = makeStyles((theme) => ({
     ...theme.scrollbarStyles,
   },
   calendarToolbar: {
-    '& .rbc-toolbar-label': {
+    "& .rbc-toolbar-label": {
       color: theme.mode === "light" ? theme.palette.light : "white",
     },
-    '& .rbc-btn-group button': {
+    "& .rbc-btn-group button": {
       color: theme.mode === "light" ? theme.palette.light : "white",
-      '&:hover': {
-        color: theme.palette.mode === 'dark' ? '#fff' : '#000',
+      "&:hover": {
+        color: theme.palette.mode === "dark" ? "#fff" : "#000",
       },
-      '&:active': {
-        color: theme.palette.mode === 'dark' ? '#fff' : '#000',
+      "&:active": {
+        color: theme.palette.mode === "dark" ? "#fff" : "#000",
       },
-      '&:focus': {
-        color: theme.palette.mode === 'dark' ? '#fff' : '#000',
+      "&:focus": {
+        color: theme.palette.mode === "dark" ? "#fff" : "#000",
       },
-      '&.rbc-active': {
-        color: theme.palette.mode === 'dark' ? '#fff' : '#000',
+      "&.rbc-active": {
+        color: theme.palette.mode === "dark" ? "#fff" : "#000",
       },
     },
   },
@@ -143,7 +149,6 @@ const Schedules = () => {
 
   //   const socketManager = useContext(SocketContext);
   const { user, socket } = useContext(AuthContext);
-
 
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
@@ -163,9 +168,11 @@ const Schedules = () => {
       const companyId = user.companyId;
       const planConfigs = await getPlanCompany(undefined, companyId);
       if (!planConfigs.plan.useSchedules) {
-        toast.error("Esta empresa não possui permissão para acessar essa página! Estamos lhe redirecionando.");
+        toast.error(
+          "Esta empresa não possui permissão para acessar essa página! Estamos lhe redirecionando."
+        );
         setTimeout(() => {
-          history.push(`/`)
+          history.push(`/`);
         }, 1000);
       }
     }
@@ -215,7 +222,6 @@ const Schedules = () => {
     // handleOpenScheduleModalFromContactId();
     // const socket = socketManager.GetSocket(user.companyId, user.id);
 
-
     const onCompanySchedule = (data) => {
       if (data.action === "update" || data.action === "create") {
         dispatch({ type: "UPDATE_SCHEDULES", payload: data.schedule });
@@ -224,12 +230,12 @@ const Schedules = () => {
       if (data.action === "delete") {
         dispatch({ type: "DELETE_SCHEDULE", payload: +data.scheduleId });
       }
-    }
+    };
 
-    socket.on(`company${user.companyId}-schedule`, onCompanySchedule)
+    socket.on(`company${user.companyId}-schedule`, onCompanySchedule);
 
     return () => {
-      socket.off(`company${user.companyId}-schedule`, onCompanySchedule)
+      socket.off(`company${user.companyId}-schedule`, onCompanySchedule);
     };
   }, [socket]);
 
@@ -310,15 +316,16 @@ const Schedules = () => {
           onClose={handleCloseScheduleModal}
           reload={fetchSchedules}
           // aria-labelledby="form-dialog-title"
-          scheduleId={
-            selectedSchedule ? selectedSchedule.id : null
-          }
+          scheduleId={selectedSchedule ? selectedSchedule.id : null}
           contactId={contactId}
           cleanContact={cleanContact}
+          user={user}
         />
       )}
       <MainHeader>
-        <Title>{i18n.t("schedules.title")} ({schedules.length})</Title>
+        <Title>
+          {i18n.t("schedules.title")} ({schedules.length})
+        </Title>
         <MainHeaderButtonsWrapper>
           <TextField
             placeholder={i18n.t("contacts.searchPlaceholder")}
@@ -342,12 +349,16 @@ const Schedules = () => {
           </Button>
         </MainHeaderButtonsWrapper>
       </MainHeader>
-      <Paper className={classes.mainPaper} variant="outlined" onScroll={handleScroll}>
+      <Paper
+        className={classes.mainPaper}
+        variant="outlined"
+        onScroll={handleScroll}
+      >
         <Calendar
           messages={defaultMessages}
           formats={{
             agendaDateFormat: "DD/MM ddd",
-            weekdayFormat: "dddd"
+            weekdayFormat: "dddd",
           }}
           localizer={localizer}
           events={schedules.map((schedule) => ({

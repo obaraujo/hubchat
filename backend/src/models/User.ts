@@ -14,8 +14,10 @@ import {
   BelongsToMany,
   ForeignKey,
   BelongsTo,
-  BeforeDestroy
+  BeforeDestroy,
+  AfterCreate
 } from "sequelize-typescript";
+import logger from "../utils/logger"
 import { hash, compare } from "bcryptjs";
 import Ticket from "./Ticket";
 import Queue from "./Queue";
@@ -24,77 +26,86 @@ import Company from "./Company";
 import QuickMessage from "./QuickMessage";
 import Whatsapp from "./Whatsapp";
 import Chatbot from "./Chatbot";
+import Chat from "./Chat";
+import ChatUser from "./ChatUser";
+import ContactWallet from "./ContactWallet";
 
 @Table
 class User extends Model<User> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.TEXT)
+  @Column
   name: string;
 
-  @Column(DataType.TEXT)
+  @Column
   email: string;
 
   @Column(DataType.VIRTUAL)
   password: string;
 
-  @Column(DataType.TEXT)
+  @Column
   passwordHash: string;
 
   @Default(0)
-  @Column(DataType.INTEGER)
+  @Column
   tokenVersion: number;
 
   @Default("admin")
-  @Column(DataType.TEXT)
+  @Column
   profile: string;
 
   @Default(null)
-  @Column(DataType.TEXT)
+  @Column
   profileImage: string;
-  
+
+  @Column(DataType.DATEONLY)
+  birthDate: Date;
+
   @ForeignKey(() => Whatsapp)
-  @Column(DataType.INTEGER)
+  @Column
   whatsappId: number;
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;
-  
-  @Column(DataType.BOOLEAN)
+
+  @Column
   super: boolean;
 
-  @Column(DataType.BOOLEAN)
+  @Column
   online: boolean;
 
+  @Column
+  lastSeen: Date;
+
   @Default("00:00")
-  @Column(DataType.TEXT)
+  @Column
   startWork: string;
 
   @Default("23:59")
-  @Column(DataType.TEXT)
+  @Column
   endWork: string;
 
   @Default("")
-  @Column(DataType.TEXT)
+  @Column
   color: string;
 
   @Default("disable")
-  @Column(DataType.TEXT)
+  @Column
   allTicket: string;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   allowGroup: boolean;
 
   @Default("light")
-  @Column(DataType.TEXT)
+  @Column
   defaultTheme: string;
 
   @Default("closed")
-  @Column(DataType.TEXT)
+  @Column
   defaultMenu: string;
 
   @Default("")
@@ -108,7 +119,7 @@ class User extends Model<User> {
   updatedAt: Date;
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @BelongsTo(() => Company)
@@ -127,6 +138,9 @@ class User extends Model<User> {
   })
   quickMessages: QuickMessage[];
 
+  @HasMany(() => ContactWallet)
+  contactWallets: ContactWallet[];
+
   @BeforeUpdate
   @BeforeCreate
   static hashPassword = async (instance: User): Promise<void> => {
@@ -140,7 +154,7 @@ class User extends Model<User> {
   };
 
   @Default("disabled")
-  @Column(DataType.TEXT)
+  @Column
   allHistoric: string;
 
   @HasMany(() => Chatbot, {
@@ -151,34 +165,169 @@ class User extends Model<User> {
   chatbot: Chatbot[];
 
   @Default("disabled")
-  @Column(DataType.TEXT)
+  @Column
   allUserChat: string;
 
   @Default("enabled")
-  @Column(DataType.TEXT)
+  @Column
   userClosePendingTicket: string;
 
   @Default("disabled")
-  @Column(DataType.TEXT)
+  @Column
   showDashboard: string;
 
   @Default(550)
-  @Column(DataType.INTEGER)
+  @Column
   defaultTicketsManagerWidth: number;
 
   @Default("disable")
-  @Column(DataType.TEXT)
+  @Column
   allowRealTime: string;
 
   @Default("disable")
-  @Column(DataType.TEXT)
+  @Column
   allowConnections: string;
+
+  @Default("enabled")
+  @Column
+  showContacts: string;
+
+  @Default("disabled")
+  @Column
+  showCampaign: string;
+
+  @Default("enabled")
+  @Column
+  showFlow: string;
+
+  @Default(false)
+  @Column
+  finalizacaoComValorVendaAtiva: boolean;
+
+  @Default("enabled")
+  @Column
+  allowSeeMessagesInPendingTickets: string;
 
   @BeforeDestroy
   static async updateChatbotsUsersReferences(user: User) {
-    // Atualizar os registros na tabela Chatbots onde optQueueId é igual ao ID da fila que será excluída
-    await Chatbot.update({ optUserId: null }, { where: { optUserId: user.id } });
+    await Chatbot.update(
+      { optUserId: null },
+      { where: { optUserId: user.id } }
+    );
   }
+
+  // @AfterCreate
+  static async createInitialChat(user: User) {
+    try {
+      const chat = await Chat.create({
+        title: user.name,
+        isGroup: false,
+        companyId: user.companyId,
+        ownerId: user.id
+      });
+
+      await ChatUser.create({
+        chatId: chat.id,
+        userId: user.id,
+        companyId: user.companyId
+      });
+
+      const admin = await User.findOne({
+        where: {
+          companyId: user.companyId,
+          profile: "admin"
+        }
+      });
+
+      if (admin) {
+        await ChatUser.create({
+          chatId: chat.id,
+          userId: admin.id,
+          companyId: user.companyId
+        });
+      }
+    } catch (err) {
+      console.error("Error creating initial chat:", err);
+    }
+  }
+
+get isBirthdayToday(): boolean {
+  if (!this.birthDate) return false;
+
+  const moment = require('moment-timezone');
+  const today = moment().tz("America/Sao_Paulo");
+  const birthDate = moment(this.birthDate).tz("America/Sao_Paulo");
+
+  return (
+    today.month() === birthDate.month() &&
+    today.date() === birthDate.date()
+  );
+}
+
+get currentAge(): number | null {
+  if (!this.birthDate) return null;
+
+  const moment = require('moment-timezone');
+  const today = moment().tz("America/Sao_Paulo");
+  const birthDate = moment(this.birthDate).tz("America/Sao_Paulo");
+
+  let age = today.year() - birthDate.year();
+
+  // Ajustar se ainda não fez aniversário este ano
+  const monthDiff = today.month() - birthDate.month();
+  if (monthDiff < 0 || (monthDiff === 0 && today.date() < birthDate.date())) {
+    age--;
+  }
+
+  return age;
+}
+
+/**
+ * Busca todos os usuários aniversariantes de hoje de uma empresa
+ */
+static async getTodayBirthdays(companyId: number): Promise<User[]> {
+  const moment = require('moment-timezone');
+  const today = moment().tz("America/Sao_Paulo");
+  const month = today.month() + 1;
+  const day = today.date();
+
+  logger.info(` [User.getTodayBirthdays] Buscando aniversariantes - Hoje: ${today.format('DD/MM/YYYY')}`);
+
+  // Buscar todos os usuários com data de nascimento
+  const users = await User.findAll({
+    where: {
+      companyId,
+      birthDate: {
+        [require('sequelize').Op.ne]: null
+      }
+    },
+    include: ['company']
+  });
+
+  logger.info(` [User.getTodayBirthdays] Total de usuários com birthDate: ${users.length}`);
+
+  // Filtrar no JavaScript para evitar problemas de timezone do banco
+  const birthdayUsers = users.filter(user => {
+    if (!user.birthDate) return false;
+
+    const birthDate = moment(user.birthDate).tz("America/Sao_Paulo");
+    const birthMonth = birthDate.month() + 1;
+    const birthDay = birthDate.date();
+
+    const isToday = birthMonth === month && birthDay === day;
+
+    if (isToday) {
+      logger.info(` [User.getTodayBirthdays] Aniversariante encontrado: ${user.name} - ${birthDate.format('DD/MM/YYYY')}`);
+    }
+
+    return isToday;
+  });
+
+  logger.info(` [User.getTodayBirthdays] Aniversariantes de hoje: ${birthdayUsers.length}`);
+
+  return birthdayUsers;
+}
+
 }
 
 export default User;

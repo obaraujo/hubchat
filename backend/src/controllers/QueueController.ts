@@ -33,12 +33,15 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     outOfHoursMessage,
     schedules,
     chatbots,
-    orderQueue, 
-    tempoRoteador, 
+    orderQueue,
+    tempoRoteador,
     ativarRoteador,
     integrationId,
     fileListId,
-    closeTicket
+    closeTicket,
+    typeRandomMode,
+    randomizeImmediate,
+    tipoIntegracao
   } = req.body;
   const { companyId } = req.user;
 
@@ -47,15 +50,18 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     color,
     greetingMessage,
     companyId,
-    outOfHoursMessage, 
-    tempoRoteador: tempoRoteador ===""? 0 : tempoRoteador, 
+    outOfHoursMessage,
+    tempoRoteador: tempoRoteador ===""? 0 : tempoRoteador,
     ativarRoteador,
     schedules,
-    chatbots, 
+    chatbots,
     orderQueue: orderQueue === "" ? null : orderQueue,
     integrationId: integrationId === "" ? null : integrationId,
     fileListId: fileListId === "" ? null : fileListId,
-    closeTicket
+    closeTicket,
+    typeRandomMode,
+    randomizeImmediate,
+    tipoIntegracao
   });
 
   const io = getIO();
@@ -91,27 +97,34 @@ export const update = async (
     outOfHoursMessage,
     schedules,
     chatbots,
-    orderQueue, 
-    tempoRoteador, 
+    orderQueue,
+    tempoRoteador,
     ativarRoteador,
     integrationId,
     fileListId,
-    closeTicket
+    closeTicket,
+    typeRandomMode,
+    randomizeImmediate,
+    tipoIntegracao
   } = req.body;
 
-  const queue = await UpdateQueueService(queueId, 
+  const queue = await UpdateQueueService(queueId,
     {name,
     color,
     greetingMessage,
-    outOfHoursMessage, 
-    tempoRoteador: tempoRoteador ===""? 0 : tempoRoteador, 
+    outOfHoursMessage,
+    tempoRoteador: tempoRoteador ===""? 0 : tempoRoteador,
     ativarRoteador,
     schedules,
-    chatbots, 
+    chatbots,
     orderQueue: orderQueue === "" ? null : orderQueue,
     integrationId: integrationId === "" ? null : integrationId,
     fileListId: fileListId === "" ? null : fileListId,
-    closeTicket},
+    closeTicket,
+    typeRandomMode,
+    randomizeImmediate,
+    tipoIntegracao
+  },
     companyId);
 
   const io = getIO();

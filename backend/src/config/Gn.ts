@@ -4,7 +4,7 @@ const name = process.env.GERENCIANET_SANDBOX === "false" ? "producao" : "homolog
 
 const cert = path.join(
   __dirname,
-  `../../certs/${process.env.GERENCIANET_PIX_CERT}.p12`
+  `../../certs/${name}.p12`
 );
 
 export = {
@@ -13,5 +13,4 @@ export = {
   client_secret: process.env.GERENCIANET_CLIENT_SECRET as string,
   pix_cert: cert
 };
-
 

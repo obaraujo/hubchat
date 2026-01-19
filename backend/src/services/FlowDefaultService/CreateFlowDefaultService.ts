@@ -9,20 +9,23 @@ interface Request {
   companyId: number
   flowIdWelcome: number
   flowIdPhrase: number
+  flowIdInactiveTime?: number
 }
 
 const CreateFlowDefaultService = async ({
   userId,
   companyId,
   flowIdWelcome,
-  flowIdPhrase
+  flowIdPhrase,
+  flowIdInactiveTime
 }: Request): Promise<FlowDefaultModel> => {
   try {
     const flow = await FlowDefaultModel.create({
       userId: userId,
       companyId: companyId,
       flowIdWelcome,
-      flowIdNotPhrase: flowIdPhrase
+      flowIdNotPhrase: flowIdPhrase,
+      flowIdInactiveTime
     });
 
     return flow;

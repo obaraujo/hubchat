@@ -19,11 +19,11 @@ import Company from "./Company";
 class Integrations extends Model<Integrations> {
     @PrimaryKey
     @AutoIncrement
-    @Column(DataType.INTEGER)
+    @Column
     id: number;
 
     @ForeignKey(() => Company)
-    @Column(DataType.INTEGER)
+    @Column
     companyId: number;
     @Column(DataType.TEXT)
     type: string;
@@ -39,7 +39,7 @@ class Integrations extends Model<Integrations> {
     jsonContent: string;
 
     @Default(false)
-    @Column(DataType.BOOLEAN)
+    @Column
     isActive: boolean;
     @Column(DataType.TEXT)
     urlN8N: string;
@@ -59,16 +59,16 @@ class Integrations extends Model<Integrations> {
     @Column(DataType.TEXT)
     token: string;
 
-    @Column(DataType.TEXT)
+    @Column
     foneContact: string;
 
-    @Column(DataType.TEXT)
+    @Column
     userLogin: string;
 
-    @Column(DataType.TEXT)
+    @Column
     passLogin: string;
 
-    @Column(DataType.INTEGER)
+    @Column
     initialCurrentMonth: number;
     @HasMany(() => Queue)
     queues: Queue[];

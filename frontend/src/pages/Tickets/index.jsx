@@ -4,7 +4,7 @@ import Grid from "@material-ui/core/Grid";
 import Paper from "@material-ui/core/Paper";
 import { makeStyles } from "@material-ui/core/styles";
 
-import TicketsManager from "../../components/TicketsManager";
+import TicketsManagerTabs from "../../components/TicketsManagerTabs";
 import Ticket from "../../components/Ticket";
 
 import { i18n } from "../../translate/i18n";
@@ -17,6 +17,10 @@ const useStyles = makeStyles(theme => ({
 		padding: theme.padding,
 		height: `calc(100% - 48px)`,
 		overflowY: "hidden",
+		// Ajuste para monitores pequenos (11-13 polegadas)
+		'@media (max-width: 1366px)': {
+			padding: theme.spacing(1),
+		},
 	},
 
 	chatPapper: {
@@ -60,7 +64,7 @@ const Chat = () => {
 			<div className={classes.chatPapper}>
 				<Grid container spacing={0}>
 					<Grid item xs={4} className={classes.contactsWrapper}>
-						<TicketsManager />
+						<TicketsManagerTabs />
 					</Grid>
 					<Grid item xs={8} className={classes.messagessWrapper}>
 						{ticketId ? (

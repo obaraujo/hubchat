@@ -19,6 +19,7 @@ import IconButton from "@material-ui/core/IconButton";
 import SearchIcon from "@material-ui/icons/Search";
 import TextField from "@material-ui/core/TextField";
 import InputAdornment from "@material-ui/core/InputAdornment";
+import { FormControl, InputLabel, Select, MenuItem } from "@material-ui/core";
 
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditIcon from "@material-ui/icons/Edit";
@@ -34,7 +35,7 @@ import TableRowSkeleton from "../../components/TableRowSkeleton";
 import TagModal from "../../components/TagModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
-import { Chip, Tooltip } from "@material-ui/core";
+import { Chip } from "@material-ui/core";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { MoreHoriz } from "@material-ui/icons";
 import ContactTagListModal from "../../components/ContactTagListModal";
@@ -81,6 +82,7 @@ const Tags = () => {
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [pageSize, setPageSize] = useState(50);
   const [selectedTagName, setSelectedTagName] = useState("");
   const [selectedTag, setSelectedTag] = useState(null);
   const [deletingTag, setDeletingTag] = useState(null);
@@ -91,24 +93,27 @@ const Tags = () => {
   const pageNumberRef = useRef(1);
 
   useEffect(() => {
-    const fetchMoreTags = async () => {
-      try {
-        const { data } = await api.get("/tags/", {
-          params: { searchParam, pageNumber, kanban: 0 },
-        });
-        dispatch({ type: "LOAD_TAGS", payload: data.tags });
-        setHasMore(data.hasMore);
-        setLoading(false);
-      } catch (err) {
-        toastError(err);
-      }
-    };
+    const delayDebounceFn = setTimeout(() => {
+      const fetchMoreTags = async () => {
+        try {
+          const { data } = await api.get("/tags/", {
+            params: { searchParam, pageNumber, kanban: 0, limit: pageSize },
+          });
+          dispatch({ type: "LOAD_TAGS", payload: data.tags });
+          setHasMore(data.hasMore);
+          setLoading(false);
+        } catch (err) {
+          toastError(err);
+        }
+      };
 
-    if (pageNumber > 0) {
-      setLoading(true);
-      fetchMoreTags();
-    }
-  }, [searchParam, pageNumber]);
+      if (pageNumber > 0) {
+        setLoading(true);
+        fetchMoreTags();
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchParam, pageNumber, pageSize]);
 
   useEffect(() => {
     const onCompanyTags = (data) => {
@@ -140,6 +145,13 @@ const Tags = () => {
   const handleSearch = (event) => {
     const newSearchParam = event.target.value.toLowerCase();
     setSearchParam(newSearchParam);
+    setPageNumber(1);
+    dispatch({ type: "RESET" });
+  };
+
+  const handlePageSizeChange = (event) => {
+    const newSize = Number(event.target.value);
+    setPageSize(newSize);
     setPageNumber(1);
     dispatch({ type: "RESET" });
   };
@@ -212,6 +224,19 @@ const Tags = () => {
       <MainHeader>
         <Title>{i18n.t("tags.title")} ({tags.length})</Title>
         <MainHeaderButtonsWrapper>
+            <FormControl variant="outlined" size="small" style={{ minWidth: 140 }}>
+              <InputLabel id="page-size-label">Itens/página</InputLabel>
+              <Select
+                labelId="page-size-label"
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                label="Itens/página"
+              >
+                <MenuItem value={20}>20</MenuItem>
+                <MenuItem value={50}>50</MenuItem>
+                <MenuItem value={100}>100</MenuItem>
+              </Select>
+            </FormControl>
           <TextField
             placeholder={i18n.t("contacts.searchPlaceholder")}
             type="search"
@@ -239,7 +264,7 @@ const Tags = () => {
         variant="outlined"
         onScroll={handleScroll}
       >
-        <Table size="small">
+        <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell align="center">{i18n.t("tags.table.id")}</TableCell>
@@ -298,10 +323,19 @@ const Tags = () => {
                 </TableRow>
               ))}
 
-              {loading && <TableRowSkeleton key="skeleton" columns={4} />}
+              {loading && Array.from({ length: 5 }).map((_, idx) => (
+                <TableRowSkeleton key={`skeleton-${idx}`} columns={4} />
+              ))}
             </>
           </TableBody>
         </Table>
+        {hasMore && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 8 }}>
+            <Button variant="outlined" color="primary" onClick={loadMore} disabled={loading}>
+              {loading ? i18n.t("contacts.loading") : i18n.t("contacts.loadMore")}
+            </Button>
+          </div>
+        )}
       </Paper>
     </MainContainer>
   );

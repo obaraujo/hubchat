@@ -195,7 +195,7 @@ const CampaignsConfig = () => {
         {i18n.t("campaigns.confirmationModal.deleteMessage")}
       </ConfirmationModal>
       {
-        user.profile === "user" ?
+        user.profile === "user" && user?.showCampaign === "disabled" ?
           <ForbiddenPage />
           :
           <>

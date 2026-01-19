@@ -7,8 +7,7 @@ import {
   PrimaryKey,
   AutoIncrement,
   ForeignKey,
-  BelongsTo,
-	DataType
+  BelongsTo
 } from "sequelize-typescript";
 import Chatbot from "./Chatbot";
 import Contact from "./Contact";
@@ -18,22 +17,22 @@ import Queue from "./Queue";
 class DialogChatBots extends Model<DialogChatBots> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.INTEGER)
+  @Column
   awaiting: number;
 
   @ForeignKey(() => Contact)
-  @Column(DataType.INTEGER)
+  @Column
   contactId: number;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueId: number;
 
   @ForeignKey(() => Chatbot)
-  @Column(DataType.INTEGER)
+  @Column
   chatbotId: number;
 
   @BelongsTo(() => Chatbot)

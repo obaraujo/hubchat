@@ -7,21 +7,39 @@ interface Data {
   companyId: number;
   users: any[];
   title: string;
+  description?: string;
+  groupImage?: string;
+  isGroup?: boolean;
 }
 
 const CreateService = async (data: Data): Promise<Chat> => {
-  const { ownerId, companyId, users, title } = data;
+  const {
+    ownerId,
+    companyId,
+    users,
+    title,
+    description = "",
+    groupImage = "",
+    isGroup
+  } = data;
 
   const record = await Chat.create({
     ownerId,
     companyId,
-    title
+    title,
+    isGroup: isGroup !== undefined ? isGroup : users.length > 1,
+    groupName: users.length > 1 ? title : "",
+    groupAdminId: ownerId,
+    description,
+    groupImage
   });
 
   if (Array.isArray(users) && users.length > 0) {
     await ChatUser.create({ chatId: record.id, userId: ownerId });
     for (let user of users) {
-      await ChatUser.create({ chatId: record.id, userId: user.id });
+      if (user.id !== ownerId) {
+        await ChatUser.create({ chatId: record.id, userId: user.id });
+      }
     }
   }
 

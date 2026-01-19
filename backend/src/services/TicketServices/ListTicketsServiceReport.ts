@@ -23,7 +23,6 @@ export interface Params {
   onlyRated: string;
 }
 
-
 export default async function ListTicketsServiceReport(
   companyId: string | number,
   params: Params,
@@ -34,9 +33,9 @@ export default async function ListTicketsServiceReport(
 
   const onlyRated = params.onlyRated === "true" ? true : false;
   let query = "";
-  console.log(params)
+  console.log(params);
   if (onlyRated) {
-   query = `
+    query = `
 
   select 
 	  t.id,
@@ -44,8 +43,12 @@ export default async function ListTicketsServiceReport(
     c."name" as "contactName",
 	  u."name" as "userName",
 	  q."name" as "queueName",
+	  wallet_user."name" as "walletName",
 	  t."lastMessage",
     t.uuid,
+    t."valorVenda",
+    t."motivoNaoVenda",
+    t."finalizadoComVenda",
     case t.status
       when 'open' then 'ABERTO'
       when 'closed' then 'FECHADO'
@@ -74,6 +77,10 @@ export default async function ListTicketsServiceReport(
        and ur.rate > 0
     left join "Contacts" c on 
       t."contactId" = c.id 
+    left join "ContactWallets" cw on 
+      c.id = cw."contactId" and cw."companyId" = ${companyId}
+    left join "Users" wallet_user on 
+      cw."walletId" = wallet_user.id
     left join "Whatsapps" w on 
       t."whatsappId" = w.id 
     left join "Users" u on
@@ -89,8 +96,12 @@ export default async function ListTicketsServiceReport(
     c."name" as "contactName",
 	  u."name" as "userName",
 	  q."name" as "queueName",
+	  wallet_user."name" as "walletName",
 	  t."lastMessage",
     t.uuid,
+    t."valorVenda",
+    t."motivoNaoVenda",
+    t."finalizadoComVenda",
     case t.status
       when 'open' then 'ABERTO'
       when 'closed' then 'FECHADO'
@@ -118,6 +129,10 @@ export default async function ListTicketsServiceReport(
    		t.id = ur."ticketId"
     left join "Contacts" c on 
       t."contactId" = c.id 
+    left join "ContactWallets" cw on 
+      c.id = cw."contactId" and cw."companyId" = ${companyId}
+    left join "Users" wallet_user on 
+      cw."walletId" = wallet_user.id
     left join "Whatsapps" w on 
       t."whatsappId" = w.id 
     left join "Users" u on
@@ -153,14 +168,13 @@ export default async function ListTicketsServiceReport(
 
   if (params.contactId !== undefined && params.contactId !== "") {
     where += ` and t."contactId" in (${params.contactId})`;
-  } 
+  }
 
   if (params.onlyRated === "true") {
     query += ` and coalesce(ur.rate, 0) > 0`;
   }
-  
-  const finalQuery = query.replace("-- filterPeriod", where);
 
+  const finalQuery = query.replace("-- filterPeriod", where);
 
   const totalTicketsQuery = `
     SELECT COUNT(*) as total FROM "Tickets" t

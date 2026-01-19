@@ -1,4 +1,4 @@
-/** 
+/**
  * @TercioSantos-0 |
  * routes/configurações das empresas |å
  */
@@ -9,8 +9,25 @@ import * as CompanySettingsController from "../controllers/CompanySettingsContro
 
 const companySettingsRoutes = express.Router();
 
-companySettingsRoutes.get("/companySettings/:companyId", isAuth, CompanySettingsController.show);
-companySettingsRoutes.get("/companySettingOne/", isAuth, CompanySettingsController.showOne);
-companySettingsRoutes.put("/companySettings/", isAuth, CompanySettingsController.update);
+companySettingsRoutes.get(
+  "/companySettings/:companyId",
+  isAuth,
+  CompanySettingsController.show
+);
+companySettingsRoutes.get(
+  "/companySettingOne/",
+  isAuth,
+  CompanySettingsController.showOne
+);
+companySettingsRoutes.put(
+  "/companySettings/",
+  isAuth,
+  CompanySettingsController.update
+);
+companySettingsRoutes.get(
+  "/companySettings",
+  isAuth,
+  CompanySettingsController.show
+);
 
 export default companySettingsRoutes;

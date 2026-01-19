@@ -1,38 +1,67 @@
+import { WASocket } from "baileys";
 import AppError from "../../errors/AppError";
-import { createJid } from "../../functionts";
 import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
 import { getWbot } from "../../libs/wbot";
+import Whatsapp from "../../models/Whatsapp";
+import logger from "../../utils/logger";
+import { Session } from "../../libs/wbot";
+
+interface IOnWhatsapp {
+  jid: string;
+  exists: boolean;
+  lid: string;
+}
+
+const toJid = (num: string) =>
+  num.includes("@") ? num : `${num}@s.whatsapp.net`;
+
+const checker = async (number: string, wbot: Session): Promise<IOnWhatsapp> => {
+  const result = await wbot.onWhatsApp(toJid(number));
+
+  if (!result) {
+    logger.error({ number }, "Failed to check number on whatsapp");
+    throw new AppError("ERR_INVALID_NUMBER", 400);
+  }
+
+  if (!result?.[0]?.exists) {
+    throw new AppError("ERR_CHECK_NUMBER", 404);
+  }
+
+  const lid = (result as any).lid ?? null;
+
+  return {
+    jid: result[0]?.jid,
+    exists: true,
+    lid
+  };
+};
 
 const CheckContactNumber = async (
-  number: string, companyId: number, isGroup: boolean = false
-): Promise<string> => {
+  number: string,
+  companyId: number,
+  isGroup: boolean = false,
+  userId?: number,
+  whatsapp?: Whatsapp | null
+): Promise<IOnWhatsapp> => {
+  const whatsappList =
+    whatsapp || (await GetDefaultWhatsApp(companyId, userId));
 
-  const wahtsappList = await GetDefaultWhatsApp(null, companyId);
+  if (whatsappList.channel === "whatsapp_oficial") {
+    return { jid: toJid(number), exists: true, lid: null };
+  }
 
-
-  const wbot = getWbot(wahtsappList.id);
-
-  let numberArray;
+  const wbot = await getWbot(whatsappList.id);
 
   if (isGroup) {
-    const grupoMeta = await wbot.groupMetadata(number);
-    numberArray = [
-      {
-        jid: grupoMeta.id,
-        exists: true
-      }
-    ];
-  } else {
-    numberArray = await wbot.onWhatsApp(`${createJid(number)}`);
+    const meta = await wbot.groupMetadata(number);
+    return { jid: meta.id, exists: true, lid: null };
   }
 
-  const isNumberExit = numberArray;
-
-  if (!isNumberExit[0]?.exists) {
-    throw new AppError("Este número não está cadastrado no whatsapp");
+  if (whatsappList.channel === "whatsapp_oficial") {
+    return { jid: toJid(number), exists: true, lid: null };
   }
 
-  return isGroup ? number.split("@")[0] : isNumberExit[0].jid.split("@")[0];
+  return checker(number, wbot);
 };
 
 export default CheckContactNumber;

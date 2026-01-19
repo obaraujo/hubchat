@@ -31,7 +31,7 @@ const update = async (req: Request, res: Response): Promise<Response> => {
   const whatsapp = await Whatsapp.findOne({ where: { id: whatsappId, companyId } });
 
   await whatsapp.update({ session: "" });
-  
+
   if (whatsapp.channel === "whatsapp") {
     await StartWhatsAppSession(whatsapp, companyId);
   }
@@ -49,7 +49,7 @@ const remove = async (req: Request, res: Response): Promise<Response> => {
   if (whatsapp.channel === "whatsapp") {
     await DeleteBaileysService(whatsappId);
 
-    const wbot = getWbot(whatsapp.id);
+    const wbot = await getWbot(whatsapp.id);
 
     wbot.logout();
     wbot.ws.close();

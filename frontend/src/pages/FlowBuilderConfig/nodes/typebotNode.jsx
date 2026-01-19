@@ -9,7 +9,7 @@ import TextField from "@mui/material/TextField";
 import { useNodeStorage } from "../../../stores/useNodeStorage";
 import { Handle } from "react-flow-renderer";
 import { Typography, Box } from "@material-ui/core";
-import typebotIcon from "../../../assets/typebot-ico.png";
+import typebotIcon from "../../../assets/typebot.jpg";
 
 export default memo(({ data, isConnectable, id }) => {
   const storageItems = useNodeStorage();
@@ -45,7 +45,7 @@ export default memo(({ data, isConnectable, id }) => {
             height: "10px",
             marginLeft: "2.9px",
             marginBottom: "1px",
-            pointerEvents: "none",
+            pointerEvents: "none"
           }}
         />
       </Handle>
@@ -124,14 +124,14 @@ export default memo(({ data, isConnectable, id }) => {
         }}
         isConnectable={isConnectable}
       >
-        <ArrowForwardIos
+       <ArrowForwardIos
           sx={{
             color: "#ffff",
             width: "10px",
             height: "10px",
             marginLeft: "2.9px",
             marginBottom: "1px",
-            pointerEvents: "none",
+            pointerEvents: "none"
           }}
         />
       </Handle>

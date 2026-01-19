@@ -10,8 +10,7 @@ import {
   ForeignKey,
   BelongsTo,
   HasMany,
-  Default,
-	DataType
+  Default
 } from "sequelize-typescript";
 import Queue from "./Queue";
 import User from "./User";
@@ -22,28 +21,28 @@ import Files from "./Files";
 class Chatbot extends Model<Chatbot> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @AllowNull(false)
-  @Column(DataType.TEXT)
+  @Column
   name: string;
 
-  @Column(DataType.TEXT)
+  @Column
   greetingMessage: string;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueId: number;
 
   @BelongsTo(() => Queue, "queueId")
   queue: Queue;
 
   @ForeignKey(() => Chatbot)
-  @Column(DataType.INTEGER)
+  @Column
   chatbotId: number;
 
-  @Column(DataType.BOOLEAN)
+  @Column
   isAgent: boolean;
 
   @BelongsTo(() => Chatbot)
@@ -58,39 +57,39 @@ class Chatbot extends Model<Chatbot> {
   @UpdatedAt
   updatedAt: Date;
 
-  @Column(DataType.TEXT)
+  @Column
   queueType: string;
 
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   optQueueId: number;
 
   @BelongsTo(() => Queue, "optQueueId")
   optQueue: Queue;
 
   @ForeignKey(() => User)
-  @Column(DataType.INTEGER)
+  @Column
   optUserId: number;
 
   @BelongsTo(() => User)
   user: User;
 
   @ForeignKey(() => QueueIntegrations)
-  @Column(DataType.INTEGER)
+  @Column
   optIntegrationId: number;
 
   @BelongsTo(() => QueueIntegrations)
   queueIntegrations: QueueIntegrations;
 
   @ForeignKey(() => Files)
-  @Column(DataType.INTEGER)
+  @Column
   optFileId: number;
 
   @BelongsTo(() => Files)
   file: Files;
 
   @Default(false)
-  @Column(DataType.BOOLEAN)
+  @Column
   closeTicket: boolean;
 }
 

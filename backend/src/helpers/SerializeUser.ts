@@ -28,13 +28,20 @@ interface SerializedUser {
   allowGroup: boolean;
   allowRealTime: string;
   allowConnections: string;
+  allowSeeMessagesInPendingTickets: string;
+  finalizacaoComValorVendaAtiva: boolean;
+  showContacts: string;
+  showCampaign: string;
+  showFlow: string;
 }
 
 export const SerializeUser = async (user: User): Promise<SerializedUser> => {
   // Gera um token de 32 bytes
   const generateToken = (userId: number | string): string => {
     // Gerar o token com base no userId e sua chave secreta
-    const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "1h" }); // Você pode definir o tempo de expiração conforme necessário
+    const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+      expiresIn: "1h"
+    });
     return token;
   };
 
@@ -56,12 +63,16 @@ export const SerializeUser = async (user: User): Promise<SerializedUser> => {
     defaultMenu: user.defaultMenu,
     allHistoric: user.allHistoric,
     allUserChat: user.allUserChat,
-    defaultTicketsManagerWidth: user.defaultTicketsManagerWidth,
     userClosePendingTicket: user.userClosePendingTicket,
     showDashboard: user.showDashboard,
     token: generateToken(user.id),
     allowGroup: user.allowGroup,
     allowRealTime: user.allowRealTime,
-    allowConnections: user.allowConnections
+    allowSeeMessagesInPendingTickets: user.allowSeeMessagesInPendingTickets || "enabled",
+    allowConnections: user.allowConnections,
+    finalizacaoComValorVendaAtiva: user.finalizacaoComValorVendaAtiva,
+    showContacts: user.showContacts,
+    showCampaign: user.showCampaign,
+    showFlow: user.showFlow
   };
 };

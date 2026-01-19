@@ -7,6 +7,7 @@ import { SendRefreshToken } from "../helpers/SendRefreshToken";
 import { RefreshTokenService } from "../services/AuthServices/RefreshTokenService";
 import FindUserFromToken from "../services/AuthServices/FindUserFromToken";
 import User from "../models/User";
+import { SerializeUser } from "../helpers/SerializeUser";
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
@@ -15,22 +16,23 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     email,
     password
   });
- 
+
   SendRefreshToken(res, refreshToken);
 
   const io = getIO();
 
-  io.of(serializedUser.companyId.toString())
-  .emit(`company-${serializedUser.companyId}-auth`, {
-    action: "update",
-    user: {
-      id: serializedUser.id,
-      email: serializedUser.email,
-      companyId: serializedUser.companyId,
-      token: serializedUser.token
+  io.of(serializedUser.companyId.toString()).emit(
+    `company-${serializedUser.companyId}-auth`,
+    {
+      action: "update",
+      user: {
+        id: serializedUser.id,
+        email: serializedUser.email,
+        companyId: serializedUser.companyId,
+        token: serializedUser.token
+      }
     }
-  });
-  
+  );
 
   return res.status(200).json({
     token,
@@ -61,13 +63,11 @@ export const update = async (
 export const me = async (req: Request, res: Response): Promise<Response> => {
   const token: string = req.cookies.jrt;
   const user = await FindUserFromToken(token);
-  const { id, profile, super: superAdmin } = user;
-
   if (!token) {
     throw new AppError("ERR_SESSION_EXPIRED", 401);
   }
-
-  return res.json({ id, profile, super: superAdmin });
+  const serializedUser = await SerializeUser(user);
+  return res.json({ user: serializedUser });
 };
 
 export const remove = async (

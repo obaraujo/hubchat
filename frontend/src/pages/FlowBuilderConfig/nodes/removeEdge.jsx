@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+
 import {
   getBezierPath,
   getEdgeCenter,
@@ -34,7 +35,9 @@ export default function removeEdge({
     targetY,
     targetPosition
   });
-  const markerEnd = getMarkerEnd(arrowHeadType, markerEndId);
+ // Substituindo a função getMarkerEnd
+ const markerEnd = markerEndId ? `url(#${markerEndId})` : null;
+
   const [edgeCenterX, edgeCenterY] = getEdgeCenter({
     sourceX,
     sourceY,
@@ -66,7 +69,7 @@ export default function removeEdge({
             className="edgebutton"
             onClick={event => onEdgeClick(event, id)}
           >
-            <Delete sx={{ width: "12px", height: "12px", color: "#0000FF" }} />
+            <Delete sx={{ width: "12px", height: "12px", color: "#9A00ED" }} />
           </button> */}
         </body>
       </foreignObject>

@@ -4,11 +4,10 @@ import Ticket from "../models/Ticket";
 
 const CheckContactSomeTickets = async (
   contactId: number,
-  companyId: number,
-  whatsappId: number
+  companyId: number
 ): Promise<void> => {
   const ticket = await Ticket.findOne({
-    where: { contactId, companyId, whatsappId }
+    where: { contactId, companyId }
   });
 
   if (ticket) {

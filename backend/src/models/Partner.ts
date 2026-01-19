@@ -5,8 +5,7 @@ import {
   UpdatedAt,
   Model,
   PrimaryKey,
-  AutoIncrement,
-	DataType
+  AutoIncrement
 } from "sequelize-typescript";
 
 @Table({
@@ -15,28 +14,28 @@ import {
 class Partner extends Model<Partner> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
-  @Column(DataType.TEXT)
+  @Column
   name: string;
 
-  @Column(DataType.TEXT)
+  @Column
   phone: string;
 
-  @Column(DataType.TEXT)
+  @Column
   email: string;
 
-  @Column(DataType.TEXT)
+  @Column
   document: string;
 
-  @Column(DataType.INTEGER)
+  @Column
   commission: number;
 
-  @Column(DataType.TEXT)
+  @Column
   typeCommission: string;
 
-  @Column(DataType.TEXT)
+  @Column
   walletId: string;
 
   @CreatedAt

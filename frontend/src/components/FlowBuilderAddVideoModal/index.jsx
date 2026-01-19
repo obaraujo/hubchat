@@ -79,7 +79,7 @@ const FlowBuilderAddVideoModal = ({ open, onSave, onUpdate, data, close }) => {
         title: "Editar video",
         btn: "Salvar"
       });
-      setPreview(import.meta.env.VITE_BACKEND_URL + '/public/' + data.data.url)
+      setPreview(process.env.REACT_APP_BACKEND_URL + '/public/' + data.data.url)
       setRecord(data.data.record)
       setActiveModal(true);
     } else if (open === "create") {

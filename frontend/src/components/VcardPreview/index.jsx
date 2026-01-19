@@ -9,13 +9,11 @@ import Grid from "@material-ui/core/Grid";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
 
-import { Button, Divider, useTheme, } from "@material-ui/core";
+import { Button, Divider } from "@material-ui/core";
 import { isNil } from 'lodash';
 import ShowTicketOpen from '../ShowTicketOpenModal';
-import { grey } from '@material-ui/core/colors';
 
-const VcardPreview = ({ contact, numbers, queueId, whatsappId }) => {
-    const theme = useTheme();
+const VcardPreview = ({ contact, numbers, queueId, whatsappId, channel }) => {
     const history = useHistory();
     const { user } = useContext(AuthContext);
 
@@ -32,33 +30,6 @@ const VcardPreview = ({ contact, numbers, queueId, whatsappId }) => {
         profilePicUrl: ""
     });
 
-    // useEffect(() => {
-    //     const delayDebounceFn = setTimeout(() => {
-    //         const fetchContacts = async () => {
-    //             try {
-    //                 const number = numbers.replace(/\D/g, "");
-    //                 const { data } = await api.get(`/contacts/profile/${number}`);
-
-    //                 let obj = {
-    //                     id: data.contactId,
-    //                     name: contact,
-    //                     number: numbers,
-    //                     profilePicUrl: data.profilePicUrl
-    //                 }
-
-    //                 setContact(obj)
-
-    //             } catch (err) {
-    //                 console.log(err)
-    //                 toastError(err);
-    //             }
-    //         };
-    //         fetchContacts();
-    //     }, 500);
-    //     return () => clearTimeout(delayDebounceFn);
-    // }, [contact, numbers]);
-
-
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             const fetchContacts = async () => {
@@ -67,14 +38,14 @@ const VcardPreview = ({ contact, numbers, queueId, whatsappId }) => {
                         return
                     }
                     const number = numbers.replace(/\D/g, "");
-                    const getData = await api.get(`/contacts/profile/${number}`);
+                    const getData = await api.get(`/contacts/profile/${number}`, { params: { channel: channel } });
 
                     if (getData.data.contactId && getData.data.contactId !== 0) {
                         let obj = {
                             id: getData.data.contactId,
                             name: contact,
                             number: numbers,
-                            profilePicUrl: getData.data.urlPicture
+                            urlPicture: getData.data.urlPicture
                         }
 
                         setContact(obj)
@@ -124,8 +95,8 @@ const VcardPreview = ({ contact, numbers, queueId, whatsappId }) => {
 
             if (ticket.userId !== user?.id) {
                 setOpenAlert(true);
-                setUserTicketOpen(ticket.user.name);
-                setQueueTicketOpen(ticket.queue.name);
+                setUserTicketOpen(ticket?.user?.name);
+                setQueueTicketOpen(ticket?.queue?.name);
             } else {
                 setOpenAlert(false);
                 setUserTicketOpen("");

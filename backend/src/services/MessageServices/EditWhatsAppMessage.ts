@@ -8,6 +8,8 @@ import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 
 import formatBody from "../../helpers/Mustache";
+import Whatsapp from "../../models/Whatsapp";
+import { getJidOf } from "../WbotServices/getJidOf";
 
 interface Request {
   messageId: string;
@@ -24,7 +26,12 @@ const EditWhatsAppMessage = async ({
       {
         model: Ticket,
         as: "ticket",
-        include: ["contact"]
+        include: ["contact",
+          {
+            model: Whatsapp,
+            attributes: ["id", "name", "groupAsTicket", "color"]
+          },
+        ]
       }
     ]
   });
@@ -40,7 +47,7 @@ const EditWhatsAppMessage = async ({
   const msg = JSON.parse(message.dataJson);
 
   try {
-    await wbot.sendMessage(message.remoteJid, {
+    await wbot.sendMessage(getJidOf(message.remoteJid), {
       text: body,
       edit: msg.key,
     }, {});

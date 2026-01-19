@@ -16,10 +16,6 @@ flowCampaignRoutes.get("/flowcampaign/:idFlow", isAuth, FlowCampaignController.f
 
 flowCampaignRoutes.put("/flowcampaign", isAuth, FlowCampaignController.updateFlowCampaign);
 
-flowCampaignRoutes.delete(
-  "/flowcampaign/:idFlow",
-  isAuth,
-  FlowCampaignController.deleteFlowCampaign
-);
+flowCampaignRoutes.delete("/flowcampaign/:idFlow", isAuth, FlowCampaignController.deleteFlowCampaign);
 
 export default flowCampaignRoutes;

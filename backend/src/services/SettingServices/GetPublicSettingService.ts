@@ -2,38 +2,38 @@ import Setting from "../../models/Setting";
 
 interface Request {
   key: string;
+  companyId?: number;
 }
 
 const publicSettingsKeys = [
-  "allowSignup",
+  "userCreation",
   "primaryColorLight",
   "primaryColorDark",
   "appLogoLight",
   "appLogoDark",
   "appLogoFavicon",
-  "appName"
-]
+  "appName",
+  "enabledLanguages",
+  "appLogoBackgroundLight",
+  "appLogoBackgroundDark"
+];
 
 const GetPublicSettingService = async ({
-  key
+  key,
+  companyId
 }: Request): Promise<string | undefined> => {
-  
-
-  console.log("|======== GetPublicSettingService ========|")
-  console.log("key", key)
-  console.log("|=========================================|")
-
   if (!publicSettingsKeys.includes(key)) {
     return null;
   }
-  
+
+  const targetCompanyId = companyId || 1;
+
   const setting = await Setting.findOne({
     where: {
-      companyId: 1,
+      companyId: targetCompanyId,
       key
     }
   });
-
   return setting?.value;
 };
 

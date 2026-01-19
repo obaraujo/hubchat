@@ -3,15 +3,17 @@ import { startOfDay, endOfDay, parseISO } from "date-fns";
 
 import Ticket from "../../models/Ticket";
 import Contact from "../../models/Contact";
+import ContactCustomField from "../../models/ContactCustomField";
 import Message from "../../models/Message";
 import Queue from "../../models/Queue";
 import User from "../../models/User";
 import ShowUserService from "../UserServices/ShowUserService";
 import Tag from "../../models/Tag";
 import TicketTag from "../../models/TicketTag";
+import ContactWallet from "../../models/ContactWallet";
 import { intersection } from "lodash";
 import Whatsapp from "../../models/Whatsapp";
-
+ 
 interface Request {
   searchParam?: string;
   pageNumber?: string;
@@ -51,17 +53,42 @@ const ListTicketsServiceKanban = async ({
   withUnreadMessages,
   companyId
 }: Request): Promise<Response> => {
-  let whereCondition: Filterable["where"] = {
-    [Op.or]: [{ userId }, { status: "pending" }],
-    queueId: { [Op.or]: [queueIds, null] }
-  };
+  // Verificar se o usuário é admin
+  const user = await ShowUserService(userId, companyId);
+  const isAdmin = user.profile === 'admin';
+  
+  let whereCondition: Filterable["where"] = isAdmin 
+    ? { queueId: { [Op.or]: [queueIds, null] } }
+    : {
+        [Op.or]: [{ userId }, { status: "pending" }],
+        queueId: { [Op.or]: [queueIds, null] }
+      };
   let includeCondition: Includeable[];
 
   includeCondition = [
     {
       model: Contact,
       as: "contact",
-      attributes: ["id", "name", "number", "email", "companyId", "urlPicture"]
+      attributes: ["id", "name", "number", "email", "companyId", "urlPicture"],
+      include: [
+        {
+          model: ContactCustomField,
+          as: "extraInfo"
+        },
+        {
+          model: ContactWallet,
+          include: [
+            {
+              model: User,
+              attributes: ["id", "name"]
+            },
+            {
+              model: Queue,
+              attributes: ["id", "name"]
+            }
+          ]
+        }
+      ]
     },
     {
       model: Queue,
@@ -85,7 +112,7 @@ const ListTicketsServiceKanban = async ({
     },
   ];
 
-  if (showAll === "true") {
+  if (showAll === "true" || isAdmin) {
     whereCondition = { queueId: { [Op.or]: [queueIds, null] } };
   }
 
@@ -157,14 +184,18 @@ const ListTicketsServiceKanban = async ({
   }
 
   if (withUnreadMessages === "true") {
-    const user = await ShowUserService(userId, companyId);
     const userQueueIds = user.queues.map(queue => queue.id);
 
-    whereCondition = {
-      [Op.or]: [{ userId }, { status: "pending" }],
-      queueId: { [Op.or]: [userQueueIds, null] },
-      unreadMessages: { [Op.gt]: 0 }
-    };
+    whereCondition = isAdmin
+      ? {
+          queueId: { [Op.or]: [userQueueIds, null] },
+          unreadMessages: { [Op.gt]: 0 }
+        }
+      : {
+          [Op.or]: [{ userId }, { status: "pending" }],
+          queueId: { [Op.or]: [userQueueIds, null] },
+          unreadMessages: { [Op.gt]: 0 }
+        };
   }
 
   if (Array.isArray(tags) && tags.length > 0) {

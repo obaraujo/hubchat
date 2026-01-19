@@ -15,87 +15,44 @@ import api from "../../services/api";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
+
 import moment from "moment";
-import ForbiddenPage from "../../components/ForbiddenPage";
-
-// Novo componente "Invoice"
-const Invoice = ({ invoice, onPayClick }) => {
-  const handlePayClick = () => {
-    // Aqui você pode abrir o link da fatura com base no "invoice.detail"
-    // Certifique-se de que "invoice.detail" contenha o URL correto da fatura.
-    // Exemplo:
-    window.open(invoice.linkInvoice, "_blank");
-  };
-
-  return (
-    <TableRow key={invoice.id}>
-      <TableCell align="center">{invoice.detail}</TableCell>
-      <TableCell align="center">{invoice.users}</TableCell>
-      <TableCell align="center">{invoice.connections}</TableCell>
-      <TableCell align="center">
-        {moment(invoice.dueDate).format("DD/MM/YYYY")}
-      </TableCell> {/* Adicione esta coluna para a data de vencimento */}
-      <TableCell align="center">
-        {invoice.value ? invoice.value.toLocaleString("pt-br", {
-          style: "currency",
-          currency: "BRL",
-        }) : 'N/A'}
-      </TableCell>
-      <TableCell align="center">
-        {invoice.status !== "Pago" ? (
-          <Button
-            size="small"
-            variant="outlined"
-            color="secondary"
-            onClick={handlePayClick}
-          >
-            PAGAR
-          </Button>
-        ) : (
-          <Button size="small" variant="outlined">
-            PAGO
-          </Button>
-        )}
-      </TableCell>
-    </TableRow>
-  );
-};
 
 const reducer = (state, action) => {
   if (action.type === "LOAD_INVOICES") {
-    const invoices = action.payload;
-    const newUsers = [];
+    const invoices = action.payload.invoices || action.payload;
+    const newInvoices = [];
 
-    invoices.forEach((user) => {
-      const userIndex = state.findIndex((u) => u.id === user.id);
-      if (userIndex !== -1) {
-        state[userIndex] = user;
+    invoices.forEach((invoice) => {
+      const invoiceIndex = state.findIndex((i) => i.id === invoice.id);
+      if (invoiceIndex !== -1) {
+        state[invoiceIndex] = invoice;
       } else {
-        newUsers.push(user);
+        newInvoices.push(invoice);
       }
     });
 
-    return [...state, ...newUsers];
+    return [...state, ...newInvoices];
   }
 
-  if (action.type === "UPDATE_USERS") {
-    const user = action.payload;
-    const userIndex = state.findIndex((u) => u.id === user.id);
+  if (action.type === "UPDATE_INVOICES") {
+    const invoice = action.payload;
+    const invoiceIndex = state.findIndex((i) => i.id === invoice.id);
 
-    if (userIndex !== -1) {
-      state[userIndex] = user;
+    if (invoiceIndex !== -1) {
+      state[invoiceIndex] = invoice;
       return [...state];
     } else {
-      return [user, ...state];
+      return [invoice, ...state];
     }
   }
 
-  if (action.type === "DELETE_USER") {
-    const userId = action.payload;
+  if (action.type === "DELETE_INVOICE") {
+    const invoiceId = action.payload;
 
-    const userIndex = state.findIndex((u) => u.id === userId);
-    if (userIndex !== -1) {
-      state.splice(userIndex, 1);
+    const invoiceIndex = state.findIndex((i) => i.id === invoiceId);
+    if (invoiceIndex !== -1) {
+      state.splice(invoiceIndex, 1);
     }
     return [...state];
   }
@@ -116,16 +73,27 @@ const useStyles = makeStyles((theme) => ({
 
 const Invoices = () => {
   const classes = useStyles();
+  const { user } = useContext(AuthContext);
 
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [searchParam, setSearchParam] = useState("");
+  const [searchParam, ] = useState("");
   const [invoices, dispatch] = useReducer(reducer, []);
   const [storagePlans, setStoragePlans] = React.useState([]);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [contactModalOpen, setContactModalOpen] = useState(false);
-  const { user } = useContext(AuthContext);
+  const [isCompanyExpired, setIsCompanyExpired] = useState(false);
+
+  // Verificar se a empresa está vencida
+  useEffect(() => {
+    if (user && user.company) {
+      const hoje = moment();
+      const vencimento = moment(user.company.dueDate);
+      const isExpired = hoje.isAfter(vencimento);
+      setIsCompanyExpired(isExpired);
+    }
+  }, [user]);
 
   const handleOpenContactModal = (invoices) => {
     setStoragePlans(invoices);
@@ -137,7 +105,6 @@ const Invoices = () => {
     setSelectedContactId(null);
     setContactModalOpen(false);
   };
-
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
@@ -148,15 +115,20 @@ const Invoices = () => {
     const delayDebounceFn = setTimeout(() => {
       const fetchInvoices = async () => {
         try {
-          const { data } = await api.get("/invoices", {
+          console.log("Buscando faturas...", { searchParam, pageNumber });
+          const { data } = await api.get("/invoices/all", {
             params: { searchParam, pageNumber },
           });
 
-          dispatch({ type: "LOAD_INVOICES", payload: data.invoices });
+          console.log("Dados recebidos:", data);
+          dispatch({ type: "LOAD_INVOICES", payload: data });
+          console.log("Dispatch realizado com payload:", data);
           setHasMore(data.hasMore);
           setLoading(false);
         } catch (err) {
+          console.error("Erro ao buscar faturas:", err);
           toastError(err);
+          setLoading(false);
         }
       };
       fetchInvoices();
@@ -176,6 +148,40 @@ const Invoices = () => {
     }
   };
 
+  const rowStyle = (record) => {
+    const hoje = moment(moment()).format("DD/MM/yyyy");
+    const vencimento = moment(record.dueDate).format("DD/MM/yyyy");
+    var diff = moment(vencimento, "DD/MM/yyyy").diff(moment(hoje, "DD/MM/yyyy"));
+    var dias = moment.duration(diff).asDays();
+    if (dias < 0 && record.status !== "paid") {
+      return { backgroundColor: "#ffbcbc9c" };
+    }
+  };
+
+  const rowStatus = (record) => {
+    const hoje = moment(moment()).format("DD/MM/yyyy");
+    const vencimento = moment(record.dueDate).format("DD/MM/yyyy");
+    var diff = moment(vencimento, "DD/MM/yyyy").diff(moment(hoje, "DD/MM/yyyy"));
+    var dias = moment.duration(diff).asDays();
+    const status = record.status;
+    if (status === "paid") {
+      return "Pago";
+    }
+    if (dias < 0) {
+      return "Vencido";
+    } else {
+      return "Em Aberto"
+    }
+  }
+  
+  const renderUseWhatsapp = (row) => { return row.status === false ? "Não" : "Sim" };
+  const renderUseFacebook = (row) => { return row.status === false ? "Não" : "Sim" };
+  const renderUseInstagram = (row) => { return row.status === false ? "Não" : "Sim" };
+  const renderUseCampaigns = (row) => { return row.status === false ? "Não" : "Sim" };
+  const renderUseSchedules = (row) => { return row.status === false ? "Não" : "Sim" };
+  const renderUseInternalChat = (row) => { return row.status === false ? "Não" : "Sim" };
+  const renderUseExternalApi = (row) => { return row.status === false ? "Não" : "Sim" };
+
   return (
     <MainContainer>
       <SubscriptionModal
@@ -184,44 +190,98 @@ const Invoices = () => {
         aria-labelledby="form-dialog-title"
         Invoice={storagePlans}
         contactId={selectedContactId}
+
       ></SubscriptionModal>
-      {user.profile === "user" ?
-        <ForbiddenPage />
-        :
-        <>
-          <MainHeader>
-            <Title>Faturas ({invoices.length})</Title>
-          </MainHeader>
-          <Paper
-            className={classes.mainPaper}
-            variant="outlined"
-            onScroll={handleScroll}
-          >
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="center">Detalhes</TableCell>
-                  <TableCell align="center">Usuários</TableCell>
-                  <TableCell align="center">Conexões</TableCell>
-                  <TableCell align="center">Vencimento</TableCell> {/* Adicione esta coluna */}
-                  <TableCell align="center">Valor</TableCell>
-                  <TableCell align="center">Ação</TableCell>
+      <MainHeader>
+        <Title>Faturas ({invoices.length})</Title>
+        {isCompanyExpired && (
+          <div style={{ 
+            backgroundColor: '#ffebee', 
+            color: '#c62828', 
+            padding: '10px', 
+            borderRadius: '4px', 
+            marginTop: '10px',
+            border: '1px solid #ef9a9a'
+          }}>
+            <strong>Atenção:</strong> Sua assinatura está vencida. Entre em contato com o suporte para regularizar sua situação.
+          </div>
+        )}
+      </MainHeader>
+      <Paper
+        className={classes.mainPaper}
+        variant="outlined"
+        onScroll={handleScroll}
+      >
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {/* <TableCell align="center">Id</TableCell> */}
+              <TableCell align="center">Detalhes</TableCell>
+
+              <TableCell align="center">Usuários</TableCell>
+              <TableCell align="center">Conexões</TableCell>
+              <TableCell align="center">Filas</TableCell>
+              {/* <TableCell align="center">Whatsapp</TableCell>
+              <TableCell align="center">Facebook</TableCell>
+              <TableCell align="center">Instagram</TableCell> */}
+              {/* <TableCell align="center">Campanhas</TableCell>
+              <TableCell align="center">Agendamentos</TableCell>
+              <TableCell align="center">Chat Interno</TableCell>
+              <TableCell align="center">Rest PI</TableCell> */}
+
+              <TableCell align="center">Valor</TableCell>
+              <TableCell align="center">Data Venc.</TableCell>
+              <TableCell align="center">Status</TableCell>
+              <TableCell align="center">Ação</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <>
+              {invoices.map((invoices) => (
+                <TableRow style={rowStyle(invoices)} key={invoices.id}>
+                  {/* <TableCell align="center">{invoices.id}</TableCell> */}
+                  <TableCell align="center">{invoices.detail}</TableCell>
+
+                  <TableCell align="center">{invoices.users}</TableCell>
+                  <TableCell align="center">{invoices.connections}</TableCell>
+                  <TableCell align="center">{invoices.queues}</TableCell>
+                  {/* <TableCell align="center">{renderUseWhatsapp(invoices.useWhatsapp)}</TableCell>
+                  <TableCell align="center">{renderUseFacebook(invoices.useFacebook)}</TableCell>
+                  <TableCell align="center">{renderUseInstagram(invoices.useInstagram)}</TableCell> */}
+                  {/* <TableCell align="center">{renderUseCampaigns(invoices.useCampaigns)}</TableCell>
+                  <TableCell align="center">{renderUseSchedules(invoices.useSchedules)}</TableCell>
+                  <TableCell align="center">{renderUseInternalChat(invoices.useInternalChat)}</TableCell>
+                  <TableCell align="center">{renderUseExternalApi(invoices.useExternalApi)}</TableCell> */}
+
+                  <TableCell style={{ fontWeight: 'bold' }} align="center">{invoices.value.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' })}</TableCell>
+                  <TableCell align="center">{moment(invoices.dueDate).format("DD/MM/YYYY")}</TableCell>
+                  <TableCell style={{ fontWeight: 'bold' }} align="center">{rowStatus(invoices)}</TableCell>
+                  <TableCell align="center">
+                    {rowStatus(invoices) !== "Pago" ?
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => handleOpenContactModal(invoices)}
+                      >
+                        PAGAR
+                      </Button> :
+                      <Button
+                        size="small"
+                        variant="outlined"
+                      // color="secondary"
+                      >
+                        PAGO
+                      </Button>}
+
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                <>
-                  {invoices.map((invoice) => (
-                    <Invoice
-                      key={invoice.id}
-                      invoice={invoice}
-                    />
-                  ))}
-                  {loading && <TableRowSkeleton columns={6} />}
-                </>
-              </TableBody>
-            </Table>
-          </Paper>
-        </>}
+              ))}
+              {loading && <TableRowSkeleton columns={4} />}
+            </>
+          </TableBody>
+        </Table>
+      </Paper>
     </MainContainer>
   );
 };

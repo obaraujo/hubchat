@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useContext, useEffect } from "react";
 import { toast } from "react-toastify";
 import { add, format, parseISO } from "date-fns";
@@ -24,6 +23,14 @@ import {
   Box,
   Card,
   CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  MenuItem as MuiMenuItem,
+  FormControl,
+  InputLabel,
 } from "@material-ui/core";
 import {
   Edit,
@@ -36,8 +43,9 @@ import {
   Facebook,
   Instagram,
   WhatsApp,
+  Sync,
 } from "@material-ui/icons";
-
+import WebhookIcon from '@mui/icons-material/Webhook';
 import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
 
 import MainContainer from "../../components/MainContainer";
@@ -144,6 +152,8 @@ const IconChannel = (channel) => {
       return <Instagram style={{ color: "#e1306c" }} />;
     case "whatsapp":
       return <WhatsApp style={{ color: "#25d366" }} />;
+    case "whatsapp_oficial":
+      return <WhatsApp style={{ color: "#25d366" }} />;
     default:
       return "error";
   }
@@ -157,6 +167,7 @@ const Connections = () => {
   const [statusImport, setStatusImport] = useState([]);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [selectedWhatsApp, setSelectedWhatsApp] = useState(null);
+  const [channel, setChannel] = useState("whatsapp");
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const history = useHistory();
   const confirmationModalInitialState = {
@@ -168,6 +179,13 @@ const Connections = () => {
   };
   const [confirmModalInfo, setConfirmModalInfo] = useState(confirmationModalInitialState);
   const [planConfig, setPlanConfig] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [sourceConnection, setSourceConnection] = useState("");
+  const [targetConnection, setTargetConnection] = useState("");
+  const [preDeleteModalOpen, setPreDeleteModalOpen] = useState(false);
+  const [whatsAppToDelete, setWhatsAppToDelete] = useState(null);
+  const [transferProgressModalOpen, setTransferProgressModalOpen] = useState(false);
+  const [transferProgress, setTransferProgress] = useState({ current: 0, total: 0, percentage: 0 });
 
   //   const socketManager = useContext(SocketContext);
   const { user, socket } = useContext(AuthContext);
@@ -224,6 +242,7 @@ const Connections = () => {
 
   useEffect(() => {
     // const socket = socketManager.GetSocket();
+
     socket.on(`importMessages-${user.companyId}`, (data) => {
       if (data.action === "refresh") {
         setStatusImport([]);
@@ -231,6 +250,27 @@ const Connections = () => {
       }
       if (data.action === "update") {
         setStatusImport(data.status);
+      }
+    });
+
+    socket.on(`transferTickets-${user.companyId}`, (data) => {
+      if (data.action === "progress") {
+        setTransferProgress({
+          current: data.current,
+          total: data.total,
+          percentage: Math.round((data.current / data.total) * 100)
+        });
+      }
+      if (data.action === "completed") {
+        setTransferProgressModalOpen(false);
+        setTransferProgress({ current: 0, total: 0, percentage: 0 });
+        toast.success(`Transferência concluída! ${data.transferred} tickets transferidos com sucesso.`);
+        handleCloseTransferModal();
+      }
+      if (data.action === "error") {
+        setTransferProgressModalOpen(false);
+        setTransferProgress({ current: 0, total: 0, percentage: 0 });
+        toast.error("Erro na transferência de tickets.");
       }
     });
 
@@ -255,7 +295,8 @@ const Connections = () => {
     }
   };
 
-  const handleOpenWhatsAppModal = () => {
+  const handleOpenWhatsAppModal = (channel) => {
+    setChannel(channel)
     setSelectedWhatsApp(null);
     setWhatsAppModalOpen(true);
   };
@@ -276,8 +317,17 @@ const Connections = () => {
   }, [setQrModalOpen, setSelectedWhatsApp]);
 
   const handleEditWhatsApp = (whatsApp) => {
+    setChannel(whatsApp.channel)
     setSelectedWhatsApp(whatsApp);
     setWhatsAppModalOpen(true);
+  };
+
+  const handleSyncTemplates = async (whatsAppId) => {
+    await api.get(`/whatsapp/sync-templates/${whatsAppId}`);
+  }
+
+  const handleCopyWebhook = (url) => {
+    navigator.clipboard.writeText(url); // Copia o token para a área de transferência    
   };
 
   const openInNewTab = url => {
@@ -310,6 +360,7 @@ const Connections = () => {
         whatsAppId: whatsAppId,
       });
     }
+
     setConfirmModalOpen(true);
   };
 
@@ -338,6 +389,7 @@ const Connections = () => {
         toastError(err);
       }
     }
+
 
     setConfirmModalInfo(confirmationModalInitialState);
   };
@@ -398,7 +450,7 @@ const Connections = () => {
   const renderActionButtons = (whatsApp) => {
     return (
       <>
-        {whatsApp.status === "qrcode" && (
+        {whatsApp.channel === "whatsapp" && whatsApp.status === "qrcode" && (
           <Can
             role={user.profile === "user" && user.allowConnections === "enabled" ? "admin" : user.profile}
             perform="connections-page:addConnection"
@@ -414,7 +466,7 @@ const Connections = () => {
             )}
           />
         )}
-        {whatsApp.status === "DISCONNECTED" && (
+        {whatsApp.channel === "whatsapp" && whatsApp.status === "DISCONNECTED" && (
           <Can
             role={user.profile === "user" && user.allowConnections === "enabled" ? "admin" : user.profile}
             perform="connections-page:addConnection"
@@ -440,9 +492,9 @@ const Connections = () => {
             )}
           />
         )}
-        {(whatsApp.status === "CONNECTED" ||
+        {(whatsApp.channel === "whatsapp" && (whatsApp.status === "CONNECTED" ||
           whatsApp.status === "PAIRING" ||
-          whatsApp.status === "TIMEOUT") && (
+          whatsApp.status === "TIMEOUT")) && (
             <Can
               role={user.profile}
               perform="connections-page:addConnection"
@@ -464,7 +516,7 @@ const Connections = () => {
               )}
             />
           )}
-        {whatsApp.status === "OPENING" && (
+        {(whatsApp.channel === "whatsapp" && whatsApp.status === "OPENING") && (
           <Button size="small" variant="outlined" disabled color="default">
             {i18n.t("connections.buttons.connecting")}
           </Button>
@@ -522,6 +574,67 @@ const Connections = () => {
     }
   }
 
+  const handleOpenTransferModal = () => {
+    setTransferModalOpen(true);
+  };
+
+  const handleCloseTransferModal = () => {
+    setTransferModalOpen(false);
+    setSourceConnection("");
+    setTargetConnection("");
+  };
+
+  const handleCloseTransferProgressModal = () => {
+    setTransferProgressModalOpen(false);
+    setTransferProgress({ current: 0, total: 0, percentage: 0 });
+  };
+
+  const handleTransferTickets = async () => {
+    if (!sourceConnection || !targetConnection) {
+      toast.error("Selecione as conexões de origem e destino");
+      return;
+    }
+
+    if (sourceConnection === targetConnection) {
+      toast.error("As conexões de origem e destino devem ser diferentes");
+      return;
+    }
+
+    try {
+      const response = await api.post(`/transfer-tickets`, {
+        sourceConnectionId: sourceConnection,
+        targetConnectionId: targetConnection
+      });
+
+      if (response.data.requiresProgress) {
+        setTransferModalOpen(false);
+        setTransferProgressModalOpen(true);
+        setTransferProgress({ current: 0, total: response.data.totalTickets, percentage: 0 });
+      } else {
+        toast.success(`Tickets transferidos com sucesso! ${response.data.transferred || 0} tickets transferidos.`);
+        handleCloseTransferModal();
+      }
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const handleOpenPreDeleteModal = (whatsAppId) => {
+    setWhatsAppToDelete(whatsAppId);
+    setPreDeleteModalOpen(true);
+  };
+
+  const handleClosePreDeleteModal = () => {
+    setPreDeleteModalOpen(false);
+    setWhatsAppToDelete(null);
+  };
+
+  const handleConfirmTransferDone = () => {
+    setPreDeleteModalOpen(false);
+    handleOpenConfirmationModal("delete", whatsAppToDelete);
+    setWhatsAppToDelete(null);
+  };
+
   return (
     <MainContainer>
       <ConfirmationModal
@@ -543,7 +656,136 @@ const Connections = () => {
         open={whatsAppModalOpen}
         onClose={handleCloseWhatsAppModal}
         whatsAppId={!qrModalOpen && selectedWhatsApp?.id}
+        channel={channel}
       />
+      <Dialog
+        open={transferModalOpen}
+        onClose={handleCloseTransferModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Transferência de Tickets</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" style={{ marginBottom: 24, lineHeight: 1.6 }}>
+            Para transferir os tickets, selecione a conexão de <strong>origem</strong> (de onde os tickets serão movidos) 
+            e a conexão de <strong>destino</strong> (para onde os tickets serão transferidos). 
+            Todos os atendimentos ativos da conexão de origem serão movidos para a conexão de destino.
+          </Typography>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24 }}>
+            <FormControl fullWidth>
+              <InputLabel>Origem</InputLabel>
+              <Select
+                value={sourceConnection}
+                onChange={(e) => setSourceConnection(e.target.value)}
+                label="Origem"
+              >
+                {whatsApps.map((whatsApp) => (
+                  <MuiMenuItem key={whatsApp.id} value={whatsApp.id}>
+                    {whatsApp.name}
+                  </MuiMenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <div style={{ fontSize: 24, color: '#4caf50', fontWeight: 'bold' }}>
+              →
+            </div>
+
+            <FormControl fullWidth>
+              <InputLabel>Destino</InputLabel>
+              <Select
+                value={targetConnection}
+                onChange={(e) => setTargetConnection(e.target.value)}
+                label="Destino"
+              >
+                {whatsApps.map((whatsApp) => (
+                  <MuiMenuItem key={whatsApp.id} value={whatsApp.id}>
+                    {whatsApp.name}
+                  </MuiMenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseTransferModal} color="default">
+            CANCELAR
+          </Button>
+          <Button onClick={handleTransferTickets} color="primary" variant="contained">
+            TRANSFERIR
+                     </Button>
+         </DialogActions>
+       </Dialog>
+       <Dialog
+         open={transferProgressModalOpen}
+         onClose={handleCloseTransferProgressModal}
+         maxWidth="sm"
+         fullWidth
+         disableBackdropClick
+         disableEscapeKeyDown
+       >
+         <DialogTitle>Transferindo Tickets</DialogTitle>
+         <DialogContent>
+           <div style={{ textAlign: 'center', padding: '20px 0' }}>
+             <Typography variant="h6" style={{ marginBottom: 16 }}>
+               Progresso da Transferência
+             </Typography>
+             
+             <Box position="relative" display="inline-flex" marginBottom={2}>
+               <CircularProgress 
+                 variant="determinate" 
+                 value={transferProgress.percentage} 
+                 size={80}
+                 thickness={4}
+               />
+               <Box
+                 top={0}
+                 left={0}
+                 bottom={0}
+                 right={0}
+                 position="absolute"
+                 display="flex"
+                 alignItems="center"
+                 justifyContent="center"
+               >
+                 <Typography variant="caption" component="div" color="textSecondary" style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                   {transferProgress.percentage}%
+                 </Typography>
+               </Box>
+             </Box>
+
+             <Typography variant="body1" style={{ marginTop: 16 }}>
+               {transferProgress.current} de {transferProgress.total} tickets transferidos
+             </Typography>
+             
+             <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
+               Por favor, aguarde enquanto os tickets são transferidos...
+             </Typography>
+           </div>
+         </DialogContent>
+       </Dialog>
+       <Dialog
+         open={preDeleteModalOpen}
+         onClose={handleClosePreDeleteModal}
+         maxWidth="sm"
+         fullWidth
+       >
+         <DialogTitle>Transferência de Tickets</DialogTitle>
+         <DialogContent>
+           <Typography variant="body1" style={{ marginBottom: 16 }}>
+             Antes de excluir esta conexão, você já fez a transferência dos tickets para outra conexão?
+           </Typography>
+         </DialogContent>
+         <DialogActions>
+           <Button onClick={handleClosePreDeleteModal} color="default">
+             NÃO
+           </Button>
+           <Button onClick={handleConfirmTransferDone} color="primary" variant="contained">
+             SIM
+           </Button>
+         </DialogActions>
+       </Dialog>
       {user.profile === "user" && user.allowConnections === "disabled" ?
         <ForbiddenPage />
         :
@@ -551,6 +793,14 @@ const Connections = () => {
           <MainHeader>
             <Title>{i18n.t("connections.title")} ({whatsApps.length})</Title>
             <MainHeaderButtonsWrapper>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleOpenTransferModal}
+              >
+                Transferir Tickets
+              </Button>
+
               <Button
                 variant="contained"
                 color="primary"
@@ -562,7 +812,7 @@ const Connections = () => {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => openInNewTab(`https://wa.me/${import.meta.env.VITE_NUMBER_SUPPORT}`)}
+                onClick={() => openInNewTab(`https://wa.me/${import.meta.VITE_APP_SUPPORT_NUMBER}`)}
               >
                 {i18n.t("connections.callSupport")}
               </Button>
@@ -599,13 +849,30 @@ const Connections = () => {
                               />
                               WhatsApp
                             </MenuItem>
+                            {/* WHATSAPP OFICIAL */}
+                            <MenuItem
+                              disabled={planConfig?.plan?.useWhatsappOfficial ? false : true}
+                              onClick={() => {
+                                handleOpenWhatsAppModal("whatsapp_oficial");
+                                popupState.close();
+                              }}
+                            >
+                              <WhatsApp
+                                fontSize="small"
+                                style={{
+                                  marginRight: "10px",
+                                  color: "#25D366",
+                                }}
+                              />
+                              WhatsApp Oficial
+                            </MenuItem>
                             {/* FACEBOOK */}
                             <FacebookLogin
-                              appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                              appId={process.env.REACT_APP_FACEBOOK_APP_ID}
                               autoLoad={false}
                               fields="name,email,picture"
                               version="9.0"
-                              scope={import.meta.env.VITE_REQUIRE_BUSINESS_MANAGEMENT?.toUpperCase() === "TRUE" ?
+                              scope={process.env.REACT_APP_REQUIRE_BUSINESS_MANAGEMENT?.toUpperCase() === "TRUE" ?
                                 "public_profile,pages_messaging,pages_show_list,pages_manage_metadata,pages_read_engagement,business_management"
                                 : "public_profile,pages_messaging,pages_show_list,pages_manage_metadata,pages_read_engagement"}
                               callback={responseFacebook}
@@ -627,11 +894,11 @@ const Connections = () => {
                             />
                             {/* INSTAGRAM */}
                             <FacebookLogin
-                              appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                              appId={process.env.REACT_APP_FACEBOOK_APP_ID}
                               autoLoad={false}
                               fields="name,email,picture"
                               version="9.0"
-                              scope={import.meta.env.VITE_REQUIRE_BUSINESS_MANAGEMENT?.toUpperCase() === "TRUE" ?
+                              scope={process.env.REACT_APP_REQUIRE_BUSINESS_MANAGEMENT?.toUpperCase() === "TRUE" ?
                                 "public_profile,instagram_basic,instagram_manage_messages,pages_messaging,pages_show_list,pages_manage_metadata,pages_read_engagement,business_management"
                                 : "public_profile,instagram_basic,instagram_manage_messages,pages_messaging,pages_show_list,pages_manage_metadata,pages_read_engagement"}
                               callback={responseInstagram}
@@ -705,6 +972,7 @@ const Connections = () => {
               <TableHead>
                 <TableRow>
                   <TableCell align="center">Channel</TableCell>
+                  <TableCell align="center">{i18n.t("connections.table.color")}</TableCell>
                   <TableCell align="center">{i18n.t("connections.table.name")}</TableCell>
                   <TableCell align="center">{i18n.t("connections.table.number")}</TableCell>
                   <TableCell align="center">{i18n.t("connections.table.status")}</TableCell>
@@ -729,8 +997,26 @@ const Connections = () => {
                       whatsApps.map((whatsApp) => (
                         <TableRow key={whatsApp.id}>
                           <TableCell align="center">{IconChannel(whatsApp.channel)}</TableCell>
+                          <TableCell align="center">
+                            <div className={classes.customTableCell}>
+                              <span
+                                style={{
+                                  backgroundColor: whatsApp.color,
+                                  width: 60,
+                                  height: 20,
+                                  alignSelf: "center",
+                                }}
+                              />
+                            </div>
+                          </TableCell>
                           <TableCell align="center">{whatsApp.name}</TableCell>
-                          <TableCell align="center">{whatsApp.number && whatsApp.channel === 'whatsapp' ? (<>{formatSerializedId(whatsApp.number)}</>) : whatsApp.number}</TableCell>
+                          <TableCell align="center">
+                            {whatsApp.channel === 'whatsapp' && whatsApp.number
+                              ? <>{formatSerializedId(whatsApp.number)}</>
+                              : whatsApp.channel === 'whatsapp_oficial' && whatsApp.phone_number
+                                  ? <>{formatSerializedId(whatsApp.phone_number)}</>
+                                  : "-"}
+                          </TableCell>
                           <TableCell align="center">{renderStatusToolTips(whatsApp)}</TableCell>
                           <TableCell align="center">{renderActionButtons(whatsApp)}</TableCell>
                           <TableCell align="center">{format(parseISO(whatsApp.updatedAt), "dd/MM/yy HH:mm")}</TableCell>
@@ -756,11 +1042,37 @@ const Connections = () => {
                                 <IconButton
                                   size="small"
                                   onClick={(e) => {
-                                    handleOpenConfirmationModal("delete", whatsApp.id);
+                                    handleOpenPreDeleteModal(whatsApp.id);
                                   }}
                                 >
                                   <DeleteOutline />
                                 </IconButton>
+                                {whatsApp.channel === "whatsapp_oficial" && (
+                                  <>
+                                    <Tooltip title="Sincronizar templates">
+                                      <IconButton
+                                        size="small"
+                                        aria-label="sync-templates"
+                                        onClick={(e) => {
+                                          handleSyncTemplates(whatsApp.id);
+                                        }}
+                                      >
+                                        <Sync />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Copiar webhook para Meta">
+                                      <IconButton
+                                        size="small"
+                                        aria-label="copy-webhook"
+                                        onClick={(e) => {
+                                          handleCopyWebhook(whatsApp.waba_webhook);
+                                        }}
+                                      >
+                                        <WebhookIcon />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </>
+                                )}
                               </TableCell>
                             )}
                           />

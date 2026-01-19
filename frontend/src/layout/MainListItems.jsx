@@ -20,6 +20,7 @@ import SyncAltIcon from "@material-ui/icons/SyncAlt";
 import SettingsOutlinedIcon from "@material-ui/icons/SettingsOutlined";
 import PeopleAltOutlinedIcon from "@material-ui/icons/PeopleAltOutlined";
 import ContactPhoneOutlinedIcon from "@material-ui/icons/ContactPhoneOutlined";
+import AccountBalanceWalletIcon from "@material-ui/icons/AccountBalanceWallet";
 import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
 import FlashOnIcon from "@material-ui/icons/FlashOn";
 import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
@@ -27,9 +28,11 @@ import CodeRoundedIcon from "@material-ui/icons/CodeRounded";
 import ViewKanban from "@mui/icons-material/ViewKanban";
 import Schedule from "@material-ui/icons/Schedule";
 import LocalOfferIcon from "@material-ui/icons/LocalOffer";
+import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
 import EventAvailableIcon from "@material-ui/icons/EventAvailable";
 import ExpandLessIcon from "@material-ui/icons/ExpandLess";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import CakeIcon from "@material-ui/icons/Cake";
 import PeopleIcon from "@material-ui/icons/People";
 import ListIcon from "@material-ui/icons/ListAlt";
 import AnnouncementIcon from "@material-ui/icons/Announcement";
@@ -43,7 +46,6 @@ import {
   Description,
   DeviceHubOutlined,
   GridOn,
-  ListAlt,
   PhonelinkSetup,
 } from "@material-ui/icons";
 
@@ -61,44 +63,175 @@ import useVersion from "../hooks/useVersion";
 import { i18n } from "../translate/i18n";
 import { Campaign, ShapeLine, Webhook } from "@mui/icons-material";
 
+import useCompanySettings from "../hooks/useSettings/companySettings";
+
 const useStyles = makeStyles((theme) => ({
   listItem: {
     height: "44px",
     width: "auto",
+    // Remove margin personalizada para manter alinhamento original
     "&:hover $iconHoverActive": {
-      backgroundColor: theme.palette.primary.main,
+      backgroundColor: theme.palette.primary.main, // Usa cor do tema
       color: "#fff",
+      transform: "scale(1.05)",
     },
+    "&:hover $listItemText": {
+      color: theme.palette.primary.main, // Usa cor do tema
+      fontWeight: 600,
+    },
+    // Transição suave
+    transition: "all 0.3s ease",
   },
 
   listItemText: {
     fontSize: "14px",
     color: theme.mode === "light" ? "#666" : "#FFF",
+    transition: "color 0.3s ease", // Só transição de cor
+    fontWeight: 500,
+    "& .MuiTypography-root": {
+      fontFamily: "'Inter', 'Roboto', sans-serif",
+    }
   },
+
   avatarActive: {
     backgroundColor: "transparent",
   },
+
   avatarHover: {
     backgroundColor: "transparent",
   },
+
   iconHoverActive: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: "50%",
-    height: 36,
-    width: 36,
-    backgroundColor: theme.mode === "light" ? "rgba(120,120,120,0.1)" : "rgba(120,120,120,0.5)",
+    borderRadius: "50%", // Mantém circular original
+    height: 36, // Mantém tamanho original
+    width: 36,  // Mantém tamanho original
+    backgroundColor:
+      theme.mode === "light"
+        ? "rgba(120,120,120,0.1)"
+        : "rgba(120,120,120,0.5)",
     color: theme.mode === "light" ? "#666" : "#FFF",
-    // color: theme.mode === "light" ? theme.palette.primary.main : "#FFF",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", // Transição mais suave
     "&:hover, &.active": {
-      backgroundColor: theme.palette.primary.main,
+      backgroundColor: theme.palette.primary.main, // Usa cor do tema
       color: "#fff",
+      boxShadow: `0 4px 12px ${theme.palette.primary.main}30`, // Sombra dinâmica
     },
     "& .MuiSvgIcon-root": {
-      fontSize: "1.4rem",
+      fontSize: "1.4rem", // Mantém tamanho original
+      transition: "transform 0.3s ease",
+    },
+    "&:hover .MuiSvgIcon-root": {
+      transform: "scale(1.1)", // Pequena animação no hover
+    }
+  },
+
+  // Badge melhorado mas mantendo funcionalidade
+  badge: {
+    "& .MuiBadge-badge": {
+      backgroundColor: "#ef4444",
+      color: "#fff",
+      fontSize: "0.75rem",
+      fontWeight: 600,
+      animation: "$pulse 2s infinite",
+    }
+  },
+
+  "@keyframes pulse": {
+    "0%, 100%": {
+      opacity: 1,
+    },
+    "50%": {
+      opacity: 0.7,
+    }
+  },
+
+  // Melhorias para submenus mantendo estrutura original
+  submenuContainer: {
+    backgroundColor: theme.mode === "light"
+      ? "rgba(0, 0, 0, 0.02)"
+      : "rgba(255, 255, 255, 0.02)",
+  },
+
+  // Tooltip melhorado
+  customTooltip: {
+    backgroundColor: theme.mode === "light" ? "#1e293b" : "#374151",
+    color: "#fff",
+    fontSize: "0.875rem",
+    fontWeight: 500,
+    borderRadius: "8px",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+    "& .MuiTooltip-arrow": {
+      color: theme.mode === "light" ? "#1e293b" : "#374151",
+    }
+  },
+
+  // Versão com destaque sutil
+  versionContainer: {
+    textAlign: "center",
+    padding: "10px",
+    color: theme.palette.primary.main, // Usa cor do tema
+    fontSize: "12px",
+    fontWeight: "bold",
+    borderTop: `1px solid ${theme.mode === "light" ? "#f0f0f0" : "#333"}`,
+    marginTop: "auto",
+  },
+
+  // Seções de administração com destaque sutil
+  adminSection: {
+    "& .MuiListSubheader-root": {
+      color: theme.palette.primary.main, // Usa cor do tema
+      fontSize: "0.875rem",
+      fontWeight: 600,
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+    }
+  },
+
+  // Efeitos suaves para expand/collapse
+  expandIcon: {
+    transition: "transform 0.3s ease",
+    color: theme.palette.primary.main, // Usa cor do tema
+    "&.expanded": {
+      transform: "rotate(180deg)",
+    }
+  },
+
+  // Menu container com melhorias sutis
+  menuContainer: {
+    overflowY: "auto",
+    "&::-webkit-scrollbar": {
+      width: "6px",
+    },
+    "&::-webkit-scrollbar-track": {
+      background: "transparent",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      background: theme.mode === "light"
+        ? "rgba(0, 0, 0, 0.1)"
+        : "rgba(255, 255, 255, 0.1)",
+      borderRadius: "3px",
+      "&:hover": {
+        background: theme.mode === "light"
+          ? "rgba(0, 0, 0, 0.2)"
+          : "rgba(255, 255, 255, 0.2)",
+      }
     },
   },
+
+  // Estado ativo melhorado mantendo funcionalidade original
+  activeItem: {
+    "& $iconHoverActive": {
+      backgroundColor: theme.palette.primary.main, // Usa cor do tema
+      color: "#fff",
+    },
+    "& $listItemText": {
+      color: theme.palette.primary.main, // Usa cor do tema
+      fontWeight: 700,
+    }
+  }
 }));
 
 function ListItemLink(props) {
@@ -109,7 +242,10 @@ function ListItemLink(props) {
   const isActive = activeMenu === to || location.pathname === to;
 
   const renderLink = React.useMemo(
-    () => React.forwardRef((itemProps, ref) => <RouterLink to={to} ref={ref} {...itemProps} />),
+    () =>
+      React.forwardRef((itemProps, ref) => (
+        <RouterLink to={to} ref={ref} {...itemProps} />
+      )),
     [to]
   );
 
@@ -129,15 +265,36 @@ function ListItemLink(props) {
           {icon ? (
             <ListItemIcon>
               {showBadge ? (
-                <Badge badgeContent="!" color="error" overlap="circular" className={classes.badge}>
-                  <Avatar className={`${classes.iconHoverActive} ${isActive ? "active" : ""}`}>{icon}</Avatar>
+                <Badge
+                  badgeContent="!"
+                  color="error"
+                  overlap="circular"
+                  className={classes.badge}
+                >
+                  <Avatar
+                    className={`${classes.iconHoverActive} ${isActive ? "active" : ""
+                      }`}
+                  >
+                    {icon}
+                  </Avatar>
                 </Badge>
               ) : (
-                <Avatar className={`${classes.iconHoverActive} ${isActive ? "active" : ""}`}>{icon}</Avatar>
+                <Avatar
+                  className={`${classes.iconHoverActive} ${isActive ? "active" : ""
+                    }`}
+                >
+                  {icon}
+                </Avatar>
               )}
             </ListItemIcon>
           ) : null}
-          <ListItemText primary={<Typography className={classes.listItemText}>{primary}</Typography>} />
+          <ListItemText
+            primary={
+              <Typography className={classes.listItemText}>
+                {primary}
+              </Typography>
+            }
+          />
         </ListItem>
       </li>
     </ConditionalTooltip>
@@ -205,17 +362,18 @@ const MainListItems = ({ collapsed, drawerClose }) => {
   const classes = useStyles();
   const { whatsApps } = useContext(WhatsAppsContext);
   const { user, socket } = useContext(AuthContext);
+
   const { setActiveMenu } = useActiveMenu();
   const location = useLocation();
 
   const [connectionWarning, setConnectionWarning] = useState(false);
   const [openCampaignSubmenu, setOpenCampaignSubmenu] = useState(false);
-  const [openFlowSubmenu, setOpenFlowSubmenu] = useState(false);
   const [openDashboardSubmenu, setOpenDashboardSubmenu] = useState(false);
   const [showCampaigns, setShowCampaigns] = useState(false);
   const [showKanban, setShowKanban] = useState(false);
   const [showOpenAi, setShowOpenAi] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
+  const [showWavoipCall, setShowWavoipCall] = useState(false);
 
   // novas features
   const [showSchedules, setShowSchedules] = useState(false);
@@ -229,12 +387,21 @@ const MainListItems = ({ collapsed, drawerClose }) => {
   const [version, setVersion] = useState(false);
   const [managementHover, setManagementHover] = useState(false);
   const [campaignHover, setCampaignHover] = useState(false);
-  const [flowHover, setFlowHover] = useState(false)
-  const { list } = useHelps();  // INSERIR
+  const { list } = useHelps(); // INSERIR
   const [hasHelps, setHasHelps] = useState(false);
 
+  const [openFlowSubmenu, setOpenFlowSubmenu] = useState(false);
+  const [flowHover, setFlowHover] = useState(false);
 
-  useEffect(() => {   // INSERIR ESSE EFFECT INTEIRO
+  const { get: getSetting } = useCompanySettings();
+  const [showWallets, setShowWallets] = useState(false);
+
+  const isFlowbuilderRouteActive =
+    location.pathname.startsWith("/phrase-lists");
+  location.pathname.startsWith("/flowbuilders");
+
+  useEffect(() => {
+    // INSERIR ESSE EFFECT INTEIRO
     async function checkHelps() {
       const helps = await list();
       setHasHelps(helps.length > 0);
@@ -242,17 +409,34 @@ const MainListItems = ({ collapsed, drawerClose }) => {
     checkHelps();
   }, []);
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const setting = await getSetting(
+          {
+            "column": "DirectTicketsToWallets"
+          }
+        );
+
+        setShowWallets(setting.DirectTicketsToWallets);
+
+      } catch (err) {
+        toastError(err);
+      }
+    }
+
+    fetchSettings();
+  }, [setShowWallets]);
+
   const isManagementActive =
-    location.pathname === "/" || location.pathname.startsWith("/reports") || location.pathname.startsWith("/moments");
+    location.pathname === "/" ||
+    location.pathname.startsWith("/reports") ||
+    location.pathname.startsWith("/moments");
 
   const isCampaignRouteActive =
     location.pathname === "/campaigns" ||
     location.pathname.startsWith("/contact-lists") ||
     location.pathname.startsWith("/campaigns-config");
-
-  const isFlowbuilderRouteActive = 
-    location.pathname.startsWith("/phrase-lists")
-    location.pathname.startsWith("/flowbuilders")
 
   useEffect(() => {
     if (location.pathname.startsWith("/tickets")) {
@@ -292,6 +476,7 @@ const MainListItems = ({ collapsed, drawerClose }) => {
       setShowSchedules(planConfigs.plan.useSchedules);
       setShowInternalChat(planConfigs.plan.useInternalChat);
       setShowExternalApi(planConfigs.plan.useExternalApi);
+      setShowWavoipCall(planConfigs.plan.wavoip);
     }
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -306,10 +491,9 @@ const MainListItems = ({ collapsed, drawerClose }) => {
   }, [searchParam, pageNumber]);
 
   useEffect(() => {
-    if (user.id) {
+    if (user.id && socket && typeof socket.on === 'function') {
       const companyId = user.companyId;
-      //    const socket = socketManager.GetSocket();
-      // console.log('socket nListItems')
+
       const onCompanyChatMainListItems = (data) => {
         if (data.action === "new-message") {
           dispatch({ type: "CHANGE_CHAT", payload: data });
@@ -319,12 +503,19 @@ const MainListItems = ({ collapsed, drawerClose }) => {
         }
       };
 
-      socket.on(`company-${companyId}-chat`, onCompanyChatMainListItems);
+      const eventName = `company-${companyId}-chat`;
+      console.log('Registrando listener para:', eventName);
+
+      socket.on(eventName, onCompanyChatMainListItems);
+
       return () => {
-        socket.off(`company-${companyId}-chat`, onCompanyChatMainListItems);
+        if (socket && typeof socket.off === 'function') {
+          console.log('Removendo listener para:', eventName);
+          socket.off(eventName, onCompanyChatMainListItems);
+        }
       };
     }
-  }, [socket]);
+  }, [socket, user.id, user.companyId]);
 
   useEffect(() => {
     let unreadsCount = 0;
@@ -387,14 +578,18 @@ const MainListItems = ({ collapsed, drawerClose }) => {
     <div onClick={drawerClose}>
       <Can
         role={
-          (user.profile === "user" && user.showDashboard === "enabled") || user.allowRealTime === "enabled"
+          (user.profile === "user" && user.showDashboard === "enabled") ||
+            user.allowRealTime === "enabled"
             ? "admin"
             : user.profile
         }
         perform={"drawer-admin-items:view"}
         yes={() => (
           <>
-            <Tooltip title={collapsed ? i18n.t("mainDrawer.listItems.management") : ""} placement="right">
+            <Tooltip
+              title={collapsed ? i18n.t("mainDrawer.listItems.management") : ""}
+              placement="right"
+            >
               <ListItem
                 dense
                 button
@@ -404,7 +599,8 @@ const MainListItems = ({ collapsed, drawerClose }) => {
               >
                 <ListItemIcon>
                   <Avatar
-                    className={`${classes.iconHoverActive} ${isManagementActive || managementHover ? "active" : ""}`}
+                    className={`${classes.iconHoverActive} ${isManagementActive || managementHover ? "active" : ""
+                      }`}
                   >
                     <Dashboard />
                   </Avatar>
@@ -424,11 +620,18 @@ const MainListItems = ({ collapsed, drawerClose }) => {
               timeout="auto"
               unmountOnExit
               style={{
-                backgroundColor: theme.mode === "light" ? "rgba(120,120,120,0.1)" : "rgba(120,120,120,0.5)",
+                backgroundColor:
+                  theme.mode === "light"
+                    ? "rgba(120,120,120,0.1)"
+                    : "rgba(120,120,120,0.5)",
               }}
             >
               <Can
-                role={user.profile === "user" && user.showDashboard === "enabled" ? "admin" : user.profile}
+                role={
+                  user.profile === "user" && user.showDashboard === "enabled"
+                    ? "admin"
+                    : user.profile
+                }
                 perform={"drawer-admin-items:view"}
                 yes={() => (
                   <>
@@ -450,7 +653,11 @@ const MainListItems = ({ collapsed, drawerClose }) => {
                 )}
               />
               <Can
-                role={user.profile === "user" && user.allowRealTime === "enabled" ? "admin" : user.profile}
+                role={
+                  user.profile === "user" && user.allowRealTime === "enabled"
+                    ? "admin"
+                    : user.profile
+                }
                 perform={"drawer-admin-items:view"}
                 yes={() => (
                   <ListItemLink
@@ -461,6 +668,16 @@ const MainListItems = ({ collapsed, drawerClose }) => {
                   />
                 )}
               />
+              {user.profile === "admin" && showWallets && (
+                <>
+                  <ListItemLink
+                    to="/wallets"
+                    primary={i18n.t("mainDrawer.listItems.wallets")}
+                    icon={<AccountBalanceWalletIcon />}
+                    tooltip={collapsed}
+                  />
+                </>
+              )}
             </Collapse>
           </>
         )}
@@ -471,6 +688,15 @@ const MainListItems = ({ collapsed, drawerClose }) => {
         icon={<WhatsAppIcon />}
         tooltip={collapsed}
       />
+
+      {showWavoipCall && (
+        <ListItemLink
+          to="/call-historicals"
+          primary={i18n.t("mainDrawer.listItems.callHistorical")}
+          icon={<HistoryToggleOffIcon />}
+          tooltip={collapsed}
+        />
+      )}
 
       <ListItemLink
         to="/quick-messages"
@@ -490,12 +716,14 @@ const MainListItems = ({ collapsed, drawerClose }) => {
         </>
       )}
 
-      <ListItemLink
-        to="/contacts"
-        primary={i18n.t("mainDrawer.listItems.contacts")}
-        icon={<ContactPhoneOutlinedIcon />}
-        tooltip={collapsed}
-      />
+      {user.showContacts === "enabled" && (
+        <ListItemLink
+          to="/contacts"
+          primary={i18n.t("mainDrawer.listItems.contacts")}
+          icon={<ContactPhoneOutlinedIcon />}
+          tooltip={collapsed}
+        />
+      )}
 
       {showSchedules && (
         <>
@@ -530,11 +758,14 @@ const MainListItems = ({ collapsed, drawerClose }) => {
         </>
       )}
 
-      {/* <ListItemLink
+      {/* 
+      <ListItemLink
         to="/todolist"
         primary={i18n.t("ToDoList")}
         icon={<EventAvailableIcon />}
-      /> */}
+      /> 
+      */}
+
       {hasHelps && (
         <ListItemLink
           to="/helps"
@@ -543,139 +774,167 @@ const MainListItems = ({ collapsed, drawerClose }) => {
           tooltip={collapsed}
         />
       )}
-      <Can
-        role={user.profile === "user" && user.allowConnections === "enabled" ? "admin" : user.profile}
-        perform="dashboard:view"
-        yes={() => (
-          <>
-            <Divider />
-            <ListSubheader inset>{i18n.t("mainDrawer.listItems.administration")}</ListSubheader>
-            {showCampaigns && (
+
+      {user?.showCampaign === "enabled" && showCampaigns && (
+        <>
+          <Tooltip
+            title={collapsed ? i18n.t("mainDrawer.listItems.campaigns") : ""}
+            placement="right"
+          >
+            <ListItem
+              dense
+              button
+              onClick={() => setOpenCampaignSubmenu((prev) => !prev)}
+              onMouseEnter={() => setCampaignHover(true)}
+              onMouseLeave={() => setCampaignHover(false)}
+            >
+              <ListItemIcon>
+                <Avatar
+                  className={`${classes.iconHoverActive} ${isCampaignRouteActive || campaignHover ? "active" : ""}`}
+                >
+                  <EventAvailableIcon />
+                </Avatar>
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography className={classes.listItemText}>
+                    {i18n.t("mainDrawer.listItems.campaigns")}
+                  </Typography>
+                }
+              />
+              {openCampaignSubmenu ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </ListItem>
+          </Tooltip>
+          <Collapse
+            in={openCampaignSubmenu}
+            timeout="auto"
+            unmountOnExit
+            style={{
+              backgroundColor:
+                theme.mode === "light"
+                  ? "rgba(120,120,120,0.1)"
+                  : "rgba(120,120,120,0.5)",
+            }}
+          >
+            <List dense component="div" disablePadding>
+              <ListItemLink
+                to="/campaigns"
+                primary={i18n.t("campaigns.subMenus.list")}
+                icon={<ListIcon />}
+                tooltip={collapsed}
+              />
+              <ListItemLink
+                to="/contact-lists"
+                primary={i18n.t("campaigns.subMenus.listContacts")}
+                icon={<PeopleIcon />}
+                tooltip={collapsed}
+              />
+              <ListItemLink
+                to="/campaigns-config"
+                primary={i18n.t("campaigns.subMenus.settings")}
+                icon={<SettingsOutlinedIcon />}
+                tooltip={collapsed}
+              />
               <Can
                 role={user.profile}
                 perform="dashboard:view"
                 yes={() => (
-                  <>
-                    <Tooltip title={collapsed ? i18n.t("mainDrawer.listItems.campaigns") : ""} placement="right">
-                      <ListItem
-                        dense
-                        button
-                        onClick={() => setOpenCampaignSubmenu((prev) => !prev)}
-                        onMouseEnter={() => setCampaignHover(true)}
-                        onMouseLeave={() => setCampaignHover(false)}
-                      >
-                        <ListItemIcon>
-                          <Avatar
-                            className={`${classes.iconHoverActive} ${isCampaignRouteActive || campaignHover ? "active" : ""
-                              }`}
-                          >
-                            <EventAvailableIcon />
-                          </Avatar>
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Typography className={classes.listItemText}>
-                              {i18n.t("mainDrawer.listItems.campaigns")}
-                            </Typography>
-                          }
-                        />
-                        {openCampaignSubmenu ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                      </ListItem>
-                    </Tooltip>
-                    <Collapse
-                      in={openCampaignSubmenu}
-                      timeout="auto"
-                      unmountOnExit
-                      style={{
-                        backgroundColor: theme.mode === "light" ? "rgba(120,120,120,0.1)" : "rgba(120,120,120,0.5)",
-                      }}
-                    >
-                      <List dense component="div" disablePadding>
-                        <ListItemLink
-                          to="/campaigns"
-                          primary={i18n.t("campaigns.subMenus.list")}
-                          icon={<ListIcon />}
-                          tooltip={collapsed}
-                        />
-                        <ListItemLink
-                          to="/contact-lists"
-                          primary={i18n.t("campaigns.subMenus.listContacts")}
-                          icon={<PeopleIcon />}
-                          tooltip={collapsed}
-                        />
-                        <ListItemLink
-                          to="/campaigns-config"
-                          primary={i18n.t("campaigns.subMenus.settings")}
-                          icon={<SettingsOutlinedIcon />}
-                          tooltip={collapsed}
-                        />
-                      </List>
-                    </Collapse>
-                  </>
+                  <ListItemLink
+                    to="/files"
+                    primary={i18n.t("mainDrawer.listItems.files")}
+                    icon={<AttachFile />}
+                    tooltip={collapsed}
+                  />
                 )}
               />
-            )}
+            </List>
+          </Collapse>
+        </>
+      )}
 
-            {/* FLOWBUILDER */}
-            <Can
-              role={user.profile}
-              perform="dashboard:view"
-              yes={() => (
-                <>
-                  <Tooltip title={collapsed ? i18n.t("mainDrawer.listItems.campaigns") : ""} placement="right">
-                    <ListItem
-                      dense
-                      button
-                      onClick={() => setOpenFlowSubmenu((prev) => !prev)}
-                      onMouseEnter={() => setFlowHover(true)}
-                      onMouseLeave={() => setFlowHover(false)}
-                    >
-                      <ListItemIcon>
-                        <Avatar
-                          className={`${classes.iconHoverActive} ${isFlowbuilderRouteActive || flowHover ? "active" : ""
-                            }`}
-                        >
-                          <Webhook />
-                        </Avatar>
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Typography className={classes.listItemText}>
-                            {i18n.t("Flowbuilder")}
-                          </Typography>
-                        }
-                      />
-                      {openFlowSubmenu ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </ListItem>
-                  </Tooltip>
-
-                  <Collapse
-                    in={openFlowSubmenu}
-                    timeout="auto"
-                    unmountOnExit
-                    style={{
-                      backgroundColor: theme.mode === "light" ? "rgba(120,120,120,0.1)" : "rgba(120,120,120,0.5)",
-                    }}
-                  >
-                    <List dense component="div" disablePadding>
-                      <ListItemLink
-                        to="/phrase-lists"
-                        primary={"Fluxo de Campanha"}
-                        icon={<EventAvailableIcon />}
-                        tooltip={collapsed}
-                      />
-
-                      <ListItemLink
-                        to="/flowbuilders"
-                        primary={'Fluxo de conversa'}
-                        icon={<ShapeLine />}
-                      />
-                    </List>
-                  </Collapse>
-                </>
+      {/* FLOWBUILDER */}
+      {user.showFlow === "enabled" && (
+        <>
+          <Tooltip
+            title={
+              collapsed ? i18n.t("mainDrawer.listItems.campaigns") : ""
+            }
+            placement="right"
+          >
+            <ListItem
+              dense
+              button
+              onClick={() => setOpenFlowSubmenu((prev) => !prev)}
+              onMouseEnter={() => setFlowHover(true)}
+              onMouseLeave={() => setFlowHover(false)}
+            >
+              <ListItemIcon>
+                <Avatar
+                  className={`${classes.iconHoverActive} ${isFlowbuilderRouteActive || flowHover
+                    ? "active"
+                    : ""
+                    }`}
+                >
+                  <Webhook />
+                </Avatar>
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography className={classes.listItemText}>
+                    {i18n.t("Flowbuilder")}
+                  </Typography>
+                }
+              />
+              {openFlowSubmenu ? (
+                <ExpandLessIcon />
+              ) : (
+                <ExpandMoreIcon />
               )}
-            />
+            </ListItem>
+          </Tooltip>
 
+          <Collapse
+            in={openFlowSubmenu}
+            timeout="auto"
+            unmountOnExit
+            style={{
+              backgroundColor:
+                theme.mode === "light"
+                  ? "rgba(120,120,120,0.1)"
+                  : "rgba(120,120,120,0.5)",
+            }}
+          >
+            <List dense component="div" disablePadding>
+              <ListItemLink
+                to="/phrase-lists"
+                primary={"Fluxo de Campanha"}
+                icon={<EventAvailableIcon />}
+                tooltip={collapsed}
+              />
+
+              <ListItemLink
+                to="/flowbuilders"
+                primary={"Fluxo de conversa"}
+                icon={<ShapeLine />}
+              />
+            </List>
+          </Collapse>
+        </>
+      )}
+
+      <Can
+        role={
+          user.profile === "user" && user.allowConnections === "enabled"
+            ? "admin"
+            : user.profile
+        }
+        perform="dashboard:view"
+        yes={() => (
+          <>
+            <Divider />
+            <ListSubheader inset>
+              {i18n.t("mainDrawer.listItems.administration")}
+            </ListSubheader>
 
             {user.super && (
               <ListItemLink
@@ -702,6 +961,7 @@ const MainListItems = ({ collapsed, drawerClose }) => {
                 />
               </>
             )}
+
             <Can
               role={user.profile}
               perform="dashboard:view"
@@ -714,6 +974,20 @@ const MainListItems = ({ collapsed, drawerClose }) => {
                 />
               )}
             />
+
+            <Can
+              role={user.profile}
+              perform="dashboard:view"
+              yes={() => (
+                <ListItemLink
+                  to="/birthday-settings"
+                  primary={i18n.t("mainDrawer.listItems.birthdaySettings")}
+                  icon={<CakeIcon />}
+                  tooltip={collapsed}
+                />
+              )}
+            />
+
             <Can
               role={user.profile}
               perform="dashboard:view"
@@ -757,7 +1031,11 @@ const MainListItems = ({ collapsed, drawerClose }) => {
               />
             )}
             <Can
-              role={user.profile === "user" && user.allowConnections === "enabled" ? "admin" : user.profile}
+              role={
+                user.profile === "user" && user.allowConnections === "enabled"
+                  ? "admin"
+                  : user.profile
+              }
               perform={"drawer-admin-items:view"}
               yes={() => (
                 <ListItemLink
@@ -782,18 +1060,6 @@ const MainListItems = ({ collapsed, drawerClose }) => {
               perform="dashboard:view"
               yes={() => (
                 <ListItemLink
-                  to="/files"
-                  primary={i18n.t("mainDrawer.listItems.files")}
-                  icon={<AttachFile />}
-                  tooltip={collapsed}
-                />
-              )}
-            />
-            <Can
-              role={user.profile}
-              perform="dashboard:view"
-              yes={() => (
-                <ListItemLink
                   to="/financeiro"
                   primary={i18n.t("mainDrawer.listItems.financeiro")}
                   icon={<LocalAtmIcon />}
@@ -813,12 +1079,6 @@ const MainListItems = ({ collapsed, drawerClose }) => {
                 />
               )}
             />
-            {/* {user.super && (
-              <ListSubheader inset>
-                {i18n.t("mainDrawer.listItems.administration")}
-              </ListSubheader>
-            )} */}
-
             {user.super && (
               <ListItemLink
                 to="/companies"
@@ -827,20 +1087,12 @@ const MainListItems = ({ collapsed, drawerClose }) => {
                 tooltip={collapsed}
               />
             )}
-
           </>
-
         )}
       />
       {!collapsed && (
         <React.Fragment>
           <Divider />
-          {/* 
-              // IMAGEM NO MENU
-              <Hidden only={['sm', 'xs']}>
-                <img style={{ width: "100%", padding: "10px" }} src={logo} alt="image" />            
-              </Hidden> 
-              */}
           <Typography
             style={{
               fontSize: "12px",

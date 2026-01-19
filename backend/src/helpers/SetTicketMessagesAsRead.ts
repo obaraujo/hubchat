@@ -1,26 +1,21 @@
-import { proto, WASocket } from "baileys";
+import { delay, proto, WASocket } from "baileys";
 import cacheLayer from "../libs/cache";
 import { getIO } from "../libs/socket";
 import Message from "../models/Message";
 import Ticket from "../models/Ticket";
 import logger from "../utils/logger";
-import GetTicketWbot from "./GetTicketWbot";
-import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService";
+import { setReadMessageWhatsAppOficial } from "../libs/whatsAppOficial/whatsAppOficial.service";
+import Whatsapp from "../models/Whatsapp";
+import { getWbot } from "../libs/wbot";
 
 const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
 
   if (ticket.whatsappId) {
     // console.log("SETTING MESSAGES AS READ", ticket.whatsappId)
-    const whatsapp = await ShowWhatsAppService(
-      ticket.whatsappId,
-
-
-      ticket.companyId
-    );
+    const whatsapp = await Whatsapp.findOne({ where: { id: ticket.whatsappId, companyId: ticket.companyId } });
 
     if (["open", "group"].includes(ticket.status) && whatsapp && whatsapp.status === 'CONNECTED' && ticket.unreadMessages > 0) {
       try {
-        const wbot = await GetTicketWbot(ticket);
         // no baileys temos que marcar cada mensagem como lida
         // não o chat inteiro como é feito no legacy
         const getJsonMessage = await Message.findAll({
@@ -32,16 +27,31 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
           order: [["createdAt", "DESC"]]
         });
 
-        if (getJsonMessage.length > 0) {
+        if (['whatsapp_oficial'].includes(ticket.channel)) {
 
           getJsonMessage.forEach(async message => {
-            const msg: proto.IWebMessageInfo = JSON.parse(message.dataJson);
-            if (msg.key && msg.key.fromMe === false && !ticket.isBot && (ticket.userId || ticket.isGroup)) {
-
-              await wbot.readMessages([msg.key])
-            }
+            setReadMessageWhatsAppOficial(whatsapp.token, message.wid);
           });
-        }
+        } else
+          if (ticket.channel == 'whatsapp') {
+            const wbot = await getWbot(ticket.whatsappId);
+
+            if (getJsonMessage.length > 0) {
+
+              getJsonMessage.forEach(async message => {
+                const msg: proto.IWebMessageInfo = JSON.parse(message.dataJson);
+                if (msg.key && msg.key.fromMe === false && !ticket.isBot && (ticket.userId || ticket.isGroup)) {
+
+                  // if (wbot?.ws?.socket?._readyState !== 1) {
+                  //   console.log("Aguardando socket Message as Read no MarkAsRead ", wbot?.ws?.socket?._readyState)
+                  //   await delay(150);
+                  // }
+
+                  await wbot.readMessages([msg.key])
+                }
+              });
+            }
+          }
 
         await Message.update(
           { read: true },

@@ -4,7 +4,6 @@ import {
   BelongsTo,
   Column,
   CreatedAt,
-  DataType,
   ForeignKey,
   Model,
   PrimaryKey,
@@ -13,67 +12,66 @@ import {
 } from "sequelize-typescript";
 import Queue from "./Queue";
 import Company from "./Company";
-import { DATE } from "sequelize";
 
 @Table
 class Prompt extends Model<Prompt> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @AllowNull(false)
-  @Column(DataType.TEXT)
+  @Column
   name: string;
 
   @AllowNull(false)
-  @Column(DataType.TEXT)
+  @Column
   prompt: string;
 
   @AllowNull(false)
-  @Column(DataType.TEXT)
+  @Column
   apiKey: string;
 
-  @Column({ defaultValue: 10, type:DataType.INTEGER })
+  @Column({ defaultValue: 10 })
   maxMessages: number;
 
-  @Column({ defaultValue: 100, type:DataType.INTEGER })
+  @Column({ defaultValue: 100 })
   maxTokens: number;
 
-  @Column({ defaultValue: 1, type:DataType.INTEGER })
+  @Column({ defaultValue: 1 })
   temperature: number;
 
-  @Column({ defaultValue: 0, type:DataType.INTEGER })
+  @Column({ defaultValue: 0 })
   promptTokens: number;
 
-  @Column({ defaultValue: 0 , type:DataType.INTEGER})
+  @Column({ defaultValue: 0 })
   completionTokens: number;
 
-  @Column({ defaultValue: 0, type:DataType.INTEGER })
+  @Column({ defaultValue: 0 })
   totalTokens: number;
 
   @AllowNull(false)
-  @Column(DataType.TEXT)
+  @Column
   voice: string;
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
+  @Column
   voiceKey:string;
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
+  @Column
   voiceRegion:string;
 
   @AllowNull
   @ForeignKey(() => Queue)
-  @Column(DataType.INTEGER)
+  @Column
   queueId: number;
 
   @BelongsTo(() => Queue)
   queue: Queue;
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
 
   @BelongsTo(() => Company)

@@ -9,6 +9,7 @@ import Whatsapp from "../../models/Whatsapp";
 import Company from "../../models/Company";
 import QueueIntegrations from "../../models/QueueIntegrations";
 import TicketTag from "../../models/TicketTag";
+import ContactWallet from "../../models/ContactWallet";
 
 const ShowTicketService = async (
   id: string | number,
@@ -49,21 +50,34 @@ const ShowTicketService = async (
       "typebotSessionId",
       "typebotStatus",
       "sendInactiveMessage",
-      "queueId",
       "fromMe",
       "isOutOfHour",
       "isActiveDemand",
-      "typebotSessionTime"
+      "typebotSessionTime",
+      "hashFlowId"
     ],
     include: [
       {
         model: Contact,
         as: "contact",
-        attributes: ["id", "companyId", "name", "number", "email", "profilePicUrl", "acceptAudioMessage", "active", "disableBot", "remoteJid", "urlPicture", "lgpdAcceptedAt"],
+        attributes: ["id", "companyId", "name", "number", "email", "profilePicUrl", "acceptAudioMessage", "active", "disableBot", "isGroup", "remoteJid", "urlPicture", "lgpdAcceptedAt"],
         include: ["extraInfo", "tags",
           {
             association: "wallets",
             attributes: ["id", "name"]
+          },
+          {
+            model: ContactWallet,
+            include: [
+              {
+                model: User,
+                attributes: ["id", "name"]
+              },
+              {
+                model: Queue,
+                attributes: ["id", "name"]
+              }
+            ]
           }]
       },
       {
@@ -85,7 +99,7 @@ const ShowTicketService = async (
       {
         model: Whatsapp,
         as: "whatsapp",
-        attributes: ["id", "name", "groupAsTicket", "greetingMediaAttachment", "facebookUserToken", "facebookUserId", "status"]
+        attributes: ["id", "name", "groupAsTicket", "greetingMediaAttachment", "facebookUserToken", "facebookUserId", "status", "token", "channel", "color"]
 
       },
       {

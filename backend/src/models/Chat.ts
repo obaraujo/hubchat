@@ -10,8 +10,7 @@ import {
   BelongsTo,
   ForeignKey,
   BeforeCreate,
-  Default,
-	DataType
+  Default
 } from "sequelize-typescript";
 
 import { v4 as uuidv4 } from "uuid";
@@ -25,26 +24,41 @@ import User from "./User";
 class Chat extends Model<Chat> {
   @PrimaryKey
   @AutoIncrement
-  @Column(DataType.INTEGER)
+  @Column
   id: number;
 
   @Default(uuidv4())
-  @Column(DataType.TEXT)
+  @Column
   uuid: string;
 
-  @Column({ defaultValue: "", type:DataType.STRING })
+  @Column({ defaultValue: "" })
   title: string;
 
   @ForeignKey(() => User)
-  @Column(DataType.INTEGER)
+  @Column
   ownerId: number;
 
-  @Column({ defaultValue: "", type:DataType.STRING })
+  @Column({ defaultValue: "" })
   lastMessage: string;
 
   @ForeignKey(() => Company)
-  @Column(DataType.INTEGER)
+  @Column
   companyId: number;
+
+  @Column
+  isGroup: boolean;
+
+  @Column
+  groupName: string;
+
+  @Column
+  groupAdminId: number;
+
+  @Column({ defaultValue: "" })
+  description: string;
+
+  @Column({ defaultValue: "" })
+  groupImage: string;
 
   @CreatedAt
   createdAt: Date;
@@ -57,6 +71,9 @@ class Chat extends Model<Chat> {
 
   @BelongsTo(() => User)
   owner: User;
+
+  @BelongsTo(() => User, { foreignKey: "groupAdminId" })
+  groupAdmin: User;
 
   @HasMany(() => ChatUser)
   users: ChatUser[];

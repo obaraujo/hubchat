@@ -1,11 +1,11 @@
+// src/services/ContactServices/CreateContactService.ts - CORRIGIDO
 import AppError from "../../errors/AppError";
 import CompaniesSettings from "../../models/CompaniesSettings";
 import Contact from "../../models/Contact";
 import ContactCustomField from "../../models/ContactCustomField";
-import logger from "../../utils/logger";
 import ContactWallet from "../../models/ContactWallet";
 
-interface ExtraInfo extends ContactCustomField {
+interface ExtraInfo {
   name: string;
   value: string;
 }
@@ -15,6 +15,7 @@ interface Wallet {
   contactId: number | string;
   companyId: number | string;
 }
+
 interface Request {
   name: string;
   number: string;
@@ -26,12 +27,14 @@ interface Request {
   extraInfo?: ExtraInfo[];
   remoteJid?: string;
   wallets?: null | number[] | string[];
+  birthDate?: Date | string; // 🎂 NOVO CAMPO ADICIONADO
 }
 
 const CreateContactService = async ({
   name,
   number,
   email = "",
+  birthDate, // 🎂 INCLUIR NO DESTRUCTURING
   acceptAudioMessage,
   active,
   companyId,
@@ -40,42 +43,69 @@ const CreateContactService = async ({
   wallets
 }: Request): Promise<Contact> => {
 
+  console.log('number', number)
+  console.log('remoteJid', remoteJid)
+
+
   const numberExists = await Contact.findOne({
     where: { number, companyId }
   });
+  
   if (numberExists) {
-
     throw new AppError("ERR_DUPLICATED_CONTACT");
   }
 
   const settings = await CompaniesSettings.findOne({
-    where: {
-      companyId
-    }
-  })
+    where: { companyId }
+  });
 
-  const { acceptAudioMessageContact } = settings;
+  const acceptAudioMessageContact =
+    settings?.acceptAudioMessageContact === "enabled";
+
+  // 🎂 PROCESSAR DATA DE NASCIMENTO - CORREÇÃO DE TIMEZONE
+  let processedBirthDate: Date | null = null;
+  if (birthDate) {
+    if (typeof birthDate === 'string') {
+      // Se vier no formato ISO, extrair apenas a parte da data
+      const dateOnly = birthDate.split('T')[0];
+      // Criar data local com meio-dia para evitar problemas de timezone
+      const [year, month, day] = dateOnly.split('-').map(Number);
+      processedBirthDate = new Date(year, month - 1, day, 12, 0, 0);
+    } else if (birthDate instanceof Date) {
+      // Se for objeto Date, criar nova data local com meio-dia
+      const year = birthDate.getFullYear();
+      const month = birthDate.getMonth();
+      const day = birthDate.getDate();
+      processedBirthDate = new Date(year, month, day, 12, 0, 0);
+    }
+  }
 
   const contact = await Contact.create(
     {
       name,
       number,
       email,
-      acceptAudioMessage: acceptAudioMessageContact === 'enabled' ? true : false,
+      birthDate: processedBirthDate, // 🎂 INCLUIR NO CREATE
+      acceptAudioMessage: acceptAudioMessageContact,
       active,
-      extraInfo,
       companyId,
       remoteJid
     },
     {
-      include: ["extraInfo",
-        {
-          association: "wallets",
-          attributes: ["id", "name"]
-        }]
+      include: ["extraInfo"]
     }
   );
 
+  if (extraInfo && extraInfo.length > 0) {
+    for (const info of extraInfo) {
+      await ContactCustomField.create({
+        name: info.name,
+        value: info.value,
+        contactId: contact.id
+      });
+    }
+  }
+  
   if (wallets) {
     await ContactWallet.destroy({
       where: {
@@ -85,7 +115,6 @@ const CreateContactService = async ({
     });
 
     const contactWallets: Wallet[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     wallets.forEach((wallet: any) => {
       contactWallets.push({
         walletId: !wallet.id ? wallet : wallet.id,
@@ -96,8 +125,17 @@ const CreateContactService = async ({
 
     await ContactWallet.bulkCreate(contactWallets);
   }
-  return contact;
 
+  await contact.reload({
+    include: ["extraInfo",
+      {
+        association: "wallets",
+        attributes: ["id", "name"]
+      },
+    ]
+  });
+
+  return contact;
 };
 
 export default CreateContactService;
