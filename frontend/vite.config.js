@@ -1,24 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from 'fs';
-import { resolve } from 'path';
 require("dotenv").config();
-
-const target = resolve(process.cwd(), "index.html");
-const source = resolve(process.cwd(), "../../echat/frontend/index.html");
-
-
-try {
-  if (fs.existsSync(source)) {
-    fs.copyFileSync(source, target);
-    console.log("✔ index.html copiado com sucesso!");
-  } else {
-    console.warn("⚠ Arquivo fonte não encontrado:", source);
-  }
-} catch (err) {
-  console.error("❌ Erro ao copiar index.html:", err);
-}
-
 
 export default defineConfig(({ mode }) => {
   // carrega variáveis do .env
