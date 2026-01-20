@@ -122,7 +122,7 @@ const useStyles = makeStyles((theme) => ({
     borderColor: "#e0e0e0",
   },
   previewCardDark: {
-    backgroundColor: "#424242",
+    backgroundColor: "#111827",
     borderColor: "#666666",
   },
   previewCardFavicon: {

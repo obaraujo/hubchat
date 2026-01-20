@@ -1,8 +1,8 @@
 import { Button } from "@material-ui/core";
 import React, { useRef, useEffect, useState } from "react";
 import api from "../../services/api";
-import { Typography } from "@material-ui/core";
 import { useTheme, makeStyles } from "@material-ui/core/styles";
+import { AudioPlayerCustom } from "./AudioPlayer";
 
 const LS_NAME = "audioMessageRate";
 
@@ -186,6 +186,8 @@ const AudioModal = ({ url, message, disableTranscription = false }) => {
     }
   };
 
+	return <AudioPlayerCustom audioUrl={url} message={message} />;
+
   return (
     <div className={classes.audioContainer}>
       {/* ✅ Container do player igual ao original */}
@@ -213,7 +215,7 @@ const AudioModal = ({ url, message, disableTranscription = false }) => {
       </div>
 
       {/* ✅ ÚNICA MUDANÇA: Container de controles com botão centralizado */}
-      <div className={classes.controlsContainer}>
+      {/* <div className={classes.controlsContainer}>
         {!disableTranscription && (
           <div className={classes.transcriptionContainer}>
             {!transcrito ? (
@@ -244,7 +246,7 @@ const AudioModal = ({ url, message, disableTranscription = false }) => {
             )}
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

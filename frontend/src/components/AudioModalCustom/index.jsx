@@ -257,7 +257,7 @@ const AudioModalCustom = ({
       </div>
 
       {/* ✅ ÚNICA MUDANÇA: Container de controles com botão centralizado */}
-      <div className={classes.controlsContainer}>
+      {/* <div className={classes.controlsContainer}>
         {!disableTranscription && (
           <div className={classes.transcriptionContainer}>
             {!transcrito ? (
@@ -288,7 +288,7 @@ const AudioModalCustom = ({
             )}
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

@@ -64,7 +64,6 @@ const App = () => {
     }),
     [appLogoLight, appLogoDark, appLogoFavicon, appName, mode]
   );
-console.log(primaryColorLight);
 
   const theme = useMemo(
     () =>
@@ -104,33 +103,33 @@ console.log(primaryColorLight);
             },
           },
 
-          palette: {
-            type: mode,
-            primary: {
-              main: mode === "light" ? primaryColorLight : primaryColorDark, // Usa cores dinâmicas
-              light: mode === "light"
-                ? `${primaryColorLight}80`
-                : `${primaryColorDark}80`,
-              dark: mode === "light"
-                ? `${primaryColorLight}CC`
-                : `${primaryColorDark}CC`,
-              contrastText: "#ffffff",
-            },
-            textPrimary:
-              mode === "light" ? primaryColorLight : primaryColorDark,
-            borderPrimary:
-              mode === "light" ? primaryColorLight : primaryColorDark,
-            dark: { main: mode === "light" ? "#333333" : "#F3F3F3" },
-            light: { main: mode === "light" ? "#F3F3F3" : "#333333" },
-            fontColor: mode === "light" ? primaryColorLight : primaryColorDark,
-            tabHeaderBackground: mode === "light" ? "#EEE" : "#666",
-            optionsBackground: mode === "light" ? "#fafafa" : "#333",
-            fancyBackground: mode === "light" ? "#fafafa" : "#333",
-            total: mode === "light" ? "#fff" : "#222",
-            messageIcons: mode === "light" ? "grey" : "#F3F3F3",
-            inputBackground: mode === "light" ? "#FFFFFF" : "#333",
-            barraSuperior: mode === "light" ? primaryColorLight : "#666", // Usa cor do tema
-          },
+					palette: {
+						type: mode,
+						primary: {
+							main: mode === "light" ? primaryColorLight : primaryColorDark,
+							light: mode === "light" ? "#8B5CF6" : "#C4B5FD", 
+							dark: mode === "light" ? "#4C1D95" : "#7C3AED",
+							contrastText: "#ffffff",
+						},
+						// Texto principal seguindo a cor da marca para títulos/ênfase
+						textPrimary: mode === "light" ? "#1F2937" : "#F9FAFB", 
+						borderPrimary: mode === "light" ? primaryColorLight : primaryColorDark,
+						
+						dark: { main: mode === "light" ? "#111827" : "#F3F4F6" },
+						light: { main: mode === "light" ? "#F3F4F6" : "#111827" },
+						
+						fontColor: mode === "light" ? "#374151" : "#E5E7EB",
+						tabHeaderBackground: mode === "light" ? "#F3F4F6" : "#1F2937",
+						optionsBackground: mode === "light" ? "#FFFFFF" : "#111827",
+						fancyBackground: mode === "light" ? "#F9FAFB" : "#1F2937",
+						
+						total: mode === "light" ? "#FFFFFF" : "#0F172A", // Fundo profundo para o Dark
+						messageIcons: mode === "light" ? "#6B7280" : "#9CA3AF",
+						inputBackground: mode === "light" ? "#FFFFFF" : "#1F2937",
+						
+						// Na barra superior, o roxo no Light e um cinza sóbrio no Dark para não ofuscar
+						barraSuperior: mode === "light" ? primaryColorLight : "#1F2937", 
+				},
 
           typography: {
             fontFamily: [

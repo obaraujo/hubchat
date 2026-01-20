@@ -165,7 +165,7 @@ const useStyles = makeStyles((theme) => ({
     overflowX: "hidden",
     overflowY: "hidden",
     // Melhorias sutis no drawer
-    borderRight: `1px solid ${theme.mode === "light" ? "#e0e0e0" : "#424242"}`,
+    borderRight: `1px solid ${theme.mode === "light" ? "#e0e0e0" : "#111827"}`,
     boxShadow:
       theme.mode === "light"
         ? "2px 0 8px rgba(0, 0, 0, 0.1)"

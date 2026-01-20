@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from 'fs';
@@ -37,7 +38,7 @@ export default defineConfig(({ mode }) => {
   fs.writeFileSync("./public/manifest.json", JSON.stringify(manifest, null, 2));
 
   return {
-    plugins: [
+    plugins: [    tailwindcss(),
       react({
         jsxRuntime: "automatic", // permite JSX em .js sem precisar importar React,
         include: "**/*.{js,jsx,ts,tsx}",
