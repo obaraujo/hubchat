@@ -1,14 +1,14 @@
 
 export const colorBack = () => {
-  return "#065183";
+  return "#6D28D9";
 };
 
 export const colorPrimary = () => {
-  return "#065183";
+  return "#6D28D9";
 };
 
 export const colorIconesMenu = () => {
-  return "#07074a";
+  return "#6D28D9";
 };
 
 export const colorTitleTable = () => {

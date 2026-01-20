@@ -24,7 +24,7 @@ const App = () => {
   const appColorLocalStorage =
     localStorage.getItem("primaryColorLight") ||
     localStorage.getItem("primaryColorDark") ||
-    "#065183";
+    "#6D28D9";
   const appNameLocalStorage = localStorage.getItem("appName") || "";
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const preferredTheme = window.localStorage.getItem("preferredTheme");
@@ -64,6 +64,7 @@ const App = () => {
     }),
     [appLogoLight, appLogoDark, appLogoFavicon, appName, mode]
   );
+console.log(primaryColorLight);
 
   const theme = useMemo(
     () =>
@@ -364,14 +365,14 @@ const App = () => {
   useEffect(() => {
     getPublicSetting("primaryColorLight")
       .then((color) => {
-        setPrimaryColorLight(color || "#25142DC7");
+        setPrimaryColorLight(color || "#6D28D9");
       })
       .catch((error) => {
         console.log("Error reading setting", error);
       });
     getPublicSetting("primaryColorDark")
       .then((color) => {
-        setPrimaryColorDark(color || "#25142DC7");
+        setPrimaryColorDark(color || "#6D28D9");
       })
       .catch((error) => {
         console.log("Error reading setting", error);
@@ -405,11 +406,11 @@ const App = () => {
       });
     getPublicSetting("appName")
       .then((name) => {
-        setAppName(name || "AtendeChat");
+        setAppName(name || "HubChat");
       })
       .catch((error) => {
         console.log("Error reading setting", error);
-        setAppName("AtendeChat");
+        setAppName("HubChat");
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

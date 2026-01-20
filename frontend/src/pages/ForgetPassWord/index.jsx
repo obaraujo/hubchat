@@ -41,7 +41,7 @@ const useStyles = makeStyles((theme) => ({
     textAlign: "center",
   },
   paper: {
-    backgroundColor: "white",
+    backgroundColor: "red",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",

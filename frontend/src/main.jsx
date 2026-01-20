@@ -7,7 +7,8 @@ import App from "./App";
 
 ReactDOM.render(
 	<CssBaseline>
-		<App /></CssBaseline>
+		<App />
+		</CssBaseline>
 ,	document.getElementById("root"),
 	() => {
 		window.finishProgress();

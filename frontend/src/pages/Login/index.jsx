@@ -498,7 +498,7 @@ const Login = () => {
     return (
         <>
             <Helmet>
-                <title>{appName || "AtendeChat"}</title>
+                <title>{appName || "HubChat"}</title>
                 <link rel="icon" href={appLogoFavicon || "/default-favicon.ico"} />
             </Helmet>
 

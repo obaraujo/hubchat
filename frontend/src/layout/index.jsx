@@ -117,7 +117,7 @@ const useStyles = makeStyles((theme) => ({
       height: "48px",
     },
     // ALTERAÇÃO: Removido o gradiente e definido fundo branco
-    backgroundColor: "#ffffff", // Fundo branco fixo
+    backgroundColor: "", // Fundo branco fixo
     borderBottom: `1px solid ${theme.palette.divider}`, // Linha sutil para separação
     transition: "all 0.3s ease",
   },
@@ -194,11 +194,12 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     padding: 0,
     margin: 0,
+		borderRadius:0
   },
 
   container: {
-    padding: 0,
-    margin: 0,
+    padding: 10,
+    margin: 10,
     maxWidth: "none",
     width: "100%",
   },
@@ -721,7 +722,7 @@ const LoggedInLayout = ({ children, themeToggle, hideMenu = false }) => {
   }
 
   return (
-    <div className={clsx(classes.root, "logged-in-layout")}>
+    <div className={clsx(classes.root, "logged-in-layout") } >
       {!hideMenu && (
         <Drawer
           variant={drawerVariant}
@@ -903,7 +904,7 @@ const LoggedInLayout = ({ children, themeToggle, hideMenu = false }) => {
                   onClick={handleMenu}
                 >
                   <Avatar
-                    alt="AtendeChat"
+                    alt="HubChat"
                     className={classes.avatar2}
                     src={profileUrl}
                   />
