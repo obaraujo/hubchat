@@ -39,6 +39,7 @@ import Message from "../models/Message";
 import { getVersionByIndexFromUrl } from "../utils/versionHelper";
 import path from "path";
 import { getGroupMetadataCache } from "../utils/RedisGroupCache";
+import { useVoiceCallsBaileys } from "./wavoip/hook";
 
 const loggerBaileys = MAIN_LOGGER.child({});
 loggerBaileys.level = "error";
@@ -228,7 +229,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           generateHighQualityLinkPreview: true,
           linkPreviewImageThumbnailWidth: 200,
           emitOwnEvents: true,
-          browser: Browsers.windows("Chrome"),
+          browser: Browsers.windows("UWP"),
           defaultQueryTimeoutMs: 60000,
           cachedGroupMetadata: async (jid) => {
             const cachedGroupMetadata = await getGroupMetadataCache(whatsapp.id, jid)
@@ -250,6 +251,10 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           },
           getMessage
         });
+
+				if (whatsapp.wavoip){			
+					useVoiceCallsBaileys(whatsapp.wavoip, wsocket, "HubChat", "close", true)
+				}
 
         wsocket.id = whatsapp.id;
 

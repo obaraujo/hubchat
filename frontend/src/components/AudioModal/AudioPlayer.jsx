@@ -35,6 +35,11 @@ export function AudioPlayerCustom({ audioUrl, message }) {
       setSpeed(newSpeed);
     }
   }, []);
+	
+  useEffect(() => {
+		const audio = audioRef.current;
+    setDuration(handleSetTime(audio.duration ?? 0));
+   }, [audioRef.current]);
 
   function handleSetTime(time) {
     const minutes = Math.floor(time / 60);

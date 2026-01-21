@@ -88,6 +88,7 @@
 		"sequelize-cli": "^5.5.1",
 		"sequelize-typescript": "^1.1.0",
 		"socket.io": "^4.7.4",
+		"socket.io-client": "^4.8.3",
 		"stripe": "^18.2.1",
 		"uuid": "^8.3.2",
 		"winston": "^3.13.0",
