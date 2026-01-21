@@ -84,7 +84,7 @@ export async function verifyContact(
   // }
 
   const isLid = msgContact.id.includes("@lid") || false;
-  console.log("[DEBUG RODRIGO] isLid", isLid)
+
   const isGroup = msgContact.id.includes("@g.us");
   const isWhatsappNet = msgContact.id.includes("@s.whatsapp.net");
 
@@ -97,9 +97,9 @@ export async function verifyContact(
 
   // Determinar número e LID adequadamente
   let number = extractedPhone;
-  console.log("[DEBUG RODRIGO] number", number)
+
   let originalLid = msgContact.lid || null;
-  console.log("[DEBUG RODRIGO] originalLid", originalLid)
+
 
   // Se o ID estiver no formato telefone:XX@s.whatsapp.net, extraia apenas o telefone
   if (isWhatsappNet && extractedId.includes(':')) {
@@ -130,7 +130,7 @@ export async function verifyContact(
   return lidUpdateMutex.runExclusive(async () => {
     let foundContact: Contact | null = null;
     if (isLid) {
-      console.log("[DEBUG RODRIGO] isLid", JSON.stringify(msgContact, null, 2))
+    
       foundContact = await Contact.findOne({
         where: {
           companyId,
@@ -142,7 +142,7 @@ export async function verifyContact(
         include: ["tags", "extraInfo", "whatsappLidMap"]
       });
     } else {
-      console.log("[DEBUG RODRIGO] No isLid", JSON.stringify(msgContact, null, 2))
+    
       foundContact = await Contact.findOne({
         where: {
           companyId,
@@ -150,7 +150,7 @@ export async function verifyContact(
         },
       });
     }
-    console.log("[DEBUG RODRIGO] foundContact", foundContact?.id)
+  
     if (isLid) {
       if (foundContact) {
         return updateContact(foundContact, {
@@ -225,7 +225,7 @@ export async function verifyContact(
             logger.warn(`[RDS CONTATO] Contato ${msgContact.id} não encontrado no WhatsApp, mas continuando processamento`);
           }
         } catch (error) {
-          console.log("[DEBUG RODRIGO] error", JSON.stringify(error, null, 2))
+        
           logger.error(`[RDS CONTATO] Erro ao verificar contato ${msgContact.id} no WhatsApp: ${error.message}`);
 
           try {
@@ -362,7 +362,7 @@ export async function verifyContact(
           }
         }
       } catch (error) {
-        console.log("[DEBUG RODRIGO] error", JSON.stringify(error, null, 2))
+      
         logger.error(`[RDS CONTATO] Erro ao verificar contato ${msgContact.id} no WhatsApp: ${error.message}`);
 
         newContact = await CreateOrUpdateContactService(contactData);

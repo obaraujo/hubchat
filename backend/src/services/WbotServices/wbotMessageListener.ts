@@ -423,7 +423,7 @@ const getSenderMessage = (
   if (msg.key.fromMe) return me.id;
 
   const key: IExtendedMessageKey = msg.key;
-  console.log("[DEBUG RODRIGO] key", key.participant_pn, msg.participant, key.participant, key.remoteJid)
+  
   const senderId =
     key.participant_pn || msg.participant || key.participant || key.remoteJid || undefined;
 
@@ -440,12 +440,12 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
 
   const isGroup = msg.key.remoteJid.includes("g.us");
   const rawNumber = msg.key.remoteJid.replace(/\D/g, "");
-  console.log("[DEBUG RODRIGO] key", JSON.stringify(key, null, 2))
+  
   const lid = key.sender_lid && key?.sender_lid.includes("@lid") ? key.sender_lid : key.participant_lid && key?.participant_lid.includes("@lid") ? key.participant_lid : key.remoteJid && key?.remoteJid.includes("@lid") ? key.remoteJid : null;
   const senderPn = key.sender_pn && key.sender_pn.length > 0 ? key.sender_pn : key.participant_pn && key.participant_pn.length > 0 ? key.participant_pn : null;
-  console.log("[DEBUG RODRIGO] senderPn", senderPn)
+  
   const remoteJid = !key.remoteJid.includes("@lid") ? key.remoteJid : key.remoteJid.includes("@lid") && senderPn !== null ? senderPn : lid;
-  console.log("[DEBUG RODRIGO] remoteJid", remoteJid)
+  
   // Usa o identificador normalizado que considera o lid
   // const normalizedId = normalizeContactIdentifier(msg);
 
@@ -3643,7 +3643,7 @@ const handleMessage = async (
 
   let campaignExecuted = false;
 
-  console.log("[DEBUG RODRIGO] msg.key.id", JSON.stringify(msg.key))
+  
   if (isImported) {
     addLogs({
       fileName: `processImportMessagesWppId${wbot.id}.txt`,
@@ -3771,7 +3771,7 @@ const handleMessage = async (
       msgContact = await getContactMessage(msg, wbot);
     }
 
-    console.log("[DEBUG RODRIGO] msgContact", JSON.stringify(msgContact, null, 2))
+    
     const isGroup = msg.key.remoteJid?.endsWith("@g.us");
 
     // IGNORAR MENSAGENS DE GRUPO
