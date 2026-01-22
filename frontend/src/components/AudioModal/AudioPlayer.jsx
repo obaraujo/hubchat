@@ -78,7 +78,7 @@ export function AudioPlayerCustom({ audioUrl, message }) {
     <>
       <div
         className={`flex  ${
-          message.fromMe ? "pr-3" : "flex-row-reverse"
+          message?.fromMe ? "pr-3" : "flex-row-reverse"
         } `}
       >
         <audio
@@ -89,7 +89,7 @@ export function AudioPlayerCustom({ audioUrl, message }) {
         />
         <div
           className={`rounded-full w-12 h-12 ${
-            message.fromMe ? "" : "ml-2"
+            message?.fromMe ? "" : "ml-2"
           } bg-zinc-300 flex items-center justify-center `}
         >
           {isPlaying ? (
@@ -100,11 +100,11 @@ export function AudioPlayerCustom({ audioUrl, message }) {
             >
               {speed}x
             </button>
-          ) : message.fromMe ? (
+          ) : message?.fromMe ? (
             <img src="/icon.png" alt="" className="rounded-full" />
           ) : (
             <img
-              src={message.contact.profilePicUrl}
+              src={message?.contact.profilePicUrl}
               alt=""
               className="rounded-full"
             />
@@ -134,7 +134,7 @@ export function AudioPlayerCustom({ audioUrl, message }) {
                     <div className="h-1 w-full bg-zinc-300 rounded-full"></div>
                     <div
                       className="absolute h-1 rounded-sm top-1/2 -translate-y-1/2 bg-zinc-500 data-[opened=true]:bg-[#30B0E8]"
-                      data-opened={message.ack == 5}
+                      data-opened={message?.ack == 5}
                       style={{
                         width: `${progress}%`,
                         transition: "width 0.2s ease-in", // Transição suave
@@ -142,7 +142,7 @@ export function AudioPlayerCustom({ audioUrl, message }) {
                     ></div>
                 <div
                   className="absolute h-3 w-3 bg-zinc-500 dark:bg-zinc-300 data-[opened=true]:bg-[#30B0E8] rounded-full top-1/2 "
-                  data-opened={message.ack == 5}
+                  data-opened={message?.ack == 5}
                   style={{
                     left: `${progress}%`,
                     transition: "left 0.2s ease-in", // Transição suave
