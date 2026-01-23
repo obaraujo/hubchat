@@ -28,23 +28,21 @@ export function AudioPlayerCustom({ audioUrl, message }) {
   };
 
   useEffect(() => {
-		const audio = audioRef.current;
-    setDuration(handleSetTime(audio.duration ?? 0));
     const newSpeed = localStorage.getItem("audioSpeed");
     if (newSpeed) {
       setSpeed(newSpeed);
     }
   }, []);
-	
-  useEffect(() => {
+
+function handleOnAudioLoad() {
 		const audio = audioRef.current;
-    setDuration(handleSetTime(audio.duration ?? 0));
-   }, [audioRef.current]);
+		setDuration(handleSetTime(audio.duration ?? 0));
+	}
 
   function handleSetTime(time) {
-    const minutes = Math.floor(time / 60);
+		const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+		    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }
 
   const handleProgressChange = (e) => {
@@ -86,6 +84,7 @@ export function AudioPlayerCustom({ audioUrl, message }) {
           src={audioUrl}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEndPlay}
+					onCanPlay={handleOnAudioLoad}
         />
         <div
           className={`rounded-full w-12 h-12 ${
